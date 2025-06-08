@@ -105,53 +105,6 @@ def create_hover_overlay_banner(current_theme="dark"):
                         "gap": "1rem",
                         "alignItems": "center"
                     },
-                    children=[
-                        html.Button(
-                            [html.Span("🏠 "), "Overview"],
-                            id="overlay-nav-overview",  # Changed ID to be unique
-                            style={
-                                "backgroundColor": "transparent",
-                                "border": f"2px solid {theme['border_light']}",
-                                "color": theme["text_primary"],
-                                "padding": "0.6rem 1.2rem",
-                                "borderRadius": "8px",
-                                "cursor": "pointer",
-                                "fontSize": "0.9rem",
-                                "fontWeight": "600",
-                                "transition": "all 0.2s ease"
-                            }
-                        ),
-                        html.Button(
-                            [html.Span("📈 "), "Analytics"],
-                            id="overlay-nav-analytics",  # Changed ID to be unique
-                            style={
-                                "backgroundColor": "transparent",
-                                "border": f"2px solid {theme['border_light']}",
-                                "color": theme["text_primary"],
-                                "padding": "0.6rem 1.2rem",
-                                "borderRadius": "8px",
-                                "cursor": "pointer",
-                                "fontSize": "0.9rem",
-                                "fontWeight": "600",
-                                "transition": "all 0.2s ease"
-                            }
-                        ),
-                        html.Button(
-                            [html.Span("📋 "), "Reports"],
-                            id="overlay-nav-reports",  # Changed ID to be unique
-                            style={
-                                "backgroundColor": "transparent",
-                                "border": f"2px solid {theme['border_light']}",
-                                "color": theme["text_primary"],
-                                "padding": "0.6rem 1.2rem",
-                                "borderRadius": "8px",
-                                "cursor": "pointer",
-                                "fontSize": "0.9rem",
-                                "fontWeight": "600",
-                                "transition": "all 0.2s ease"
-                            }
-                        )
-                    ]
                 ),
                 
                 # Center - Theme switcher
