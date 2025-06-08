@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 # Import Google OAuth utilities with error handling
 try:
-    from utils.google_auth import get_auth_manager
-    google_auth_manager = get_auth_manager()
+    from utils.google_auth import get_google_auth_manager
+    google_auth_manager = get_google_auth_manager()
     GOOGLE_AUTH_AVAILABLE = True
     print("✅ Google OAuth utilities loaded successfully")
     print(f"✅ Auth manager type: {type(google_auth_manager).__name__}")
