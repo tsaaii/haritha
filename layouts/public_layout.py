@@ -12,51 +12,86 @@ from components.navigation.hover_overlay import create_hover_overlay_banner
 from components.cards.stat_card import create_stat_card, create_metric_grid
 from components.cards.status_indicators import create_status_indicator, create_status_grid
 
+
+def create_responsive_logo(image_name, alt_text, position="left"):
+    """Create responsive logo that auto-resizes for all devices"""
+    return html.Img(
+        src=f"/assets/img/{image_name}.png",
+        alt=alt_text,
+        style={
+            "height": "clamp(60px, 8vw, 120px)",  # Back to original auto-scaling sizes
+            "width": "auto",  # Maintain aspect ratio
+            "objectFit": "contain",
+            "filter": "drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.3))",
+            "transition": "all 0.3s ease",
+            # TV scaling
+            "maxHeight": "min(15vh, 200px)",  # TV: up to 200px or 15% viewport
+            "minHeight": "50px"  # Mobile minimum
+        },
+        className=f"logo-{position} responsive-logo"
+    )
+
 def create_hero_section(theme):
-    """Create hero section for public dashboard"""
+    """Create compact hero section - 1.5 inches on 24-inch screen"""
     return html.Div(
         className="hero-section",
         style={
             "background": f"linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%)",
-            "borderRadius": "12px",
-            "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
+            "borderRadius": "8px",
+            "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.3)",
             "textAlign": "center",
-            "padding": "2rem 0",
-            "margin": "1rem 0"
+            # Let CSS handle all sizing - remove inline overrides
+            "position": "relative",
+            "overflow": "hidden"
         },
         children=[
-            html.H1(
-                "स्वच्छ आंध्र प्रदेश",
-                style={
-                    "fontSize": "3rem",
-                    "fontWeight": "800",
-                    "marginBottom": "0.5rem",
-                    "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.5)",
-                    "color": theme["text_primary"]
-                }
-            ),
-            html.P(
-                "Clean Andhra Pradesh • Real-time Analytics Dashboard",
-                style={
-                    "fontSize": "1.25rem",
-                    "fontWeight": "500",
-                    "margin": "0",
-                    "color": theme["text_secondary"]
-                }
-            ),
-            html.P(
-                "🖱️ Hover at the top of your screen for navigation options",
-                style={
-                    "fontSize": "0.95rem",
-                    "fontWeight": "400",
-                    "margin": "1rem 0 0 0",
-                    "color": theme["brand_primary"],
-                    "fontStyle": "italic",
-                    "padding": "0.5rem 1rem",
-                    "backgroundColor": f"{theme['accent_bg']}80",
-                    "borderRadius": "8px",
-                    "border": f"1px solid {theme['brand_primary']}40"
-                }
+            # Main content - logos and title only
+            html.Div(
+                children=[
+                    # Left Logo - let CSS handle sizing
+                    html.Img(
+                        src="/assets/img/left.png",
+                        alt="Left Organization Logo",
+                        className="logo-left responsive-logo"  # Only use CSS classes
+                    ),
+                    
+                    # Title Section with main title and subtitle
+                    html.Div(
+                        className="hero-title-section",
+                        children=[
+                            # Main Title
+                            html.H1(
+                                "Swaccha Andhra Corporation",
+                                style={
+                                    "color": theme["text_primary"],  # Only theme-specific styles
+                                    "margin": "0 0 0.25rem 0",  # Small margin below main title
+                                    "lineHeight": "1.1"
+                                }
+                            ),
+                            
+                            # Subtitle
+                            html.P(
+                                "Real Time Legacy Waste Remediation Progress Tracker",
+                                className="hero-subtitle",
+                                style={
+                                    "color": theme["text_secondary"],
+                                    "fontSize": "clamp(0.8rem, 2vw, 1rem)",  # Smaller responsive font
+                                    "fontWeight": "500",
+                                    "margin": "0",
+                                    "lineHeight": "1.2",
+                                    "fontStyle": "Bold"
+                                }
+                            )
+                        ]
+                    ),
+                    
+                    # Right Logo - let CSS handle sizing
+                    html.Img(
+                        src="/assets/img/right.png",
+                        alt="Right Organization Logo",
+                        className="logo-right responsive-logo"  # Only use CSS classes
+                    )
+                ]
             )
         ]
     )

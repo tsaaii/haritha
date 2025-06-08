@@ -24,72 +24,10 @@ def create_hover_trigger():
         }
     )
 
-def create_navigation_buttons(theme):
-    """Create navigation buttons for the overlay"""
-    return [
-        html.Div(
-            "🚀 Quick Access",
-            style={
-                "color": theme["brand_primary"],
-                "fontSize": "1rem",
-                "fontWeight": "700",
-                "marginRight": "1rem",
-                "borderRight": f"2px solid {theme['border_light']}",
-                "paddingRight": "1rem"
-            }
-        ),
-        html.Button(
-            [html.Span("📊", style={"marginRight": "0.5rem"}), "Overview"],
-            id="nav-overview",
-            style={
-                "background": theme["brand_primary"],
-                "border": "none",
-                "color": "white",
-                "fontSize": "1rem",
-                "fontWeight": "600",
-                "padding": "0.6rem 1.2rem",
-                "borderRadius": "8px",
-                "cursor": "pointer",
-                "transition": "all 0.2s ease",
-                "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.2)"
-            }
-        ),
-        html.Button(
-            [html.Span("📈", style={"marginRight": "0.5rem"}), "Analytics"],
-            id="nav-analytics", 
-            style={
-                "background": "transparent",
-                "border": f"2px solid {theme['border_light']}",
-                "color": theme["text_primary"],
-                "fontSize": "1rem",
-                "fontWeight": "500",
-                "padding": "0.6rem 1.2rem",
-                "borderRadius": "8px",
-                "cursor": "pointer",
-                "transition": "all 0.2s ease"
-            }
-        ),
-        html.Button(
-            [html.Span("📋", style={"marginRight": "0.5rem"}), "Reports"],
-            id="nav-reports",
-            style={
-                "background": "transparent", 
-                "border": f"2px solid {theme['border_light']}",
-                "color": theme["text_primary"],
-                "fontSize": "1rem",
-                "fontWeight": "500",
-                "padding": "0.6rem 1.2rem",
-                "borderRadius": "8px",
-                "cursor": "pointer",
-                "transition": "all 0.2s ease"
-            }
-        )
-    ]
-
 def create_admin_login_button(theme):
     """Create admin login button"""
     return html.Button(
-        [html.Span("🔐", style={"marginRight": "0.5rem"}), "Admin Login"],
+        [html.Span(style={"marginRight": "0.5rem"}), "User Login"],
         id="admin-login-btn",
         style={
             "background": f"linear-gradient(135deg, {theme['success']} 0%, {theme['info']} 100%)",
@@ -114,13 +52,13 @@ def create_divider(theme):
             "width": "2px",
             "height": "50px",
             "backgroundColor": theme["border_light"],
-            "margin": "0 0.5rem"
+            "margin": "0 1rem"
         }
     )
 
 def create_hover_overlay_banner(current_theme="dark"):
     """
-    Create complete hover overlay banner
+    Create simplified hover overlay banner with only theme switcher and login
     
     Args:
         current_theme (str): Currently active theme
@@ -134,7 +72,7 @@ def create_hover_overlay_banner(current_theme="dark"):
         # Invisible hover trigger area
         create_hover_trigger(),
         
-        # The actual overlay banner
+        # The actual overlay banner - simplified
         html.Div(
             id="overlay-banner",
             className="overlay-banner",
@@ -154,28 +92,19 @@ def create_hover_overlay_banner(current_theme="dark"):
                 "transition": "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 "padding": "1rem 2rem 1.5rem 2rem",
                 "display": "flex",
-                "justifyContent": "space-between",
+                "justifyContent": "center",  # Center the content
                 "alignItems": "center",
                 "opacity": "0",
                 "pointerEvents": "none"
             },
             children=[
-                # Left side - Navigation
-                html.Div(
-                    style={
-                        "display": "flex",
-                        "gap": "1.5rem",
-                        "alignItems": "center"
-                    },
-                    children=create_navigation_buttons(theme)
-                ),
-                
-                # Right side - Controls
+                # Centered content - Only theme switcher and login
                 html.Div(
                     style={
                         "display": "flex",
                         "gap": "1rem",
-                        "alignItems": "center"
+                        "alignItems": "center",
+                        "justifyContent": "center"
                     },
                     children=[
                         create_theme_switcher(current_theme),
