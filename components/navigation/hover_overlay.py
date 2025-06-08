@@ -27,7 +27,7 @@ def create_hover_trigger():
 def create_admin_login_button(theme):
     """Create admin login button"""
     return html.Button(
-        [html.Span(style={"marginRight": "0.5rem"}), "User Login"],
+        [html.Span("🔐", style={"marginRight": "0.5rem"}), "User Login"],
         id="admin-login-btn",
         style={
             "background": f"linear-gradient(135deg, {theme['success']} 0%, {theme['info']} 100%)",
@@ -98,7 +98,7 @@ def create_hover_overlay_banner(current_theme="dark"):
                 "pointerEvents": "none"
             },
             children=[
-                # Left - Navigation buttons
+                # Left - Navigation buttons (with unique IDs)
                 html.Div(
                     style={
                         "display": "flex",
@@ -108,7 +108,7 @@ def create_hover_overlay_banner(current_theme="dark"):
                     children=[
                         html.Button(
                             [html.Span("🏠 "), "Overview"],
-                            id="nav-overview",
+                            id="overlay-nav-overview",  # Changed ID to be unique
                             style={
                                 "backgroundColor": "transparent",
                                 "border": f"2px solid {theme['border_light']}",
@@ -123,7 +123,7 @@ def create_hover_overlay_banner(current_theme="dark"):
                         ),
                         html.Button(
                             [html.Span("📈 "), "Analytics"],
-                            id="nav-analytics",
+                            id="overlay-nav-analytics",  # Changed ID to be unique
                             style={
                                 "backgroundColor": "transparent",
                                 "border": f"2px solid {theme['border_light']}",
@@ -138,7 +138,7 @@ def create_hover_overlay_banner(current_theme="dark"):
                         ),
                         html.Button(
                             [html.Span("📋 "), "Reports"],
-                            id="nav-reports",
+                            id="overlay-nav-reports",  # Changed ID to be unique
                             style={
                                 "backgroundColor": "transparent",
                                 "border": f"2px solid {theme['border_light']}",

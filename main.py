@@ -5,7 +5,7 @@ Supports Google OAuth, session management, and protected routes
 """
 
 import dash
-from dash import html, dcc, callback, Input, Output, State, ctx
+from dash import html, dcc, callback, Input, Output, State, ctx, clientside_callback, ClientsideFunction
 from dash.exceptions import PreventUpdate
 import flask
 from flask import request, redirect, session
@@ -229,12 +229,18 @@ def oauth_callback():
 
 @server.route('/auth/logout')
 def logout():
-    """Handle user logout"""
+    """Handle user logout - FIXED"""
+    print("Logout route called")  # Debug
+    
+    # Clear session
     session_id = flask.session.get('swaccha_session_id')
     if session_id:
         auth_service.logout_user(session_id)
     
+    # Clear Flask session completely
     flask.session.clear()
+    
+    # Redirect to home page (not just /)
     return redirect('/')
 
 @server.route('/debug/oauth')
@@ -315,10 +321,11 @@ app.layout = html.Div(
         dcc.Store(id='current-theme', data=DEFAULT_THEME),
         dcc.Store(id='user-authenticated', data=False),
         dcc.Store(id='current-page', data='public_landing'),
-        dcc.Store(id='user-session-data', data={}),  # Add this to main layout
+        dcc.Store(id='user-session-data', data={}),
         dcc.Store(id='auth-error-message', data=''),
         dcc.Location(id='url', refresh=False),
-        dcc.Interval(id='session-check-interval', interval=30*1000, n_intervals=0),  # Check every 30 seconds
+        dcc.Location(id='redirect', refresh=True),  # Add redirect location for OAuth
+        dcc.Interval(id='session-check-interval', interval=30*1000, n_intervals=0),
         html.Div(id="main-layout")
     ]
 )
@@ -335,6 +342,8 @@ app.layout = html.Div(
 )
 def update_current_page_and_auth(pathname, search):
     """Determine current page and check authentication status"""
+    print(f"DEBUG: Routing - pathname: {pathname}, search: {search}")  # Debug
+    
     # Parse URL parameters
     params = {}
     if search:
@@ -358,6 +367,8 @@ def update_current_page_and_auth(pathname, search):
             flask.session.clear()
             user_data = {}
     
+    print(f"DEBUG: is_authenticated: {is_authenticated}")  # Debug
+    
     # Handle different routes
     if pathname is None or pathname == '/' or pathname == '':
         return 'public_landing', is_authenticated, user_data, ''
@@ -378,7 +389,7 @@ def update_current_page_and_auth(pathname, search):
         if is_authenticated:
             return 'admin_dashboard', True, user_data, ''
         else:
-            # Redirect to login if not authenticated
+            # Redirect to login if not authenticated - but don't change URL
             return 'login', False, {}, 'Please log in to access the dashboard.'
     
     elif pathname == '/analytics':
@@ -435,6 +446,7 @@ def update_theme(dark_clicks, light_clicks, contrast_clicks, green_clicks):
 )
 def update_main_layout(theme_name, is_authenticated, current_page, user_data, error_message):
     """Update main layout based on current page and authentication status"""
+    print(f"DEBUG: Layout - current_page: {current_page}, is_authenticated: {is_authenticated}")  # Debug
     
     if current_page == 'login':
         return build_login_layout(theme_name, error_message)
@@ -450,16 +462,14 @@ def update_main_layout(theme_name, is_authenticated, current_page, user_data, er
         # Default to public landing
         return build_public_layout(theme_name)
 
-# Split navigation callbacks to handle different page contexts
-
-# Main navigation callback (for buttons that exist on all pages)
+# FIXED - Main navigation callback with proper debug and button handling
 @callback(
     Output('url', 'pathname'),
     [
         Input('admin-login-btn', 'n_clicks'),
-        Input('nav-overview', 'n_clicks'),
-        Input('nav-analytics', 'n_clicks'),
-        Input('nav-reports', 'n_clicks')
+        Input('overlay-nav-overview', 'n_clicks'),
+        Input('overlay-nav-analytics', 'n_clicks'),
+        Input('overlay-nav-reports', 'n_clicks')
     ],
     prevent_initial_call=True
 )
@@ -469,21 +479,72 @@ def handle_main_navigation(admin_login, nav_overview, nav_analytics, nav_reports
         raise PreventUpdate
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    trigger_value = ctx.triggered[0]['value']
+    
+    print(f"DEBUG: Navigation - button: {button_id}, value: {trigger_value}")  # Debug
+    
+    # Only process if the button was actually clicked (value > 0)
+    if trigger_value is None or trigger_value == 0:
+        raise PreventUpdate
     
     if button_id == 'admin-login-btn':
+        print("DEBUG: Navigating to /login")  # Debug
         return '/login'
-    elif button_id == 'nav-overview':
+    elif button_id == 'overlay-nav-overview':
+        print("DEBUG: Navigating to /")  # Debug
         return '/'
-    elif button_id == 'nav-analytics':
+    elif button_id == 'overlay-nav-analytics':
+        print("DEBUG: Navigating to /analytics")  # Debug
         return '/analytics'
-    elif button_id == 'nav-reports':
+    elif button_id == 'overlay-nav-reports':
+        print("DEBUG: Navigating to /reports")  # Debug
         return '/reports'
     
     raise PreventUpdate
 
-# Login page specific callback
-@callback(
-    Output('url', 'pathname', allow_duplicate=True),
+# FIXED Login page callback - Using clientside callback for OAuth redirect
+clientside_callback(
+    """
+    function(google_clicks, google_alt_clicks, back_clicks, manual_clicks, manual_email, current_page) {
+        const triggered = window.dash_clientside.callback_context.triggered;
+        if (!triggered || triggered.length === 0) {
+            return window.dash_clientside.no_update;
+        }
+        
+        // Only process if we're actually on the login page
+        if (current_page !== 'login') {
+            return window.dash_clientside.no_update;
+        }
+        
+        const button_id = triggered[0].prop_id.split('.')[0];
+        const button_value = triggered[0].value;
+        
+        // Only process if button was actually clicked
+        if (!button_value || button_value === 0) {
+            return window.dash_clientside.no_update;
+        }
+        
+        console.log('Login callback triggered:', button_id);
+        
+        if (button_id === 'google-login-btn' || button_id === 'google-login-btn-alt') {
+            // Redirect to OAuth endpoint using browser navigation
+            console.log('Redirecting to OAuth...');
+            window.location.href = '/oauth/login';
+            return window.dash_clientside.no_update;
+        } else if (button_id === 'back-to-public-btn') {
+            return '/';
+        } else if (button_id === 'manual-login-btn') {
+            if (manual_email) {
+                return '/login?error=manual_login_not_implemented';
+            } else {
+                return '/login?error=email_required';
+            }
+        }
+        
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('redirect', 'pathname'),
     [
         Input('google-login-btn', 'n_clicks'),
         Input('google-login-btn-alt', 'n_clicks'),
@@ -491,35 +552,11 @@ def handle_main_navigation(admin_login, nav_overview, nav_analytics, nav_reports
         Input('manual-login-btn', 'n_clicks')
     ],
     [State('manual-email', 'value'),
-     State('current-page', 'data')],
+     State('current-page', 'data')],  # Add current page as state
     prevent_initial_call=True
 )
-def handle_login_actions(google_login, google_login_alt, back_to_public, manual_login, manual_email, current_page):
-    """Handle login page specific actions"""
-    # Only process if we're on the login page
-    if current_page != 'login':
-        raise PreventUpdate
-    
-    if not ctx.triggered:
-        raise PreventUpdate
-    
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    
-    if button_id in ['google-login-btn', 'google-login-btn-alt']:
-        # Redirect to Flask route for OAuth
-        return '/oauth/login'
-    elif button_id == 'back-to-public-btn':
-        return '/'
-    elif button_id == 'manual-login-btn':
-        # Handle manual email login (placeholder for now)
-        if manual_email:
-            # For now, just show a message that this feature is coming soon
-            return '/login?error=manual_login_not_implemented'
-        return '/login?error=email_required'
-    
-    raise PreventUpdate
 
-# Admin dashboard specific callback
+# FIXED - Admin dashboard callback with proper logout handling
 @callback(
     Output('url', 'pathname', allow_duplicate=True),
     [
@@ -541,8 +578,11 @@ def handle_admin_actions(logout, quick_reports, quick_settings, current_page):
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
+    print(f"DEBUG: Admin action - button: {button_id}")  # Debug
+    
     if button_id == 'logout-btn':
-        # Redirect to Flask route for logout
+        print("DEBUG: Logout button clicked")  # Debug
+        # Use clientside redirect to Flask route
         return '/auth/logout'
     elif button_id == 'quick-reports-btn':
         return '/reports'

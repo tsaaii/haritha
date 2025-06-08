@@ -31,7 +31,7 @@ class AuthenticationService:
         self.sessions = {}  # In production, use Redis or database
         self.login_attempts = {}  # Track failed login attempts
         
-    def generate_oauth_url(self, state: str = None) -> str:
+    def generate_oauth_url(self, state: str = None) -> Tuple[str, str]:
         """
         Generate Google OAuth authorization URL
         
@@ -39,7 +39,7 @@ class AuthenticationService:
             state (str): Optional state parameter for CSRF protection
             
         Returns:
-            str: Authorization URL
+            Tuple[str, str]: (authorization_url, state)
         """
         if not self.oauth_config:
             raise ValueError("Google OAuth not configured. Check client_secrets.json")
@@ -234,6 +234,28 @@ class AuthenticationService:
             del self.sessions[session_id]
             return True
         return False
+    
+    def debug_oauth_config(self) -> Dict:
+        """
+        Debug OAuth configuration for troubleshooting
+        
+        Returns:
+            dict: Debug information about OAuth config
+        """
+        debug_info = {
+            'config_loaded': bool(self.oauth_config),
+            'has_client_id': bool(self.oauth_config.get('client_id') if self.oauth_config else False),
+            'has_client_secret': bool(self.oauth_config.get('client_secret') if self.oauth_config else False),
+            'redirect_uris': self.oauth_config.get('redirect_uris', []) if self.oauth_config else [],
+            'auth_uri': self.oauth_config.get('auth_uri', 'Not found') if self.oauth_config else 'Not found',
+            'token_uri': self.oauth_config.get('token_uri', 'Not found') if self.oauth_config else 'Not found'
+        }
+        
+        if self.oauth_config:
+            debug_info['expected_redirect_uri'] = 'http://localhost:8050/oauth/callback'
+            debug_info['redirect_uri_configured'] = 'http://localhost:8050/oauth/callback' in self.oauth_config.get('redirect_uris', [])
+        
+        return debug_info
     
     def _record_failed_attempt(self, email: str):
         """Record failed login attempt"""
