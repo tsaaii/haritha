@@ -1,11 +1,11 @@
 # layouts/public_layout.py
 """
 Public Layout - Main dashboard visible without login
-Features hover overlay for admin access
+Features hover overlay for admin access - NO HEADER
 """
 
 from dash import html
-from header import render_header
+# REMOVED: from header import render_header  # Don't import header for public layout
 from footer import render_footer
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
@@ -214,13 +214,13 @@ def create_status_section(theme):
 
 def build_public_layout(theme_name="dark"):
     """
-    Build the complete public layout
+    Build the complete public layout - NO HEADER
     
     Args:
         theme_name (str): Current theme name
         
     Returns:
-        html.Div: Complete public layout
+        html.Div: Complete public layout WITHOUT header
     """
     theme_styles = get_theme_styles(theme_name)
     theme = theme_styles["theme"]
@@ -230,16 +230,18 @@ def build_public_layout(theme_name="dark"):
         className="public-layout",
         style=theme_styles["container_style"],
         children=[
-            # Hover overlay banner (admin access)
+            # Hover overlay banner (admin access) - ONLY navigation
             create_hover_overlay_banner(theme_name),
             
-            # Main header (always visible)
-            render_header(),
+            # REMOVED: render_header() - NO HEADER for public layout!
             
-            # Main content area
+            # Main content area - starts from top since no header
             html.Div(
                 className="main-content",
-                style=theme_styles["main_content_style"],
+                style={
+                    **theme_styles["main_content_style"],
+                    "paddingTop": "0.5rem"  # Reduced since no header
+                },
                 children=[
                     # Hero section
                     create_hero_section(theme),
@@ -262,7 +264,7 @@ def build_public_layout(theme_name="dark"):
 
 def create_mobile_public_layout(theme_name="dark"):
     """
-    Create mobile-optimized version of public layout
+    Create mobile-optimized version of public layout - NO HEADER
     """
     theme_styles = get_theme_styles(theme_name)
     theme = theme_styles["theme"]
@@ -278,11 +280,12 @@ def create_mobile_public_layout(theme_name="dark"):
         },
         children=[
             create_hover_overlay_banner(theme_name),
-            render_header(),
+            # REMOVED: render_header() - NO HEADER for mobile public layout!
             html.Div(
                 style={
                     **theme_styles["main_content_style"],
-                    "padding": "1rem"
+                    "padding": "1rem",
+                    "paddingTop": "0.5rem"  # Reduced since no header
                 },
                 children=[
                     create_hero_section(theme),
