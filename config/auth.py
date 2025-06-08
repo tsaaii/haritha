@@ -1,6 +1,6 @@
-# config/auth.py
+# config/auth.py - COMPLETE FIXED VERSION
 """
-Authentication Configuration
+Authentication Configuration - COMPLETE
 Manages user access control and OAuth settings
 """
 
@@ -14,6 +14,7 @@ ALLOWED_USERS = {
     "administrators": [
         "saaitejaa@gmail.com",
         "director@swacchaandhra.gov.in",
+        "admin@swacchaap.gov.in",
         "your.email@gmail.com"  # Add your email here
     ],
     
@@ -52,7 +53,7 @@ SECURITY_CONFIG = {
     "max_login_attempts": 5,
     "lockout_duration": 900,  # 15 minutes in seconds
     "require_domain_verification": False,
-    "allowed_domains": ["swacchaandhra.gov.in", "gmail.com"]  # Add your allowed domains
+    "allowed_domains": ["swacchaandhra.gov.in", "gmail.com", "googlemail.com"]  # Add your allowed domains
 }
 
 def get_user_role(email: str) -> Optional[str]:
@@ -99,18 +100,30 @@ def load_google_oauth_config() -> Dict:
         with open(OAUTH_CONFIG["google"]["client_secrets_file"], 'r') as f:
             client_config = json.load(f)
         
+        # Handle both 'web' and 'installed' app types
+        config_key = 'web' if 'web' in client_config else 'installed'
+        
+        if config_key not in client_config:
+            print("Error: Invalid client_secrets.json format.")
+            return {}
+        
+        oauth_section = client_config[config_key]
+        
         return {
-            "client_id": client_config["web"]["client_id"],
-            "client_secret": client_config["web"]["client_secret"],
-            "auth_uri": client_config["web"]["auth_uri"],
-            "token_uri": client_config["web"]["token_uri"],
-            "redirect_uris": client_config["web"]["redirect_uris"]
+            "client_id": oauth_section["client_id"],
+            "client_secret": oauth_section["client_secret"],
+            "auth_uri": oauth_section.get("auth_uri", "https://accounts.google.com/o/oauth2/auth"),
+            "token_uri": oauth_section.get("token_uri", "https://oauth2.googleapis.com/token"),
+            "redirect_uris": oauth_section.get("redirect_uris", [])
         }
     except FileNotFoundError:
         print("Warning: client_secrets.json not found. Google OAuth will not work.")
         return {}
     except KeyError as e:
         print(f"Error: Invalid client_secrets.json format. Missing key: {e}")
+        return {}
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in client_secrets.json: {e}")
         return {}
 
 def get_permissions(role: str) -> List[str]:
@@ -146,6 +159,26 @@ def get_permissions(role: str) -> List[str]:
     }
     
     return permissions_map.get(role, [])
+
+# MISSING FUNCTION - THIS WAS CAUSING THE IMPORT ERROR
+def validate_email_domain(email: str) -> bool:
+    """
+    Validate if email domain is allowed
+    
+    Args:
+        email (str): Email address to validate
+        
+    Returns:
+        bool: True if domain is allowed, False otherwise
+    """
+    if not SECURITY_CONFIG["require_domain_verification"]:
+        return True
+    
+    try:
+        domain = email.split('@')[-1].lower()
+        return domain in SECURITY_CONFIG["allowed_domains"]
+    except (IndexError, AttributeError):
+        return False
 
 # Easy configuration updates
 def add_user(email: str, role: str = "viewer") -> bool:
@@ -206,20 +239,55 @@ def get_environment_config():
             "require_domain_verification": False
         }
 
-# Validation functions
-def validate_email_domain(email: str) -> bool:
-    """Validate if email domain is allowed"""
-    if not SECURITY_CONFIG["require_domain_verification"]:
-        return True
-    
-    domain = email.split('@')[-1].lower()
-    return domain in SECURITY_CONFIG["allowed_domains"]
-
 def get_user_display_name(email: str, role: str) -> str:
     """Get display name for user"""
     name = email.split('@')[0].replace('.', ' ').title()
     role_display = role.replace('_', ' ').title()
     return f"{name} ({role_display})"
+
+# NEW FUNCTION - for compatibility with auth_service.py
+def is_user_allowed(email: str) -> bool:
+    """
+    Alternative name for is_user_authorized for backward compatibility
+    """
+    return is_user_authorized(email)
+
+def get_user_info(email: str) -> Dict:
+    """
+    Get user information including role and permissions
+    
+    Args:
+        email (str): User email address
+        
+    Returns:
+        dict: User information
+    """
+    role = get_user_role(email)
+    if not role:
+        return {}
+    
+    return {
+        'email': email,
+        'role': role,
+        'permissions': get_permissions(role),
+        'display_name': get_user_display_name(email, role),
+        'is_authorized': True
+    }
+
+def get_settings() -> Dict:
+    """
+    Get current settings configuration
+    
+    Returns:
+        dict: Settings configuration
+    """
+    return {
+        'session_timeout_minutes': SESSION_CONFIG['session_timeout'] // 60,
+        'max_login_attempts': SECURITY_CONFIG['max_login_attempts'],
+        'lockout_duration_minutes': SECURITY_CONFIG['lockout_duration'] // 60,
+        'require_domain_verification': SECURITY_CONFIG['require_domain_verification'],
+        'allowed_domains': SECURITY_CONFIG['allowed_domains']
+    }
 
 # Export configuration
 __all__ = [
@@ -229,8 +297,14 @@ __all__ = [
     'SECURITY_CONFIG',
     'get_user_role',
     'is_user_authorized',
+    'is_user_allowed',  # Added for compatibility
     'load_google_oauth_config',
     'get_permissions',
-    'validate_email_domain',
-    'get_user_display_name'
+    'validate_email_domain',  # This was missing!
+    'get_user_display_name',
+    'get_user_info',  # Added for compatibility
+    'get_settings',  # Added for compatibility
+    'add_user',
+    'remove_user',
+    'get_environment_config'
 ]
