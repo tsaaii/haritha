@@ -1,12 +1,13 @@
 # layouts/login_layout.py
 """
-Login Page Layout
-Themed login interface with Google OAuth integration
+Login Page Layout - UPDATED
+Themed login interface with Google OAuth integration and hardcoded credentials
 """
 
 from dash import html, dcc
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
+
 
 def create_login_hero(theme):
     """Create login page hero section"""
@@ -103,7 +104,7 @@ def create_login_hero(theme):
                     }
                 ),
                 html.P(
-                    "This portal requires authorized access. Please authenticate with your authorized Google account.",
+                    "This portal requires authorized access. Please authenticate with your authorized Google account or use development credentials.",
                     style={
                         "color": theme["text_secondary"],
                         "fontSize": "1rem",
@@ -116,8 +117,9 @@ def create_login_hero(theme):
         ]
     )
 
+
 def create_login_form(theme):
-    """Create the main login form"""
+    """Create the main login form - STABLE with multiple reliable methods"""
     return html.Div(
         className="login-form-container",
         style={
@@ -152,24 +154,17 @@ def create_login_form(theme):
                 )
             ]),
             
-            # Google OAuth Button - Enhanced and more visible
+            # STABLE METHOD 1: Quick Demo Login - One Click
             html.Button(
                 [
-                    # Google icon using Unicode
-                    html.Span(
-                        "🔵",  # Using blue circle as fallback
-                        style={
-                            "marginRight": "12px",
-                            "fontSize": "1.2rem"
-                        }
-                    ),
-                    html.Span("Continue with Google", style={"fontSize": "1rem", "fontWeight": "600"})
+                    html.Span("🚀", style={"marginRight": "12px", "fontSize": "1.2rem"}),
+                    html.Span("Quick Demo Login", style={"fontSize": "1rem", "fontWeight": "600"})
                 ],
-                id="google-login-btn",
+                id="demo-login-btn",
                 style={
                     "width": "100%",
                     "padding": "16px 24px",
-                    "backgroundColor": "#4285f4",  # Google blue
+                    "backgroundColor": theme["success"],
                     "color": "white",
                     "border": "none",
                     "borderRadius": "8px",
@@ -180,133 +175,227 @@ def create_login_form(theme):
                     "display": "flex",
                     "alignItems": "center",
                     "justifyContent": "center",
-                    "marginBottom": "1.5rem",
-                    "boxShadow": "0 4px 12px rgba(66, 133, 244, 0.3)",
-                    "position": "relative",
-                    "overflow": "hidden"
+                    "marginBottom": "1rem",
+                    "boxShadow": "0 4px 12px rgba(56, 161, 105, 0.3)"
                 }
             ),
             
-            # Secondary Google button (alternative styling)
-            html.Button(
-                [
-                    html.Span("G", style={
-                        "marginRight": "12px",
-                        "fontSize": "1.2rem",
-                        "fontWeight": "bold",
-                        "backgroundColor": "white",
-                        "color": "#4285f4",
-                        "borderRadius": "50%",
-                        "width": "24px",
-                        "height": "24px",
-                        "display": "inline-flex",
-                        "alignItems": "center",
-                        "justifyContent": "center"
-                    }),
-                    "Sign in with Google"
-                ],
-                id="google-login-btn-alt",
+            # Info for demo login
+            html.P(
+                "Instant access - no credentials needed",
                 style={
-                    "width": "100%",
-                    "padding": "12px 20px",
-                    "backgroundColor": "white",
-                    "color": "#333",
-                    "border": "2px solid #dadce0",
-                    "borderRadius": "8px",
-                    "fontSize": "1rem",
-                    "fontWeight": "500",
-                    "cursor": "pointer",
-                    "transition": "all 0.2s ease",
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center",
-                    "marginBottom": "1.5rem",
-                    "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
+                    "color": theme["text_secondary"],
+                    "fontSize": "0.85rem",
+                    "margin": "0 0 1.5rem 0",
+                    "fontStyle": "italic"
                 }
             ),
             
-            # Alternative login divider
+            # Divider
             html.Div([
-                html.Div(
-                    style={
-                        "height": "1px",
-                        "backgroundColor": theme["border_light"],
-                        "flex": "1"
-                    }
-                ),
-                html.Span(
-                    "OR",
+                html.Div(style={"height": "1px", "backgroundColor": theme["border_light"], "flex": "1"}),
+                html.Span("OR", style={"color": theme["text_secondary"], "fontSize": "0.9rem", "padding": "0 1rem", "backgroundColor": theme["card_bg"]}),
+                html.Div(style={"height": "1px", "backgroundColor": theme["border_light"], "flex": "1"})
+            ], style={"display": "flex", "alignItems": "center", "margin": "1.5rem 0"}),
+            
+            # STABLE METHOD 2: Multiple Preset Accounts
+            html.Div([
+                html.P(
+                    "Select Admin Account:",
                     style={
                         "color": theme["text_secondary"],
                         "fontSize": "0.9rem",
-                        "padding": "0 1rem",
-                        "backgroundColor": theme["card_bg"]
+                        "marginBottom": "1rem",
+                        "fontWeight": "600"
                     }
                 ),
-                html.Div(
+                
+                # Admin account buttons
+                html.Div([
+                    html.Button(
+                        "👨‍💼 Administrator",
+                        id="admin-account-btn",
+                        style={
+                            "width": "100%",
+                            "padding": "12px 16px",
+                            "backgroundColor": theme["brand_primary"],
+                            "color": "white",
+                            "border": "none",
+                            "borderRadius": "6px",
+                            "fontSize": "0.9rem",
+                            "fontWeight": "600",
+                            "cursor": "pointer",
+                            "marginBottom": "0.5rem",
+                            "transition": "all 0.2s ease"
+                        }
+                    ),
+                    html.Button(
+                        "👨‍💻 Developer",
+                        id="dev-account-btn",
+                        style={
+                            "width": "100%",
+                            "padding": "12px 16px",
+                            "backgroundColor": theme["info"],
+                            "color": "white",
+                            "border": "none",
+                            "borderRadius": "6px",
+                            "fontSize": "0.9rem",
+                            "fontWeight": "600",
+                            "cursor": "pointer",
+                            "marginBottom": "0.5rem",
+                            "transition": "all 0.2s ease"
+                        }
+                    ),
+                    html.Button(
+                        "👁️ Viewer",
+                        id="viewer-account-btn",
+                        style={
+                            "width": "100%",
+                            "padding": "12px 16px",
+                            "backgroundColor": theme["warning"],
+                            "color": "white",
+                            "border": "none",
+                            "borderRadius": "6px",
+                            "fontSize": "0.9rem",
+                            "fontWeight": "600",
+                            "cursor": "pointer",
+                            "marginBottom": "1rem",
+                            "transition": "all 0.2s ease"
+                        }
+                    )
+                ])
+            ]),
+            
+            # Divider
+            html.Div([
+                html.Div(style={"height": "1px", "backgroundColor": theme["border_light"], "flex": "1"}),
+                html.Span("OR", style={"color": theme["text_secondary"], "fontSize": "0.9rem", "padding": "0 1rem", "backgroundColor": theme["card_bg"]}),
+                html.Div(style={"height": "1px", "backgroundColor": theme["border_light"], "flex": "1"})
+            ], style={"display": "flex", "alignItems": "center", "margin": "1.5rem 0"}),
+            
+            # STABLE METHOD 3: PIN Code Access
+            html.Div([
+                html.P(
+                    "Access PIN:",
                     style={
-                        "height": "1px",
-                        "backgroundColor": theme["border_light"],
-                        "flex": "1"
+                        "color": theme["text_secondary"],
+                        "fontSize": "0.9rem",
+                        "marginBottom": "1rem",
+                        "fontWeight": "600"
                     }
-                )
+                ),
+                
+                html.Div([
+                    dcc.Input(
+                        id="access-pin",
+                        type="password",
+                        placeholder="Enter 4-digit PIN",
+                        maxLength=4,
+                        style={
+                            "width": "60%",
+                            "padding": "12px 16px",
+                            "backgroundColor": theme["accent_bg"],
+                            "border": f"2px solid {theme['border_light']}",
+                            "borderRadius": "8px 0 0 8px",
+                            "color": theme["text_primary"],
+                            "fontSize": "1.2rem",
+                            "textAlign": "center",
+                            "outline": "none",
+                            "fontFamily": "monospace",
+                            "letterSpacing": "0.5rem"
+                        }
+                    ),
+                    html.Button(
+                        "Enter",
+                        id="pin-login-btn",
+                        style={
+                            "width": "40%",
+                            "padding": "12px 16px",
+                            "backgroundColor": theme["brand_primary"],
+                            "color": "white",
+                            "border": "none",
+                            "borderRadius": "0 8px 8px 0",
+                            "fontSize": "1rem",
+                            "fontWeight": "600",
+                            "cursor": "pointer",
+                            "transition": "all 0.2s ease"
+                        }
+                    )
+                ], style={"display": "flex", "marginBottom": "1rem"})
+            ]),
+            
+            # PIN hints
+            html.Div([
+                html.P(
+                    "💡 Valid PINs:",
+                    style={
+                        "color": theme["info"],
+                        "fontSize": "0.85rem",
+                        "marginBottom": "0.5rem",
+                        "fontWeight": "600"
+                    }
+                ),
+                html.Div([
+                    html.Span("1234", style={"backgroundColor": theme["accent_bg"], "padding": "0.25rem 0.5rem", "borderRadius": "4px", "fontFamily": "monospace", "margin": "0.25rem", "fontSize": "0.8rem"}),
+                    html.Span(" Admin • "),
+                    html.Span("5678", style={"backgroundColor": theme["accent_bg"], "padding": "0.25rem 0.5rem", "borderRadius": "4px", "fontFamily": "monospace", "margin": "0.25rem", "fontSize": "0.8rem"}),
+                    html.Span(" Dev • "),
+                    html.Span("9999", style={"backgroundColor": theme["accent_bg"], "padding": "0.25rem 0.5rem", "borderRadius": "4px", "fontFamily": "monospace", "margin": "0.25rem", "fontSize": "0.8rem"}),
+                    html.Span(" Demo")
+                ], style={"color": theme["text_secondary"], "fontSize": "0.8rem", "lineHeight": "2"})
             ], style={
-                "display": "flex",
-                "alignItems": "center",
-                "margin": "1.5rem 0"
+                "backgroundColor": f"{theme['info']}22",
+                "border": f"1px solid {theme['info']}",
+                "borderRadius": "8px",
+                "padding": "1rem",
+                "marginBottom": "1.5rem"
             }),
             
-            # Manual credential form (optional)
-            html.Div([
-                dcc.Input(
-                    id="manual-email",
-                    type="email",
-                    placeholder="Enter your email address",
+            # Optional: Google OAuth (if available)
+            html.Details([
+                html.Summary(
+                    "Advanced: Google OAuth",
                     style={
-                        "width": "100%",
-                        "padding": "12px 16px",
-                        "backgroundColor": theme["accent_bg"],
-                        "border": f"2px solid {theme['border_light']}",
-                        "borderRadius": "8px",
-                        "color": theme["text_primary"],
-                        "fontSize": "1rem",
-                        "marginBottom": "1rem",
-                        "outline": "none",
-                        "boxSizing": "border-box"
+                        "color": theme["text_secondary"],
+                        "fontSize": "0.9rem",
+                        "cursor": "pointer",
+                        "marginBottom": "1rem"
                     }
                 ),
                 html.Button(
-                    "Request Access",
-                    id="manual-login-btn",
+                    [
+                        html.Span("🔵", style={"marginRight": "8px"}),
+                        "Continue with Google"
+                    ],
+                    id="google-login-btn",
                     style={
                         "width": "100%",
-                        "padding": "12px 24px",
-                        "backgroundColor": theme["brand_primary"],
+                        "padding": "12px 16px",
+                        "backgroundColor": "#4285f4",
                         "color": "white",
                         "border": "none",
                         "borderRadius": "8px",
-                        "fontSize": "1rem",
+                        "fontSize": "0.9rem",
                         "fontWeight": "600",
                         "cursor": "pointer",
                         "transition": "all 0.2s ease"
                     }
+                ),
+                html.P(
+                    "Note: Google OAuth may be unreliable. Use methods above for guaranteed access.",
+                    style={
+                        "color": theme["warning"],
+                        "fontSize": "0.75rem",
+                        "marginTop": "0.5rem",
+                        "fontStyle": "italic"
+                    }
                 )
-            ]),
+            ], style={"marginBottom": "1.5rem"}),
             
             # Help text
             html.Div([
                 html.P(
-                    "Having trouble accessing your account?",
-                    style={
-                        "color": theme["text_muted"] if "text_muted" in theme else theme["text_secondary"],
-                        "fontSize": "0.9rem",
-                        "marginTop": "1.5rem",
-                        "marginBottom": "0.5rem",
-                        "lineHeight": "1.4"
-                    }
-                ),
-                html.P(
-                    "Contact your system administrator for assistance.",
+                    "Need help? All methods above provide immediate access to the dashboard.",
                     style={
                         "color": theme["text_secondary"],
                         "fontSize": "0.85rem",
@@ -317,6 +406,7 @@ def create_login_form(theme):
             ])
         ]
     )
+
 
 def create_auth_status_card(theme, message_type="info", title="", message=""):
     """Create authentication status card for feedback"""
@@ -371,6 +461,7 @@ def create_auth_status_card(theme, message_type="info", title="", message=""):
             )
         ]
     )
+
 
 def build_login_layout(theme_name="dark", error_message=""):
     """
@@ -476,6 +567,7 @@ def build_login_layout(theme_name="dark", error_message=""):
             )
         ]
     )
+
 
 def create_mobile_login_layout(theme_name="dark"):
     """Create mobile-optimized login layout"""
