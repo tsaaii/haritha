@@ -58,13 +58,131 @@ def create_divider(theme):
 
 def create_hover_overlay_banner(current_theme="dark"):
     """
-    Create simplified hover overlay banner with only theme switcher and login
+    Create complete hover overlay banner with navigation, theme switcher and login
     
     Args:
         current_theme (str): Currently active theme
         
     Returns:
         html.Div: Complete hover overlay component
+    """
+    theme = THEMES[current_theme]
+    
+    return html.Div([
+        # Invisible hover trigger area
+        create_hover_trigger(),
+        
+        # The actual overlay banner - with full navigation
+        html.Div(
+            id="overlay-banner",
+            className="overlay-banner",
+            style={
+                "position": "fixed",
+                "top": "0",
+                "left": "0",
+                "right": "0",
+                "zIndex": "10001",
+                "backgroundColor": f"{theme['secondary_bg']}ee",  # Semi-transparent
+                "backdropFilter": "blur(10px)",
+                "border": f"3px solid {theme['brand_primary']}",
+                "borderTop": "none",
+                "borderRadius": "0 0 12px 12px",
+                "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.5)",
+                "transform": "translateY(-100%)",
+                "transition": "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                "padding": "1rem 2rem 1.5rem 2rem",
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "center",
+                "opacity": "0",
+                "pointerEvents": "none"
+            },
+            children=[
+                # Left - Navigation buttons
+                html.Div(
+                    style={
+                        "display": "flex",
+                        "gap": "1rem",
+                        "alignItems": "center"
+                    },
+                    children=[
+                        html.Button(
+                            [html.Span("🏠 "), "Overview"],
+                            id="nav-overview",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": f"2px solid {theme['border_light']}",
+                                "color": theme["text_primary"],
+                                "padding": "0.6rem 1.2rem",
+                                "borderRadius": "8px",
+                                "cursor": "pointer",
+                                "fontSize": "0.9rem",
+                                "fontWeight": "600",
+                                "transition": "all 0.2s ease"
+                            }
+                        ),
+                        html.Button(
+                            [html.Span("📈 "), "Analytics"],
+                            id="nav-analytics",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": f"2px solid {theme['border_light']}",
+                                "color": theme["text_primary"],
+                                "padding": "0.6rem 1.2rem",
+                                "borderRadius": "8px",
+                                "cursor": "pointer",
+                                "fontSize": "0.9rem",
+                                "fontWeight": "600",
+                                "transition": "all 0.2s ease"
+                            }
+                        ),
+                        html.Button(
+                            [html.Span("📋 "), "Reports"],
+                            id="nav-reports",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": f"2px solid {theme['border_light']}",
+                                "color": theme["text_primary"],
+                                "padding": "0.6rem 1.2rem",
+                                "borderRadius": "8px",
+                                "cursor": "pointer",
+                                "fontSize": "0.9rem",
+                                "fontWeight": "600",
+                                "transition": "all 0.2s ease"
+                            }
+                        )
+                    ]
+                ),
+                
+                # Center - Theme switcher
+                create_theme_switcher(current_theme),
+                
+                # Right - Admin login
+                html.Div(
+                    style={
+                        "display": "flex",
+                        "gap": "1rem",
+                        "alignItems": "center"
+                    },
+                    children=[
+                        create_divider(theme),
+                        create_admin_login_button(theme)
+                    ]
+                )
+            ]
+        )
+    ])
+
+def create_simple_hover_overlay_banner(current_theme="dark"):
+    """
+    Create simplified hover overlay banner with only theme switcher and login
+    Alternative version without navigation buttons
+    
+    Args:
+        current_theme (str): Currently active theme
+        
+    Returns:
+        html.Div: Simplified hover overlay component
     """
     theme = THEMES[current_theme]
     
