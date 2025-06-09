@@ -56,15 +56,110 @@ def create_divider(theme):
         }
     )
 
-def create_hover_overlay_banner(current_theme="dark"):
+def create_dynamic_auth_button(theme, is_authenticated=False, user_data=None):
+    """Create dynamic authentication button (login or logout)"""
+    if is_authenticated and user_data:
+        # Show logout button with user info
+        return html.Div(
+            style={
+                "display": "flex",
+                "alignItems": "center",
+                "gap": "1rem"
+            },
+            children=[
+                # User info section
+                html.Div(
+                    style={
+                        "display": "flex",
+                        "alignItems": "center",
+                        "gap": "0.75rem",
+                        "padding": "0.5rem 1rem",
+                        "backgroundColor": theme["accent_bg"],
+                        "borderRadius": "8px",
+                        "border": f"2px solid {theme['brand_primary']}"
+                    },
+                    children=[
+                        # User avatar
+                        html.Img(
+                            src=user_data.get('picture', '/assets/img/default-avatar.png'),
+                            alt=f"{user_data.get('name', 'User')} Avatar",
+                            style={
+                                "width": "28px",
+                                "height": "28px",
+                                "borderRadius": "50%",
+                                "border": f"2px solid {theme['brand_primary']}",
+                                "objectFit": "cover"
+                            }
+                        ),
+                        # User name
+                        html.Div([
+                            html.Div(
+                                user_data.get('name', 'User'),
+                                style={
+                                    "fontSize": "0.85rem",
+                                    "fontWeight": "600",
+                                    "color": theme["text_primary"],
+                                    "lineHeight": "1.2",
+                                    "whiteSpace": "nowrap"
+                                }
+                            ),
+                            html.Div(
+                                user_data.get('role', 'user').replace('_', ' ').title(),
+                                style={
+                                    "fontSize": "0.7rem",
+                                    "color": theme["text_secondary"],
+                                    "lineHeight": "1.2"
+                                }
+                            )
+                        ])
+                    ]
+                ),
+                
+                # Logout button
+                html.Button(
+                    [html.Span("🚪", style={"marginRight": "0.5rem"}), "Logout"],
+                    id="overlay-logout-btn",
+                    style={
+                        "background": f"linear-gradient(135deg, {theme['error']} 0%, #C53030 100%)",
+                        "border": "none",
+                        "color": "white",
+                        "fontSize": "0.95rem",
+                        "fontWeight": "700",
+                        "padding": "0.8rem 1.5rem",
+                        "borderRadius": "10px",
+                        "cursor": "pointer",
+                        "transition": "all 0.2s ease",
+                        "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.3)",
+                        "textTransform": "uppercase",
+                        "letterSpacing": "0.5px"
+                    }
+                )
+            ]
+        )
+    else:
+        # Show login button
+        return html.Button(
+            [html.Span("🔐", style={"marginRight": "0.5rem"}), "User Login"],
+            id="admin-login-btn",
+            style={
+                "background": f"linear-gradient(135deg, {theme['success']} 0%, {theme['info']} 100%)",
+                "border": "none",
+                "color": "white",
+                "fontSize": "1rem",
+                "fontWeight": "700",
+                "padding": "0.8rem 1.5rem",
+                "borderRadius": "10px",
+                "cursor": "pointer",
+                "transition": "all 0.2s ease",
+                "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.3)",
+                "textTransform": "uppercase",
+                "letterSpacing": "0.5px"
+            }
+        )
+
+def create_hover_overlay_banner(current_theme="dark", is_authenticated=False, user_data=None):
     """
-    Create complete hover overlay banner with navigation, theme switcher and login
-    
-    Args:
-        current_theme (str): Currently active theme
-        
-    Returns:
-        html.Div: Complete hover overlay component
+    Create complete hover overlay banner with dynamic login/logout
     """
     theme = THEMES[current_theme]
     
@@ -72,7 +167,7 @@ def create_hover_overlay_banner(current_theme="dark"):
         # Invisible hover trigger area
         create_hover_trigger(),
         
-        # The actual overlay banner - with full navigation
+        # The actual overlay banner
         html.Div(
             id="overlay-banner",
             className="overlay-banner",
@@ -82,7 +177,7 @@ def create_hover_overlay_banner(current_theme="dark"):
                 "left": "0",
                 "right": "0",
                 "zIndex": "10001",
-                "backgroundColor": f"{theme['secondary_bg']}ee",  # Semi-transparent
+                "backgroundColor": f"{theme['secondary_bg']}ee",
                 "backdropFilter": "blur(10px)",
                 "border": f"3px solid {theme['brand_primary']}",
                 "borderTop": "none",
@@ -98,19 +193,29 @@ def create_hover_overlay_banner(current_theme="dark"):
                 "pointerEvents": "none"
             },
             children=[
-                # Left - Navigation buttons (with unique IDs)
+                # Left - App name
                 html.Div(
                     style={
                         "display": "flex",
-                        "gap": "1rem",
-                        "alignItems": "center"
+                        "alignItems": "center",
+                        "gap": "1rem"
                     },
+                    children=[
+                        html.Div([
+                            html.Span("🌱", style={"fontSize": "1.5rem", "marginRight": "0.5rem"}),
+                            html.Span("Swaccha Andhra", style={
+                                "fontSize": "1.1rem", 
+                                "fontWeight": "700",
+                                "color": theme["text_primary"]
+                            })
+                        ], style={"display": "flex", "alignItems": "center"})
+                    ]
                 ),
                 
                 # Center - Theme switcher
                 create_theme_switcher(current_theme),
                 
-                # Right - Admin login
+                # Right - Dynamic auth button
                 html.Div(
                     style={
                         "display": "flex",
@@ -119,7 +224,7 @@ def create_hover_overlay_banner(current_theme="dark"):
                     },
                     children=[
                         create_divider(theme),
-                        create_admin_login_button(theme)
+                        create_dynamic_auth_button(theme, is_authenticated, user_data)
                     ]
                 )
             ]

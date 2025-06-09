@@ -247,7 +247,7 @@ def create_status_section(theme):
         ]
     )
 
-def build_public_layout(theme_name="dark"):
+def build_public_layout(theme_name="dark", is_authenticated=False, user_data=None):
     """
     Build the complete public layout - NO HEADER
     
@@ -266,7 +266,7 @@ def build_public_layout(theme_name="dark"):
         style=theme_styles["container_style"],
         children=[
             # Hover overlay banner (admin access) - ONLY navigation
-            create_hover_overlay_banner(theme_name),
+            create_hover_overlay_banner(theme_name, is_authenticated, user_data),
             
             # REMOVED: render_header() - NO HEADER for public layout!
             

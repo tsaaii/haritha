@@ -83,7 +83,7 @@ def create_admin_hero_section(theme):
 
 
 def create_navigation_tabs(theme, user_data):
-    """Create navigation tabs with logout button and user info"""
+    """Create navigation tabs with user info (logout moved to overlay)"""
     tabs = [
         {"id": "tab-dashboard", "label": "📊 Dashboard", "icon": "📊"},
         {"id": "tab-analytics", "label": "📈 Analytics", "icon": "📈"},
@@ -118,7 +118,8 @@ def create_navigation_tabs(theme, user_data):
                             "display": "flex",
                             "gap": "0.5rem",
                             "flexWrap": "wrap",
-                            "alignItems": "center"
+                            "alignItems": "center",
+                            "flex": "1"
                         },
                         children=[
                             html.Button(
@@ -145,92 +146,11 @@ def create_navigation_tabs(theme, user_data):
                                 }
                             ) for tab in tabs
                         ]
-                    ),
-                    
-                    # Right side - User info and logout
-                    html.Div(
-                        style={
-                            "display": "flex",
-                            "alignItems": "center",
-                            "gap": "1rem"
-                        },
-                        children=[
-                            # User info
-                            html.Div(
-                                style={
-                                    "display": "flex",
-                                    "alignItems": "center",
-                                    "gap": "0.75rem",
-                                    "padding": "0.5rem 1rem",
-                                    "backgroundColor": theme["accent_bg"],
-                                    "borderRadius": "8px",
-                                    "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}"
-                                },
-                                children=[
-                                    # User avatar
-                                    html.Img(
-                                        src=user_data.get('picture', '/assets/img/default-avatar.png'),
-                                        alt=f"{user_data.get('name', 'User')} Avatar",
-                                        style={
-                                            "width": "32px",
-                                            "height": "32px",
-                                            "borderRadius": "50%",
-                                            "border": f"2px solid {theme['brand_primary']}",
-                                            "objectFit": "cover"
-                                        }
-                                    ),
-                                    # User name and role
-                                    html.Div([
-                                        html.Div(
-                                            user_data.get('name', 'Administrator'),
-                                            style={
-                                                "fontSize": "0.9rem",
-                                                "fontWeight": "600",
-                                                "color": theme["text_primary"],
-                                                "lineHeight": "1.2"
-                                            }
-                                        ),
-                                        html.Div(
-                                            user_data.get('role', 'admin').replace('_', ' ').title(),
-                                            style={
-                                                "fontSize": "0.75rem",
-                                                "color": theme["text_secondary"],
-                                                "lineHeight": "1.2"
-                                            }
-                                        )
-                                    ])
-                                ]
-                            ),
-                            
-                            # Logout button
-                            html.Button(
-                                [
-                                    html.Span("🚪", style={"marginRight": "0.5rem"}),
-                                    "Logout"
-                                ],
-                                id="logout-btn",
-                                style={
-                                    "background": f"linear-gradient(135deg, {theme['error']} 0%, #C53030 100%)",
-                                    "color": "white",
-                                    "border": "none",
-                                    "padding": "0.75rem 1.5rem",
-                                    "borderRadius": "8px",
-                                    "fontSize": "0.95rem",
-                                    "fontWeight": "600",
-                                    "cursor": "pointer",
-                                    "transition": "all 0.2s ease",
-                                    "boxShadow": f"0 4px 12px {theme['error']}44",
-                                    "textTransform": "uppercase",
-                                    "letterSpacing": "0.5px"
-                                }
-                            )
-                        ]
                     )
                 ]
             )
         ]
     )
-
 
 def create_tab_content(active_tab, theme_styles, user_data, data):
     """Create content based on active tab"""
@@ -1257,7 +1177,8 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-
         style=theme_styles["container_style"],
         children=[
             # Hover overlay banner for theme switching
-            create_hover_overlay_banner(theme_name),
+            create_hover_overlay_banner(theme_name, is_authenticated=True, user_data=user_data),
+
             
             # Main dashboard content
             html.Div(

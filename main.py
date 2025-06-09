@@ -663,9 +663,9 @@ html.Div(
         dcc.Input(id="manual-email", type="email"),
         
         # Admin dashboard buttons (only exist when authenticated)
-        html.Button("Logout", id="logout-btn"),
         html.Button("Quick Reports", id="quick-reports-btn"),
         html.Button("Quick Settings", id="quick-settings-btn"),
+        html.Button("Overlay Logout", id="overlay-logout-btn"),  # NEW: Overlay logout
         
         # ✅ NEW: Tab navigation buttons (exist in admin dashboard only)
         html.Button("Dashboard Tab", id="tab-dashboard"),
@@ -843,7 +843,7 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
             print(f"DEBUG: Enhanced dashboard layout rendered for {current_page}")
             return layout
         else:
-            layout = build_public_layout(theme_name)
+            layout = build_public_layout(theme_name, is_authenticated, user_data)
             print("DEBUG: Public layout rendered")
             return layout
     except Exception as e:
@@ -1016,27 +1016,29 @@ def handle_login_actions(demo_clicks, admin_clicks, dev_clicks,
 # 6. Admin dashboard actions - SAFE CALLBACK
 @callback(
     Output('url', 'pathname', allow_duplicate=True),
-    [Input('logout-btn', 'n_clicks'),
+    [Input('overlay-logout-btn', 'n_clicks'),  # Only the overlay logout button
      Input('quick-reports-btn', 'n_clicks'),
      Input('quick-settings-btn', 'n_clicks')],
     [State('current-page', 'data'),
      State('user-authenticated', 'data')],
     prevent_initial_call=True
 )
-def handle_admin_actions(logout_clicks, reports_clicks, settings_clicks, current_page, is_authenticated):
-    """Handle admin dashboard actions"""
-    if not is_authenticated or current_page != 'admin_dashboard' or not ctx.triggered:
+def handle_admin_actions(overlay_logout_clicks, reports_clicks, settings_clicks, current_page, is_authenticated):
+    """Handle admin dashboard actions including overlay logout"""
+    if not ctx.triggered:
         raise PreventUpdate
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if ctx.triggered[0]['value'] in [None, 0]:
         raise PreventUpdate
     
-    if button_id == 'logout-btn':
+    # Handle logout from overlay button
+    if button_id == 'overlay-logout-btn':
+        print(f"DEBUG: Logout triggered from {button_id}")
         return '/?logout=true'  # Triggers logout handling in route_and_authenticate
-    elif button_id == 'quick-reports-btn':
+    elif button_id == 'quick-reports-btn' and is_authenticated:
         return '/reports'
-    elif button_id == 'quick-settings-btn':
+    elif button_id == 'quick-settings-btn' and is_authenticated:
         return '/settings'
     
     raise PreventUpdate
