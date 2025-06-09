@@ -69,7 +69,9 @@ app = dash.Dash(
     suppress_callback_exceptions=True, 
     title="स्वच्छ आंध्र प्रदेश - Swaccha Andhra Dashboard",
     external_stylesheets=[
-        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
+        "/assets/style.css",      # ✅ Keep your main styles
+        "/assets/dashboard.css"   # ✅ ADD THIS LINE - New dashboard CSS
     ],
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
@@ -631,51 +633,62 @@ app.layout = html.Div([
     html.Div(id="main-layout"),
     
     # BULLETPROOF: All possible callback components in hidden container
-    html.Div(
-        style={"display": "none"},
-        children=[
-            # Navigation buttons (exist in hover overlay - all layouts)
-            html.Button("Admin Login", id="admin-login-btn"),
-            html.Button("Overview", id="overlay-nav-overview"),
-            html.Button("Analytics", id="overlay-nav-analytics"),
-            html.Button("Reports", id="overlay-nav-reports"),
-            
-            # Theme buttons (exist in hover overlay - all layouts)
-            html.Button("Dark", id="theme-dark"),
-            html.Button("Light", id="theme-light"),
-            html.Button("High Contrast", id="theme-high_contrast"),
-            html.Button("Swaccha Green", id="theme-swaccha_green"),
-            
-            # Login page buttons (only exist when on login page)
-            html.Button("Back to Public", id="back-to-public-btn"),
-            html.Button("Google Login", id="google-login-btn"),
-            html.Button("Demo Login", id="demo-login-btn"),
-            html.Button("Admin Account", id="admin-account-btn"),
-            html.Button("Dev Account", id="dev-account-btn"),
-            html.Button("Viewer Account", id="viewer-account-btn"),
-            html.Button("PIN Login", id="pin-login-btn"),
-            html.Button("Manual Login", id="manual-login-btn"),
-            html.Button("OAuth Debug", id="oauth-debug-btn"),
-            html.Button("OAuth Test", id="oauth-test-btn"),
-            dcc.Input(id="access-pin", type="password"),
-            dcc.Input(id="manual-email", type="email"),
-            
-            # Admin dashboard buttons (only exist when authenticated)
-            html.Button("Logout", id="logout-btn"),
-            html.Button("Quick Reports", id="quick-reports-btn"),
-            html.Button("Quick Settings", id="quick-settings-btn"),
-            
-            # Placeholder page buttons
-            html.Button("Back to Dashboard", id="back-to-dashboard-btn"),
-            
-            # Unauthorized page components
-            html.Button("Manual Redirect", id="manual-redirect-btn"),
-            html.Button("Login Redirect", id="login-redirect-btn"),
-            html.Div(id="countdown-display"),
-            dcc.Interval(id='unauthorized-redirect-timer', interval=5000, n_intervals=0, max_intervals=1),
-            dcc.Interval(id='unauthorized-countdown-timer', interval=1000, n_intervals=0, max_intervals=5)
-        ]
-    )
+html.Div(
+    style={"display": "none"},
+    children=[
+        # Navigation buttons (exist in hover overlay - all layouts)
+        html.Button("Admin Login", id="admin-login-btn"),
+        html.Button("Overview", id="overlay-nav-overview"),
+        html.Button("Analytics", id="overlay-nav-analytics"),
+        html.Button("Reports", id="overlay-nav-reports"),
+        
+        # Theme buttons (exist in hover overlay - all layouts)
+        html.Button("Dark", id="theme-dark"),
+        html.Button("Light", id="theme-light"),
+        html.Button("High Contrast", id="theme-high_contrast"),
+        html.Button("Swaccha Green", id="theme-swaccha_green"),
+        
+        # Login page buttons (only exist when on login page)
+        html.Button("Back to Public", id="back-to-public-btn"),
+        html.Button("Google Login", id="google-login-btn"),
+        html.Button("Demo Login", id="demo-login-btn"),
+        html.Button("Admin Account", id="admin-account-btn"),
+        html.Button("Dev Account", id="dev-account-btn"),
+        html.Button("Viewer Account", id="viewer-account-btn"),
+        html.Button("PIN Login", id="pin-login-btn"),
+        html.Button("Manual Login", id="manual-login-btn"),
+        html.Button("OAuth Debug", id="oauth-debug-btn"),
+        html.Button("OAuth Test", id="oauth-test-btn"),
+        dcc.Input(id="access-pin", type="password"),
+        dcc.Input(id="manual-email", type="email"),
+        
+        # Admin dashboard buttons (only exist when authenticated)
+        html.Button("Logout", id="logout-btn"),
+        html.Button("Quick Reports", id="quick-reports-btn"),
+        html.Button("Quick Settings", id="quick-settings-btn"),
+        
+        # ✅ NEW: Tab navigation buttons (exist in admin dashboard only)
+        html.Button("Dashboard Tab", id="tab-dashboard"),
+        html.Button("Analytics Tab", id="tab-analytics"), 
+        html.Button("Reports Tab", id="tab-reports"),
+        html.Button("Reviews Tab", id="tab-reviews"),
+        html.Button("Upload Tab", id="tab-upload"),
+        
+        # ✅ NEW: Tab content container
+        html.Div(id="tab-content"),
+        
+        # Placeholder page buttons
+        html.Button("Back to Dashboard", id="back-to-dashboard-btn"),
+        
+        # Unauthorized page components
+        html.Button("Manual Redirect", id="manual-redirect-btn"),
+        html.Button("Login Redirect", id="login-redirect-btn"),
+        html.Div(id="countdown-display"),
+        dcc.Interval(id='unauthorized-redirect-timer', interval=5000, n_intervals=0, max_intervals=1),
+        dcc.Interval(id='unauthorized-countdown-timer', interval=1000, n_intervals=0, max_intervals=5)
+    ]
+)
+
 ])
 
 # 1. Page routing and authentication - ENHANCED WITH UNAUTHORIZED ACCESS
@@ -795,6 +808,7 @@ def update_theme(dark, light, contrast, green):
      Input('user-session-data', 'data'),
      Input('auth-error-message', 'data')]
 )
+
 def render_layout(theme_name, is_authenticated, current_page, user_data, error_message):
     """Render appropriate layout with unauthorized access handling"""
     # Handle None values
@@ -812,17 +826,21 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
             print("DEBUG: Login layout rendered")
             return layout
         elif current_page == 'unauthorized_access':
-            # NEW: Unauthorized access layout
             layout = create_unauthorized_layout(theme_name)
             print("DEBUG: Unauthorized access layout rendered")
             return layout
         elif current_page == 'admin_dashboard' and is_authenticated:
-            layout = build_enhanced_dashboard(theme_name, user_data)
+            # ✅ UPDATED: Import and use the enhanced dashboard
+            from layouts.admin_dashboard import build_enhanced_dashboard
+            layout = build_enhanced_dashboard(theme_name, user_data)  # ✅ Updated call
             print("DEBUG: Enhanced dashboard layout rendered")
             return layout
         elif current_page in ['analytics_page', 'reports_page'] and is_authenticated:
-            layout = build_placeholder_layout(current_page, theme_name, user_data)
-            print(f"DEBUG: Placeholder layout rendered for {current_page}")
+            # ✅ UPDATED: Redirect to admin dashboard with appropriate tab
+            from layouts.admin_dashboard import build_enhanced_dashboard
+            active_tab = 'tab-analytics' if current_page == 'analytics_page' else 'tab-reports'
+            layout = build_enhanced_dashboard(theme_name, user_data, active_tab)  # ✅ Updated call
+            print(f"DEBUG: Enhanced dashboard layout rendered for {current_page}")
             return layout
         else:
             layout = build_public_layout(theme_name)
@@ -833,6 +851,49 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
         import traceback
         print(f"ERROR: Full traceback: {traceback.format_exc()}")
         return build_public_layout(DEFAULT_THEME)
+def render_layout(theme_name, is_authenticated, current_page, user_data, error_message):
+    """Render appropriate layout with unauthorized access handling"""
+    # Handle None values
+    theme_name = theme_name or DEFAULT_THEME
+    is_authenticated = bool(is_authenticated)
+    current_page = current_page or 'public_landing'
+    user_data = user_data or {}
+    error_message = error_message or ''
+    
+    print(f"DEBUG: Rendering layout - page: {current_page}, theme: {theme_name}")
+    
+    try:
+        if current_page == 'login':
+            layout = build_login_layout(theme_name, error_message)
+            print("DEBUG: Login layout rendered")
+            return layout
+        elif current_page == 'unauthorized_access':
+            layout = create_unauthorized_layout(theme_name)
+            print("DEBUG: Unauthorized access layout rendered")
+            return layout
+        elif current_page == 'admin_dashboard' and is_authenticated:
+            # ✅ UPDATED: Import and use the enhanced dashboard
+            from layouts.admin_dashboard import build_enhanced_dashboard
+            layout = build_enhanced_dashboard(theme_name, user_data)  # ✅ Updated call
+            print("DEBUG: Enhanced dashboard layout rendered")
+            return layout
+        elif current_page in ['analytics_page', 'reports_page'] and is_authenticated:
+            # ✅ UPDATED: Redirect to admin dashboard with appropriate tab
+            from layouts.admin_dashboard import build_enhanced_dashboard
+            active_tab = 'tab-analytics' if current_page == 'analytics_page' else 'tab-reports'
+            layout = build_enhanced_dashboard(theme_name, user_data, active_tab)  # ✅ Updated call
+            print(f"DEBUG: Enhanced dashboard layout rendered for {current_page}")
+            return layout
+        else:
+            layout = build_public_layout(theme_name)
+            print("DEBUG: Public layout rendered")
+            return layout
+    except Exception as e:
+        print(f"ERROR: Layout build failed: {e}")
+        import traceback
+        print(f"ERROR: Full traceback: {traceback.format_exc()}")
+        return build_public_layout(DEFAULT_THEME)
+
 
 # 4. Basic navigation - SAFE CALLBACK
 @callback(
@@ -1076,17 +1137,24 @@ def create_demo_session(user_id, name, role):
     flask.session['user_data'] = session_data
     print(f"DEBUG: Demo session created for {name}")
 
+
 def build_placeholder_layout(page_type, theme_name, user_data):
-    """Build placeholder layouts"""
+    """Build placeholder layouts - UPDATED VERSION"""
     from utils.theme_utils import get_theme_styles
     from components.navigation.hover_overlay import create_hover_overlay_banner
     
+    # ✅ For analytics and reports pages, redirect to admin dashboard with appropriate tab
+    if page_type in ['analytics_page', 'reports_page']:
+        from layouts.admin_dashboard import build_enhanced_dashboard
+        active_tab = 'tab-analytics' if page_type == 'analytics_page' else 'tab-reports'
+        return build_enhanced_dashboard(theme_name, user_data, active_tab)
+    
+    # For other placeholder pages, show simple placeholder
     theme_styles = get_theme_styles(theme_name)
     theme = theme_styles["theme"]
     
     titles = {
-        'analytics_page': '📈 Advanced Analytics',
-        'reports_page': '📋 Reports & Documentation'
+        'settings_page': '⚙️ Settings & Configuration'
     }
     
     auth_method = user_data.get('auth_method', 'unknown')
@@ -1098,7 +1166,6 @@ def build_placeholder_layout(page_type, theme_name, user_data):
     return html.Div(
         style=theme_styles["container_style"],
         children=[
-            # ENSURE HOVER OVERLAY IS INCLUDED
             create_hover_overlay_banner(theme_name),
             html.Div(
                 style=theme_styles["main_content_style"],
@@ -1122,6 +1189,90 @@ def build_placeholder_layout(page_type, theme_name, user_data):
             )
         ]
     )
+
+    
+@callback(
+    [Output('tab-content', 'children'),
+     Output('tab-dashboard', 'style'),
+     Output('tab-analytics', 'style'),
+     Output('tab-reports', 'style'),
+     Output('tab-reviews', 'style'),
+     Output('tab-upload', 'style')],
+    [Input('tab-dashboard', 'n_clicks'),
+     Input('tab-analytics', 'n_clicks'),
+     Input('tab-reports', 'n_clicks'),
+     Input('tab-reviews', 'n_clicks'),
+     Input('tab-upload', 'n_clicks')],
+    [State('current-theme', 'data'),
+     State('user-session-data', 'data'),
+     State('current-page', 'data'),
+     State('user-authenticated', 'data')],
+    prevent_initial_call=True
+)
+def handle_tab_navigation(dashboard_clicks, analytics_clicks, reports_clicks, 
+                         reviews_clicks, upload_clicks, theme_name, user_data, 
+                         current_page, is_authenticated):
+    """Handle tab navigation in admin dashboard"""
+    # Only handle tabs if user is on admin dashboard and authenticated
+    if not is_authenticated or current_page != 'admin_dashboard':
+        raise PreventUpdate
+    
+    if not ctx.triggered:
+        raise PreventUpdate
+    
+    # Get the clicked tab
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    if ctx.triggered[0]['value'] in [None, 0]:
+        raise PreventUpdate
+    
+    # Import necessary functions
+    from utils.theme_utils import get_theme_styles
+    from layouts.admin_dashboard import (
+        create_tab_content, 
+        generate_sample_data
+    )
+    
+    theme_styles = get_theme_styles(theme_name or "dark")
+    theme = theme_styles["theme"]
+    data = generate_sample_data()
+    
+    # Determine active tab
+    active_tab = button_id
+    
+    # Create tab content
+    tab_content = create_tab_content(active_tab, theme_styles, user_data or {}, data)
+    
+    # Create button styles
+    def get_tab_style(tab_id, is_active=False):
+        return {
+            "backgroundColor": theme["brand_primary"] if is_active else theme["accent_bg"],
+            "color": "white" if is_active else theme["text_primary"],
+            "border": f"2px solid {theme['brand_primary']}" if is_active else f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+            "padding": "0.75rem 1.5rem",
+            "borderRadius": "8px",
+            "fontSize": "0.95rem",
+            "fontWeight": "600",
+            "cursor": "pointer",
+            "transition": "all 0.2s ease",
+            "display": "flex",
+            "alignItems": "center",
+            "gap": "0.5rem",
+            "minWidth": "120px",
+            "justifyContent": "center"
+        }
+    
+    # Get styles for all tabs
+    dashboard_style = get_tab_style('tab-dashboard', active_tab == 'tab-dashboard')
+    analytics_style = get_tab_style('tab-analytics', active_tab == 'tab-analytics')
+    reports_style = get_tab_style('tab-reports', active_tab == 'tab-reports')
+    reviews_style = get_tab_style('tab-reviews', active_tab == 'tab-reviews')
+    upload_style = get_tab_style('tab-upload', active_tab == 'tab-upload')
+    
+    return (tab_content, dashboard_style, analytics_style, reports_style, 
+            reviews_style, upload_style)
+
+
+
 
 if __name__ == "__main__":
     print("🚀 Starting Swaccha Andhra Dashboard...")

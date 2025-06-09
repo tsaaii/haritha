@@ -1,7 +1,7 @@
-# layouts/dashboard_layout.py
+# layouts/admin_dashboard.py - COMPLETE ENHANCED VERSION
 """
-Enhanced Dashboard Layout for Swaccha Andhra
-Comprehensive dashboard with real-time data, charts, and interactive components
+Enhanced Admin Dashboard Layout for Swaccha Andhra
+Same header as public landing + navigation tabs with logout + comprehensive dashboard content
 """
 
 from dash import html, dcc, dash_table
@@ -15,6 +15,528 @@ from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
 from components.cards.stat_card import create_stat_card, create_trend_stat_card, create_compact_stat_card
 from components.cards.status_indicators import create_status_indicator, create_detailed_status_indicator
+
+
+def create_admin_hero_section(theme):
+    """Create hero section identical to public landing"""
+    return html.Div(
+        className="hero-section",
+        style={
+            "background": f"linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%)",
+            "borderRadius": "8px",
+            "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.3)",
+            "textAlign": "center",
+            "position": "relative",
+            "overflow": "hidden"
+        },
+        children=[
+            # Main content - logos and title only (same as public landing)
+            html.Div(
+                children=[
+                    # Left Logo
+                    html.Img(
+                        src="/assets/img/left.png",
+                        alt="Left Organization Logo",
+                        className="logo-left responsive-logo"
+                    ),
+                    
+                    # Title Section
+                    html.Div(
+                        className="hero-title-section",
+                        children=[
+                            # Main Title
+                            html.H1(
+                                "Swaccha Andhra Corporation",
+                                style={
+                                    "color": theme["text_primary"],
+                                    "margin": "0 0 0.25rem 0",
+                                    "lineHeight": "1.1"
+                                }
+                            ),
+                            
+                            # Subtitle
+                            html.P(
+                                "Admin Portal - Real Time Dashboard",
+                                className="hero-subtitle",
+                                style={
+                                    "color": theme["text_secondary"],
+                                    "fontSize": "clamp(0.8rem, 2vw, 1rem)",
+                                    "fontWeight": "500",
+                                    "margin": "0",
+                                    "lineHeight": "1.2",
+                                    "fontStyle": "Bold"
+                                }
+                            )
+                        ]
+                    ),
+                    
+                    # Right Logo
+                    html.Img(
+                        src="/assets/img/right.png",
+                        alt="Right Organization Logo",
+                        className="logo-right responsive-logo"
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def create_navigation_tabs(theme, user_data):
+    """Create navigation tabs with logout button and user info"""
+    tabs = [
+        {"id": "tab-dashboard", "label": "📊 Dashboard", "icon": "📊"},
+        {"id": "tab-analytics", "label": "📈 Analytics", "icon": "📈"},
+        {"id": "tab-reports", "label": "📋 Reports", "icon": "📋"},
+        {"id": "tab-reviews", "label": "⭐ Reviews", "icon": "⭐"},
+        {"id": "tab-upload", "label": "📤 Upload", "icon": "📤"}
+    ]
+    
+    return html.Div(
+        className="navigation-tabs",
+        style={
+            "backgroundColor": theme["card_bg"],
+            "borderRadius": "12px",
+            "border": f"2px solid {theme['accent_bg']}",
+            "padding": "1rem",
+            "margin": "1rem 0",
+            "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.2)"
+        },
+        children=[
+            html.Div(
+                style={
+                    "display": "flex",
+                    "justifyContent": "space-between",
+                    "alignItems": "center",
+                    "flexWrap": "wrap",
+                    "gap": "1rem"
+                },
+                children=[
+                    # Left side - Navigation tabs
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "gap": "0.5rem",
+                            "flexWrap": "wrap",
+                            "alignItems": "center"
+                        },
+                        children=[
+                            html.Button(
+                                [
+                                    html.Span(tab["icon"], style={"marginRight": "0.5rem", "fontSize": "1.1rem"}),
+                                    tab["label"].split(" ", 1)[1]  # Remove emoji from label text
+                                ],
+                                id=tab["id"],
+                                style={
+                                    "backgroundColor": theme["brand_primary"] if tab["id"] == "tab-dashboard" else theme["accent_bg"],
+                                    "color": "white" if tab["id"] == "tab-dashboard" else theme["text_primary"],
+                                    "border": f"2px solid {theme['brand_primary']}" if tab["id"] == "tab-dashboard" else f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+                                    "padding": "0.75rem 1.5rem",
+                                    "borderRadius": "8px",
+                                    "fontSize": "0.95rem",
+                                    "fontWeight": "600",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "gap": "0.5rem",
+                                    "minWidth": "120px",
+                                    "justifyContent": "center"
+                                }
+                            ) for tab in tabs
+                        ]
+                    ),
+                    
+                    # Right side - User info and logout
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "gap": "1rem"
+                        },
+                        children=[
+                            # User info
+                            html.Div(
+                                style={
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "gap": "0.75rem",
+                                    "padding": "0.5rem 1rem",
+                                    "backgroundColor": theme["accent_bg"],
+                                    "borderRadius": "8px",
+                                    "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}"
+                                },
+                                children=[
+                                    # User avatar
+                                    html.Img(
+                                        src=user_data.get('picture', '/assets/img/default-avatar.png'),
+                                        alt=f"{user_data.get('name', 'User')} Avatar",
+                                        style={
+                                            "width": "32px",
+                                            "height": "32px",
+                                            "borderRadius": "50%",
+                                            "border": f"2px solid {theme['brand_primary']}",
+                                            "objectFit": "cover"
+                                        }
+                                    ),
+                                    # User name and role
+                                    html.Div([
+                                        html.Div(
+                                            user_data.get('name', 'Administrator'),
+                                            style={
+                                                "fontSize": "0.9rem",
+                                                "fontWeight": "600",
+                                                "color": theme["text_primary"],
+                                                "lineHeight": "1.2"
+                                            }
+                                        ),
+                                        html.Div(
+                                            user_data.get('role', 'admin').replace('_', ' ').title(),
+                                            style={
+                                                "fontSize": "0.75rem",
+                                                "color": theme["text_secondary"],
+                                                "lineHeight": "1.2"
+                                            }
+                                        )
+                                    ])
+                                ]
+                            ),
+                            
+                            # Logout button
+                            html.Button(
+                                [
+                                    html.Span("🚪", style={"marginRight": "0.5rem"}),
+                                    "Logout"
+                                ],
+                                id="logout-btn",
+                                style={
+                                    "background": f"linear-gradient(135deg, {theme['error']} 0%, #C53030 100%)",
+                                    "color": "white",
+                                    "border": "none",
+                                    "padding": "0.75rem 1.5rem",
+                                    "borderRadius": "8px",
+                                    "fontSize": "0.95rem",
+                                    "fontWeight": "600",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "boxShadow": f"0 4px 12px {theme['error']}44",
+                                    "textTransform": "uppercase",
+                                    "letterSpacing": "0.5px"
+                                }
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def create_tab_content(active_tab, theme_styles, user_data, data):
+    """Create content based on active tab"""
+    theme = theme_styles["theme"]
+    
+    if active_tab == "tab-dashboard":
+        return create_dashboard_content(theme_styles, user_data, data)
+    elif active_tab == "tab-analytics":
+        return create_analytics_content(theme_styles, data)
+    elif active_tab == "tab-reports":
+        return create_reports_content(theme_styles, data)
+    elif active_tab == "tab-reviews":
+        return create_reviews_content(theme_styles)
+    elif active_tab == "tab-upload":
+        return create_upload_content(theme_styles)
+    else:
+        return create_dashboard_content(theme_styles, user_data, data)
+
+
+def create_dashboard_content(theme_styles, user_data, data):
+    """Create main dashboard content"""
+    theme = theme_styles["theme"]
+    
+    return html.Div([
+        # Quick stats
+        create_kpi_section(theme_styles, user_data),
+        
+        # Charts section
+        create_charts_section(theme_styles, data),
+        
+        # Status and alerts
+        html.Div(
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "1fr 1fr",
+                "gap": "2rem",
+                "margin": "2rem 0"
+            },
+            children=[
+                create_alerts_section(theme_styles),
+                create_quick_actions_section(theme_styles)
+            ]
+        )
+    ])
+
+
+def create_analytics_content(theme_styles, data):
+    """Create analytics tab content"""
+    theme = theme_styles["theme"]
+    
+    return html.Div([
+        html.H2("📈 Advanced Analytics", 
+               style={"color": theme["text_primary"], "textAlign": "center", "marginBottom": "2rem"}),
+        
+        # Analytics charts
+        create_charts_section(theme_styles, data),
+        
+        # Data table
+        create_data_table_section(theme_styles, data)
+    ])
+
+
+def create_reports_content(theme_styles, data):
+    """Create reports tab content"""
+    theme = theme_styles["theme"]
+    
+    return html.Div([
+        html.H2("📋 Reports & Documentation", 
+               style={"color": theme["text_primary"], "textAlign": "center", "marginBottom": "2rem"}),
+        
+        # Report generation section
+        html.Div(
+            style={
+                "backgroundColor": theme["card_bg"],
+                "borderRadius": "12px",
+                "border": f"2px solid {theme['accent_bg']}",
+                "padding": "2rem",
+                "margin": "1rem 0"
+            },
+            children=[
+                html.H3("Generate Reports", style={"color": theme["text_primary"], "marginBottom": "1rem"}),
+                
+                html.Div(
+                    style={
+                        "display": "grid",
+                        "gridTemplateColumns": "repeat(auto-fit, minmax(250px, 1fr))",
+                        "gap": "1rem"
+                    },
+                    children=[
+                        create_report_card("📊 Daily Summary", "Generate daily performance report", theme),
+                        create_report_card("📈 Weekly Analytics", "Comprehensive weekly analysis", theme),
+                        create_report_card("📋 Monthly Report", "Detailed monthly overview", theme),
+                        create_report_card("🔍 Custom Report", "Create custom date range report", theme)
+                    ]
+                )
+            ]
+        ),
+        
+        # Recent reports
+        html.Div(
+            style={
+                "backgroundColor": theme["card_bg"],
+                "borderRadius": "12px",
+                "border": f"2px solid {theme['accent_bg']}",
+                "padding": "2rem",
+                "margin": "1rem 0"
+            },
+            children=[
+                html.H3("Recent Reports", style={"color": theme["text_primary"], "marginBottom": "1rem"}),
+                html.P("Recent reports will be displayed here.", 
+                      style={"color": theme["text_secondary"], "textAlign": "center"})
+            ]
+        )
+    ])
+
+
+def create_reviews_content(theme_styles):
+    """Create reviews tab content"""
+    theme = theme_styles["theme"]
+    
+    # Sample review data
+    reviews = [
+        {"name": "Ramesh Kumar", "location": "Visakhapatnam", "rating": 5, "comment": "Excellent waste management system! Very satisfied.", "date": "2025-06-07"},
+        {"name": "Priya Sharma", "location": "Vijayawada", "rating": 4, "comment": "Good service, could improve pickup timing.", "date": "2025-06-06"},
+        {"name": "Suresh Reddy", "location": "Guntur", "rating": 5, "comment": "Amazing cleanliness improvements in our area.", "date": "2025-06-05"},
+        {"name": "Lakshmi Devi", "location": "Tirupati", "rating": 4, "comment": "Happy with the recycling program.", "date": "2025-06-04"}
+    ]
+    
+    return html.Div([
+        html.H2("⭐ Customer Reviews & Feedback", 
+               style={"color": theme["text_primary"], "textAlign": "center", "marginBottom": "2rem"}),
+        
+        # Review stats
+        html.Div(
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(200px, 1fr))",
+                "gap": "1rem",
+                "margin": "2rem 0"
+            },
+            children=[
+                create_compact_stat_card("⭐", "Average Rating", "4.7", theme_styles),
+                create_compact_stat_card("📝", "Total Reviews", "1,247", theme_styles),
+                create_compact_stat_card("👍", "Positive Reviews", "92%", theme_styles),
+                create_compact_stat_card("📈", "This Month", "+15%", theme_styles)
+            ]
+        ),
+        
+        # Reviews list
+        html.Div(
+            style={
+                "backgroundColor": theme["card_bg"],
+                "borderRadius": "12px",
+                "border": f"2px solid {theme['accent_bg']}",
+                "padding": "2rem",
+                "margin": "1rem 0"
+            },
+            children=[
+                html.H3("Recent Reviews", style={"color": theme["text_primary"], "marginBottom": "1.5rem"}),
+                
+                html.Div([
+                    create_review_card(review, theme) for review in reviews
+                ])
+            ]
+        )
+    ])
+
+
+def create_upload_content(theme_styles):
+    """Create upload tab content"""
+    theme = theme_styles["theme"]
+    
+    return html.Div([
+        html.H2("📤 Data Upload & Management", 
+               style={"color": theme["text_primary"], "textAlign": "center", "marginBottom": "2rem"}),
+        
+        # Upload section
+        html.Div(
+            style={
+                "backgroundColor": theme["card_bg"],
+                "borderRadius": "12px",
+                "border": f"2px solid {theme['accent_bg']}",
+                "padding": "2rem",
+                "margin": "1rem 0"
+            },
+            children=[
+                html.H3("Upload Data Files", style={"color": theme["text_primary"], "marginBottom": "1.5rem"}),
+                
+                # Upload area
+                html.Div(
+                    className="upload-area",
+                    style={
+                        "border": f"2px dashed {theme['brand_primary']}",
+                        "borderRadius": "12px",
+                        "padding": "3rem",
+                        "textAlign": "center",
+                        "backgroundColor": theme["accent_bg"],
+                        "cursor": "pointer",
+                        "transition": "all 0.2s ease"
+                    },
+                    children=[
+                        html.Div("📁", style={"fontSize": "3rem", "marginBottom": "1rem"}),
+                        html.H4("Drag & Drop Files Here", 
+                               style={"color": theme["text_primary"], "marginBottom": "0.5rem"}),
+                        html.P("Or click to browse files", 
+                              style={"color": theme["text_secondary"], "marginBottom": "1rem"}),
+                        html.P("Supported formats: CSV, Excel, JSON", 
+                              style={"color": theme.get("text_muted", theme["text_secondary"]), "fontSize": "0.9rem"})
+                    ]
+                ),
+                
+                # Upload actions
+                html.Div(
+                    style={
+                        "display": "flex",
+                        "gap": "1rem",
+                        "justifyContent": "center",
+                        "marginTop": "2rem"
+                    },
+                    children=[
+                        html.Button("Choose Files", 
+                                   style={"backgroundColor": theme["brand_primary"], "color": "white", 
+                                         "border": "none", "padding": "0.75rem 1.5rem", 
+                                         "borderRadius": "8px", "cursor": "pointer"}),
+                        html.Button("Upload", 
+                                   style={"backgroundColor": theme["success"], "color": "white", 
+                                         "border": "none", "padding": "0.75rem 1.5rem", 
+                                         "borderRadius": "8px", "cursor": "pointer"})
+                    ]
+                )
+            ]
+        ),
+        
+        # Recent uploads
+        html.Div(
+            style={
+                "backgroundColor": theme["card_bg"],
+                "borderRadius": "12px",
+                "border": f"2px solid {theme['accent_bg']}",
+                "padding": "2rem",
+                "margin": "1rem 0"
+            },
+            children=[
+                html.H3("Recent Uploads", style={"color": theme["text_primary"], "marginBottom": "1rem"}),
+                html.P("Upload history will be displayed here.", 
+                      style={"color": theme["text_secondary"], "textAlign": "center"})
+            ]
+        )
+    ])
+
+
+def create_report_card(title, description, theme):
+    """Create report generation card"""
+    return html.Div(
+        className="report-card",
+        style={
+            "backgroundColor": theme["accent_bg"],
+            "borderRadius": "8px",
+            "padding": "1.5rem",
+            "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+            "cursor": "pointer",
+            "transition": "all 0.2s ease",
+            "textAlign": "center"
+        },
+        children=[
+            html.H4(title, style={"color": theme["text_primary"], "marginBottom": "0.5rem"}),
+            html.P(description, style={"color": theme["text_secondary"], "marginBottom": "1rem", "fontSize": "0.9rem"}),
+            html.Button("Generate", 
+                       style={"backgroundColor": theme["brand_primary"], "color": "white", 
+                             "border": "none", "padding": "0.5rem 1rem", 
+                             "borderRadius": "6px", "cursor": "pointer"})
+        ]
+    )
+
+
+def create_review_card(review, theme):
+    """Create individual review card"""
+    stars = "⭐" * review["rating"] + "☆" * (5 - review["rating"])
+    
+    return html.Div(
+        className="review-card",
+        style={
+            "backgroundColor": theme["accent_bg"],
+            "borderRadius": "8px",
+            "padding": "1.5rem",
+            "margin": "1rem 0",
+            "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}"
+        },
+        children=[
+            html.Div(
+                style={"display": "flex", "justifyContent": "space-between", "alignItems": "flex-start", "marginBottom": "1rem"},
+                children=[
+                    html.Div([
+                        html.H4(review["name"], style={"color": theme["text_primary"], "margin": "0", "fontSize": "1.1rem"}),
+                        html.P(f"📍 {review['location']}", style={"color": theme["text_secondary"], "margin": "0.25rem 0", "fontSize": "0.9rem"})
+                    ]),
+                    html.Div([
+                        html.P(stars, style={"fontSize": "1.2rem", "margin": "0"}),
+                        html.P(review["date"], style={"color": theme.get("text_muted", theme["text_secondary"]), "fontSize": "0.8rem", "margin": "0"})
+                    ], style={"textAlign": "right"})
+                ]
+            ),
+            html.P(review["comment"], 
+                  style={"color": theme["text_secondary"], "lineHeight": "1.5", "margin": "0", "fontStyle": "italic"})
+        ]
+    )
 
 
 def generate_sample_data():
@@ -295,11 +817,11 @@ def create_waste_trends_chart(waste_data, theme):
         ),
         margin=dict(l=0, r=0, t=40, b=0),
         xaxis=dict(
-            gridcolor=theme["border_light"],
+            gridcolor=theme.get("border_light", theme["accent_bg"]),
             showgrid=True
         ),
         yaxis=dict(
-            gridcolor=theme["border_light"],
+            gridcolor=theme.get("border_light", theme["accent_bg"]),
             showgrid=True,
             title="Tons"
         )
@@ -556,7 +1078,6 @@ def create_alerts_section(theme_styles):
     return html.Div(
         className="alerts-section",
         style={
-            "margin": "2rem 0",
             "backgroundColor": theme["card_bg"],
             "borderRadius": "12px",
             "border": f"2px solid {theme['accent_bg']}",
@@ -610,7 +1131,7 @@ def create_alerts_section(theme_styles):
                             html.P(
                                 alert["time"],
                                 style={
-                                    "color": theme["text_muted"] if "text_muted" in theme else theme["text_secondary"],
+                                    "color": theme.get("text_muted", theme["text_secondary"]),
                                     "margin": "0",
                                     "fontSize": "0.8rem",
                                     "fontStyle": "italic"
@@ -632,15 +1153,12 @@ def create_quick_actions_section(theme_styles):
         {"icon": "📊", "title": "Generate Report", "description": "Create detailed analytics report"},
         {"icon": "📤", "title": "Export Data", "description": "Download system data as CSV/Excel"},
         {"icon": "👥", "title": "Manage Users", "description": "Add or modify user permissions"},
-        {"icon": "⚙️", "title": "System Settings", "description": "Configure dashboard parameters"},
-        {"icon": "🔄", "title": "Sync Data", "description": "Force data synchronization"},
-        {"icon": "📱", "title": "Mobile App", "description": "Download mobile companion app"}
+        {"icon": "⚙️", "title": "System Settings", "description": "Configure dashboard parameters"}
     ]
     
     return html.Div(
         className="quick-actions-section",
         style={
-            "margin": "2rem 0",
             "backgroundColor": theme["card_bg"],
             "borderRadius": "12px",
             "border": f"2px solid {theme['accent_bg']}",
@@ -657,11 +1175,12 @@ def create_quick_actions_section(theme_styles):
             html.Div(
                 style={
                     "display": "grid",
-                    "gridTemplateColumns": "repeat(auto-fit, minmax(200px, 1fr))",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))",
                     "gap": "1rem"
                 },
                 children=[
                     html.Div(
+                        className="action-card",
                         style={
                             "backgroundColor": theme["accent_bg"],
                             "borderRadius": "8px",
@@ -669,21 +1188,21 @@ def create_quick_actions_section(theme_styles):
                             "textAlign": "center",
                             "cursor": "pointer",
                             "transition": "all 0.2s ease",
-                            "border": f"1px solid {theme['border_light']}"
+                            "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}"
                         },
                         children=[
                             html.Div(
                                 action["icon"],
                                 style={
-                                    "fontSize": "2.5rem",
-                                    "marginBottom": "1rem"
+                                    "fontSize": "2rem",
+                                    "marginBottom": "0.5rem"
                                 }
                             ),
                             html.H4(
                                 action["title"],
                                 style={
                                     "color": theme["text_primary"],
-                                    "fontSize": "1.1rem",
+                                    "fontSize": "1rem",
                                     "fontWeight": "600",
                                     "marginBottom": "0.5rem"
                                 }
@@ -692,7 +1211,7 @@ def create_quick_actions_section(theme_styles):
                                 action["description"],
                                 style={
                                     "color": theme["text_secondary"],
-                                    "fontSize": "0.9rem",
+                                    "fontSize": "0.8rem",
                                     "margin": "0",
                                     "lineHeight": "1.4"
                                 }
@@ -705,13 +1224,14 @@ def create_quick_actions_section(theme_styles):
     )
 
 
-def build_enhanced_dashboard(theme_name="dark", user_data=None):
+def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-dashboard"):
     """
-    Build the complete enhanced dashboard layout
+    Build the complete enhanced dashboard layout with tabs
     
     Args:
         theme_name (str): Current theme name
         user_data (dict): Authenticated user data
+        active_tab (str): Currently active tab
         
     Returns:
         html.Div: Complete enhanced dashboard layout
@@ -736,7 +1256,7 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None):
         className="enhanced-dashboard-layout",
         style=theme_styles["container_style"],
         children=[
-            # Hover overlay banner for navigation
+            # Hover overlay banner for theme switching
             create_hover_overlay_banner(theme_name),
             
             # Main dashboard content
@@ -747,244 +1267,36 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None):
                     "paddingTop": "1rem"
                 },
                 children=[
-                    # Welcome header with user info and logout
+                    # Hero header (same as public landing)
+                    create_admin_hero_section(theme),
+                    
+                    # Navigation tabs with user info and logout
+                    create_navigation_tabs(theme, user_data),
+                    
+                    # Tab content container
                     html.Div(
-                        style={
-                            "position": "relative",
-                            "marginBottom": "2rem",
-                            "padding": "2rem",
-                            "background": f"linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['brand_primary']}22 100%)",
-                            "borderRadius": "12px",
-                            "border": f"2px solid {theme['brand_primary']}",
-                            "overflow": "hidden"
-                        },
+                        id="tab-content",
                         children=[
-                            # Background decoration
-                            html.Div(
-                                style={
-                                    "position": "absolute",
-                                    "top": "-30px",
-                                    "right": "-30px",
-                                    "width": "120px",
-                                    "height": "120px",
-                                    "background": f"radial-gradient(circle, {theme['brand_primary']}22 0%, transparent 70%)",
-                                    "borderRadius": "50%",
-                                    "pointerEvents": "none"
-                                }
-                            ),
-                            
-                            # Header content layout
-                            html.Div(
-                                style={
-                                    "display": "flex",
-                                    "justifyContent": "space-between",
-                                    "alignItems": "center",
-                                    "flexWrap": "wrap",
-                                    "gap": "1rem"
-                                },
-                                children=[
-                                    # Left side - Main title and welcome
-                                    html.Div([
-                                        html.H1(
-                                            "🌱 Swaccha Andhra Dashboard",
-                                            style={
-                                                "color": theme["text_primary"],
-                                                "fontSize": "2.5rem",
-                                                "fontWeight": "900",
-                                                "marginBottom": "0.5rem",
-                                                "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.3)"
-                                            }
-                                        ),
-                                        html.P(
-                                            f"Welcome back, {user_data.get('name', 'User')}! Real-time insights into Andhra Pradesh's cleanliness initiatives.",
-                                            style={
-                                                "color": theme["text_secondary"],
-                                                "fontSize": "1.2rem",
-                                                "marginBottom": "1rem",
-                                                "lineHeight": "1.5"
-                                            }
-                                        )
-                                    ], style={"flex": "1", "textAlign": "left"}),
-                                    
-                                    # Right side - User info and logout
-                                    html.Div([
-                                        # User avatar and info card
-                                        html.Div(
-                                            style={
-                                                "backgroundColor": theme["card_bg"],
-                                                "borderRadius": "12px",
-                                                "border": f"2px solid {theme['accent_bg']}",
-                                                "padding": "1.5rem",
-                                                "textAlign": "center",
-                                                "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.2)",
-                                                "minWidth": "200px"
-                                            },
-                                            children=[
-                                                # User avatar
-                                                html.Img(
-                                                    src=user_data.get('picture', '/assets/img/default-avatar.png'),
-                                                    alt=f"{user_data.get('name', 'User')} Avatar",
-                                                    style={
-                                                        "width": "60px",
-                                                        "height": "60px",
-                                                        "borderRadius": "50%",
-                                                        "border": f"3px solid {theme['brand_primary']}",
-                                                        "objectFit": "cover",
-                                                        "marginBottom": "1rem",
-                                                        "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)"
-                                                    }
-                                                ),
-                                                
-                                                # User name
-                                                html.H3(
-                                                    user_data.get('name', 'User'),
-                                                    style={
-                                                        "color": theme["text_primary"],
-                                                        "fontSize": "1.1rem",
-                                                        "fontWeight": "700",
-                                                        "margin": "0 0 0.5rem 0"
-                                                    }
-                                                ),
-                                                
-                                                # User role badge
-                                                html.Div(
-                                                    user_data.get('role', 'user').replace('_', ' ').title(),
-                                                    style={
-                                                        "backgroundColor": theme["brand_primary"],
-                                                        "color": "white",
-                                                        "padding": "0.25rem 0.75rem",
-                                                        "borderRadius": "12px",
-                                                        "fontSize": "0.8rem",
-                                                        "fontWeight": "600",
-                                                        "marginBottom": "1rem",
-                                                        "display": "inline-block"
-                                                    }
-                                                ),
-                                                
-                                                # Auth method indicator
-                                                html.P(
-                                                    f"🔐 {user_data.get('auth_method', 'unknown').replace('_', ' ').title()}",
-                                                    style={
-                                                        "color": theme["success"],
-                                                        "fontSize": "0.8rem",
-                                                        "margin": "0 0 1rem 0",
-                                                        "fontWeight": "500"
-                                                    }
-                                                ),
-                                                
-                                                # Logout button - perfectly styled
-                                                html.Button(
-                                                    [
-                                                        html.Span("🚪", style={"marginRight": "0.5rem", "fontSize": "1rem"}),
-                                                        "Logout"
-                                                    ],
-                                                    id="logout-btn",
-                                                    style={
-                                                        "background": f"linear-gradient(135deg, {theme['error']} 0%, #C53030 100%)",
-                                                        "color": "white",
-                                                        "border": "none",
-                                                        "padding": "0.75rem 1.5rem",
-                                                        "borderRadius": "8px",
-                                                        "fontSize": "0.9rem",
-                                                        "fontWeight": "600",
-                                                        "cursor": "pointer",
-                                                        "transition": "all 0.2s ease",
-                                                        "width": "100%",
-                                                        "boxShadow": f"0 4px 12px {theme['error']}44",
-                                                        "textTransform": "uppercase",
-                                                        "letterSpacing": "0.5px"
-                                                    }
-                                                )
-                                            ]
-                                        )
-                                    ], style={"display": "flex", "alignItems": "center"})
-                                ]
-                            ),
-                            
-                            # Bottom info bar
-                            html.Div([
-                                html.Span(
-                                    f"📅 Last Updated: {data['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}",
-                                    style={
-                                        "color": theme["brand_primary"],
-                                        "fontSize": "0.9rem",
-                                        "fontWeight": "600"
-                                    }
-                                ),
-                                html.Span(
-                                    " • ",
-                                    style={"color": theme["text_secondary"], "margin": "0 1rem"}
-                                ),
-                                html.Span(
-                                    f"📊 Dashboard Status: Active",
-                                    style={
-                                        "color": theme["success"],
-                                        "fontSize": "0.9rem",
-                                        "fontWeight": "600"
-                                    }
-                                ),
-                                html.Span(
-                                    " • ",
-                                    style={"color": theme["text_secondary"], "margin": "0 1rem"}
-                                ),
-                                html.Span(
-                                    f"🔄 Auto-refresh: 30s",
-                                    style={
-                                        "color": theme["info"],
-                                        "fontSize": "0.9rem",
-                                        "fontWeight": "600"
-                                    }
-                                )
-                            ], style={
-                                "textAlign": "center",
-                                "marginTop": "1.5rem",
-                                "padding": "1rem",
-                                "backgroundColor": theme["accent_bg"],
-                                "borderRadius": "8px",
-                                "border": f"1px solid {theme['border_light']}"
-                            })
+                            create_tab_content(active_tab, theme_styles, user_data, data)
                         ]
                     ),
                     
-                    # KPI Section
-                    create_kpi_section(theme_styles, user_data),
-                    
-                    # Charts Section
-                    create_charts_section(theme_styles, data),
-                    
-                    # Data Table Section
-                    create_data_table_section(theme_styles, data),
-                    
-                    # Two-column layout for alerts and actions
-                    html.Div(
-                        style={
-                            "display": "grid",
-                            "gridTemplateColumns": "2fr 1fr",
-                            "gap": "2rem",
-                            "margin": "2rem 0"
-                        },
-                        children=[
-                            create_alerts_section(theme_styles),
-                            create_quick_actions_section(theme_styles)
-                        ]
-                    ),
-                    
-                    # Auto-refresh indicator
+                    # Footer status info
                     html.Div(
                         style={
                             "textAlign": "center",
-                            "marginTop": "2rem",
+                            "marginTop": "3rem",
                             "padding": "1rem",
                             "backgroundColor": theme["accent_bg"],
                             "borderRadius": "8px",
-                            "border": f"1px solid {theme['border_light']}"
+                            "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}"
                         },
                         children=[
                             html.P([
                                 html.Span("🔄", style={"marginRight": "0.5rem"}),
                                 "Dashboard auto-refreshes every 30 seconds • ",
                                 html.Span("⚡", style={"marginLeft": "0.5rem", "marginRight": "0.5rem"}),
-                                "Real-time data powered by Swaccha Andhra API"
+                                f"Real-time data • Last updated: {data['last_updated'].strftime('%H:%M:%S')}"
                             ], style={
                                 "color": theme["text_secondary"],
                                 "fontSize": "0.9rem",
