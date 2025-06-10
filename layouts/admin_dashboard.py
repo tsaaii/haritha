@@ -1,7 +1,7 @@
-# layouts/admin_dashboard.py - ENHANCED MINIMAL VERSION
+# layouts/admin_dashboard.py - UPDATED WITH FILTERABLE CONTAINER
 """
-Enhanced Admin Dashboard Layout for Swaccha Andhra - HEADER AND MENU ONLY
-Removes all panels except header and navigation menu for clean interface
+Enhanced Admin Dashboard Layout for Swaccha Andhra - WITH FILTERABLE CONTAINER
+Now includes a new "Data Analytics" tab with advanced filtering capabilities
 """
 
 from dash import html, dcc
@@ -10,6 +10,7 @@ import random
 
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
+from components.data.filterable_container import create_filterable_container
 
 
 def create_admin_hero_section(theme):
@@ -81,99 +82,124 @@ def create_admin_hero_section(theme):
 
 
 def create_navigation_tabs(theme, user_data):
-    """Create navigation tabs with user info (logout moved to overlay)"""
+    """OPTIMIZED: Navigation tabs with uniform sizing and no user info"""
+    
     tabs = [
-        {"id": "tab-dashboard", "label": "Dashboard", "icon": "📊"},
-        {"id": "tab-analytics", "label": "Analytics", "icon": "📈"},
-        {"id": "tab-reports", "label": "Reports", "icon": "📋"},
-        {"id": "tab-reviews", "label": "Reviews", "icon": "⭐"},
-        {"id": "tab-forecasting", "label": "Forecasting", "icon": "🔮"},
-        {"id": "tab-upload", "label": "Upload", "icon": "📤"}
+        {"href": "/admin/dashboard", "label": "Dashboard", "icon": "📊"},
+        {"href": "/admin/data-analytics", "label": "Data Analytics", "icon": "🔍"},
+        {"href": "/admin/charts", "label": "Charts", "icon": "📈"},
+        {"href": "/admin/reports", "label": "Reports", "icon": "📋"},
+        {"href": "/admin/reviews", "label": "Reviews", "icon": "⭐"},
+        {"href": "/admin/forecasting", "label": "Forecasting", "icon": "🔮"},
+        {"href": "/admin/upload", "label": "Upload", "icon": "📤"}
     ]
     
     return html.Div(
         className="navigation-tabs",
         style={
             "backgroundColor": theme["card_bg"],
-            "borderRadius": "12px",
+            "borderRadius": "8px",  # Reduced from 12px
             "border": f"2px solid {theme['accent_bg']}",
-            "padding": "1rem",
-            "margin": "1rem 0",
+            "padding": "0.75rem 1.5rem",  # Reduced padding for less height
+            "margin": "0.75rem 0",  # Reduced margin
             "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.2)"
         },
         children=[
+            # Single centered container for navigation tabs only
             html.Div(
                 style={
                     "display": "flex",
-                    "justifyContent": "space-between",
+                    "justifyContent": "center",  # Center the tabs
                     "alignItems": "center",
-                    "flexWrap": "wrap",
-                    "gap": "1rem"
+                    "gap": "0.75rem",  # Consistent gap between buttons
+                    "flexWrap": "wrap"
                 },
                 children=[
-                    # Tab buttons container
-                    html.Div(
+                    html.A(
+                        [
+                            html.Span(tab["icon"], style={"marginRight": "0.5rem", "fontSize": "1rem"}),
+                            html.Span(tab["label"], style={"fontSize": "0.9rem", "fontWeight": "600"})
+                        ],
+                        href=tab["href"],
                         style={
-                            "display": "flex",
-                            "gap": "0.5rem",
-                            "flexWrap": "wrap",
-                            "alignItems": "center"
-                        },
-                        children=[
-                            html.Button(
-                                [
-                                    html.Span(tab["icon"], style={"marginRight": "0.5rem"}),
-                                    tab["label"]
-                                ],
-                                id=tab["id"],
-                                style={
-                                    "backgroundColor": theme["brand_primary"] if tab["id"] == "tab-dashboard" else theme["accent_bg"],
-                                    "color": "white" if tab["id"] == "tab-dashboard" else theme["text_secondary"],
-                                    "border": "none",
-                                    "borderRadius": "8px",
-                                    "padding": "0.75rem 1rem",
-                                    "fontSize": "0.9rem",
-                                    "fontWeight": "600",
-                                    "cursor": "pointer",
-                                    "transition": "all 0.2s ease",
-                                    "display": "flex",
-                                    "alignItems": "center",
-                                    "justifyContent": "center",
-                                    "minWidth": "120px"
-                                }
-                            ) for tab in tabs
-                        ]
-                    ),
-                    
-                    # User info and logout section
-                    html.Div(
-                        style={
+                            # UNIFORM SIZING FOR ALL BUTTONS
+                            "backgroundColor": theme["accent_bg"],
+                            "color": theme["text_primary"],
+                            "border": f"2px solid {theme['card_bg']}",
+                            "borderRadius": "8px",
+                            "padding": "1rem 1.5rem",  # Bigger padding for larger buttons
+                            "fontSize": "0.9rem",
+                            "fontWeight": "600",
+                            "cursor": "pointer",
+                            "transition": "all 0.2s ease",
                             "display": "flex",
                             "alignItems": "center",
-                            "gap": "1rem",
-                            "flexWrap": "wrap"
-                        },
-                    )
+                            "justifyContent": "center",
+                            "textDecoration": "none",
+                            "whiteSpace": "nowrap",  # Prevent text wrapping
+                            
+                            # UNIFORM SIZE CONSTRAINTS
+                            "minWidth": "140px",  # Consistent minimum width
+                            "maxWidth": "160px",  # Consistent maximum width
+                            "height": "48px",     # Fixed height for uniformity
+                            "flex": "0 0 auto",   # Don't grow or shrink
+                            
+                            # HOVER EFFECTS
+                            "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
+                        }
+                    ) for tab in tabs
                 ]
             )
         ]
     )
 
 
-def create_minimal_dashboard_content(theme_styles, user_data):
-    """Create minimal dashboard content - ONLY welcome message"""
-    pass
-
-
 def create_tab_content(active_tab, theme_styles, user_data, data=None):
-    """Create content based on active tab - MINIMAL VERSION"""
+    """Create content based on active tab - UPDATED WITH FILTERABLE CONTAINER"""
     theme = theme_styles["theme"]
     
-    # Simple content for each tab
-    if active_tab == "tab-dashboard":
+    # Handle the new Data Analytics tab
+    if active_tab == "tab-data-analytics":
+        return html.Div([
+            # Tab header
+            html.Div([
+                html.H2(
+                    "🔍 Advanced Data Analytics",
+                    style={
+                        "color": theme["text_primary"],
+                        "fontSize": "2.5rem",
+                        "fontWeight": "800",
+                        "marginBottom": "1rem",
+                        "textAlign": "center"
+                    }
+                ),
+                html.P(
+                    "Comprehensive data filtering, analysis, and visualization tools for waste management operations.",
+                    style={
+                        "color": theme["text_secondary"],
+                        "fontSize": "1.2rem",
+                        "textAlign": "center",
+                        "marginBottom": "2rem",
+                        "lineHeight": "1.5"
+                    }
+                )
+            ], style={
+                "padding": "2rem 0",
+                "backgroundColor": theme["accent_bg"],
+                "borderRadius": "12px",
+                "marginBottom": "2rem",
+                "border": f"2px solid {theme['card_bg']}"
+            }),
+            
+            # Filterable container
+            create_filterable_container(theme, "admin-filterable-container")
+        ])
+    
+    # Simple content for other tabs
+    elif active_tab == "tab-dashboard":
         return create_minimal_dashboard_content(theme_styles, user_data)
     elif active_tab == "tab-analytics":
-        return create_simple_tab_content("📈 Analytics", "Advanced analytics will be available here soon.", theme_styles)
+        return create_simple_tab_content("📈 Charts & Analytics", "Interactive charts and analytics will be available here soon.", theme_styles)
     elif active_tab == "tab-reports":
         return create_simple_tab_content("📋 Reports", "Report generation and management will be available here.", theme_styles)
     elif active_tab == "tab-reviews":
@@ -184,6 +210,151 @@ def create_tab_content(active_tab, theme_styles, user_data, data=None):
         return create_simple_tab_content("📤 Upload", "File upload and data management tools will be available here.", theme_styles)
     else:
         return create_minimal_dashboard_content(theme_styles, user_data)
+
+
+def create_minimal_dashboard_content(theme_styles, user_data):
+    """Create minimal dashboard content - welcome message and quick stats"""
+    theme = theme_styles["theme"]
+    
+    return html.Div([
+        # Welcome section
+        html.Div([
+            html.H2(
+                f"👋 Welcome back, {user_data.get('name', 'Administrator')}!",
+                style={
+                    "color": theme["text_primary"],
+                    "fontSize": "2rem",
+                    "fontWeight": "700",
+                    "marginBottom": "1rem",
+                    "textAlign": "center"
+                }
+            ),
+            html.P(
+                "Your dashboard is ready. Use the tabs above to navigate to different sections.",
+                style={
+                    "color": theme["text_secondary"],
+                    "fontSize": "1.1rem",
+                    "textAlign": "center",
+                    "marginBottom": "2rem",
+                    "lineHeight": "1.5"
+                }
+            )
+        ], style={
+            "backgroundColor": theme["card_bg"],
+            "borderRadius": "12px",
+            "border": f"2px solid {theme['accent_bg']}",
+            "padding": "2rem",
+            "margin": "2rem 0",
+            "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.2)"
+        }),
+        
+        # Quick access cards
+        html.Div([
+            html.H3(
+                "🚀 Quick Access",
+                style={
+                    "color": theme["text_primary"],
+                    "fontSize": "1.5rem",
+                    "fontWeight": "700",
+                    "marginBottom": "1.5rem",
+                    "textAlign": "center"
+                }
+            ),
+            html.Div(
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(250px, 1fr))",
+                    "gap": "1.5rem"
+                },
+                children=[
+                    create_quick_access_card(
+                        "🔍", "Data Analytics", 
+                        "Filter and analyze waste management data with advanced tools",
+                        "tab-data-analytics", theme
+                    ),
+                    create_quick_access_card(
+                        "📈", "Charts & Visualizations", 
+                        "View interactive charts and data visualizations",
+                        "tab-analytics", theme
+                    ),
+                    create_quick_access_card(
+                        "📋", "Generate Reports", 
+                        "Create and export detailed operational reports",
+                        "tab-reports", theme
+                    ),
+                    create_quick_access_card(
+                        "📤", "Upload Data", 
+                        "Upload new data files and manage existing datasets",
+                        "tab-upload", theme
+                    )
+                ]
+            )
+        ], style={
+            "backgroundColor": theme["accent_bg"],
+            "borderRadius": "12px",
+            "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+            "padding": "2rem",
+            "margin": "2rem 0"
+        })
+    ])
+
+
+def create_quick_access_card(icon, title, description, tab_id, theme):
+    """Create quick access cards for dashboard"""
+    return html.Div([
+        html.Div(
+            icon,
+            style={
+                "fontSize": "2.5rem",
+                "marginBottom": "1rem",
+                "textAlign": "center"
+            }
+        ),
+        html.H4(
+            title,
+            style={
+                "color": theme["text_primary"],
+                "fontSize": "1.2rem",
+                "fontWeight": "700",
+                "marginBottom": "0.5rem",
+                "textAlign": "center"
+            }
+        ),
+        html.P(
+            description,
+            style={
+                "color": theme["text_secondary"],
+                "fontSize": "0.9rem",
+                "lineHeight": "1.4",
+                "textAlign": "center",
+                "marginBottom": "1rem"
+            }
+        ),
+        html.Button(
+            "Open",
+            id=f"quick-access-{tab_id}",
+            style={
+                "backgroundColor": theme["brand_primary"],
+                "color": "white",
+                "border": "none",
+                "borderRadius": "6px",
+                "padding": "0.5rem 1rem",
+                "fontSize": "0.9rem",
+                "fontWeight": "600",
+                "cursor": "pointer",
+                "width": "100%",
+                "transition": "all 0.2s ease"
+            }
+        )
+    ], style={
+        "backgroundColor": theme["card_bg"],
+        "borderRadius": "8px",
+        "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+        "padding": "1.5rem",
+        "textAlign": "center",
+        "transition": "transform 0.2s ease, box-shadow 0.2s ease",
+        "cursor": "pointer"
+    })
 
 
 def create_simple_tab_content(title, description, theme_styles):
@@ -224,9 +395,19 @@ def create_simple_tab_content(title, description, theme_styles):
     )
 
 
+def generate_sample_data():
+    """Generate sample data for dashboard components"""
+    return {
+        "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "total_collections": random.randint(1500, 2500),
+        "efficiency_score": random.randint(85, 98),
+        "active_vehicles": random.randint(45, 75)
+    }
+
+
 def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-dashboard"):
     """
-    Build the MINIMAL enhanced dashboard layout with tabs - HEADER AND MENU ONLY
+    Build the ENHANCED dashboard layout with filterable container
     
     Args:
         theme_name (str): Current theme name
@@ -234,7 +415,7 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-
         active_tab (str): Currently active tab
         
     Returns:
-        html.Div: Complete minimal dashboard layout
+        html.Div: Complete enhanced dashboard layout
     """
     theme_styles = get_theme_styles(theme_name)
     theme = theme_styles["theme"]
@@ -270,7 +451,7 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-
                     # Navigation tabs with user info and logout
                     create_navigation_tabs(theme, user_data),
                     
-                    # Tab content container - MINIMAL CONTENT ONLY
+                    # Tab content container - NOW INCLUDES FILTERABLE CONTAINER
                     html.Div(
                         id="tab-content",
                         children=[
@@ -291,9 +472,9 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-
                         children=[
                             html.P([
                                 html.Span("⚡", style={"marginRight": "0.5rem"}),
-                                "Dashboard ready for content • ",
-                                html.Span("🎯", style={"marginLeft": "0.5rem", "marginRight": "0.5rem"}),
-                                f"Simplified interface • Current time: {datetime.now().strftime('%H:%M:%S')}"
+                                "Dashboard with Advanced Analytics ready • ",
+                                html.Span("🔍", style={"marginLeft": "0.5rem", "marginRight": "0.5rem"}),
+                                f"Data Analytics tab added • Current time: {datetime.now().strftime('%H:%M:%S')}"
                             ], style={
                                 "color": theme["text_secondary"],
                                 "fontSize": "0.9rem",
@@ -308,4 +489,4 @@ def build_enhanced_dashboard(theme_name="dark", user_data=None, active_tab="tab-
 
 
 # Export the main function
-__all__ = ['build_enhanced_dashboard']
+__all__ = ['build_enhanced_dashboard', 'create_tab_content', 'generate_sample_data']
