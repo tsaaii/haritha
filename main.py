@@ -67,7 +67,7 @@ app = dash.Dash(
     __name__, 
     server=server,
     suppress_callback_exceptions=True, 
-    title="स्वच्छ आंध्र प्रदेश - Swaccha Andhra Dashboard",
+    title="Swaccha Andhra Dashboard",
     external_stylesheets=[
         "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
         "/assets/style.css",

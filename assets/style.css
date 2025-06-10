@@ -345,45 +345,152 @@
     }
     
     /* Hero section mobile adjustments */
-    .hero-section {
-      height: clamp(70px, 15vh, 100px) !important;
-      padding: 0.25rem var(--space-2) !important;
-    }
+ 
+  
+    @media (max-width: 768px) {
+        /* Hero section mobile adjustments - Logo-Title-Logo sandwich */
+        .hero-section {
+          height: clamp(100px, 20vh, 140px) !important; /* Taller for 3 elements */
+          padding: 0.5rem var(--space-2) !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          align-items: center !important;
+        }
+        
+        /* Mobile logo sizing - smaller for stacked layout */
+        .responsive-logo {
+          height: clamp(35px, 6vw, 50px) !important; /* Smaller for mobile stacking */
+          width: auto !important;
+          object-fit: contain !important;
+          filter: drop-shadow(1px 1px 4px rgba(0, 0, 0, 0.3)) !important;
+          transition: all var(--transition-base) !important;
+          flex-shrink: 0 !important;
+        }
+        
+        /* FIXED: Mobile hero content - Logo-Title-Logo vertical stack */
+        .hero-section > div {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 0.5rem !important; /* Smaller gap for mobile */
+          height: 100% !important;
+          width: 100% !important;
+          text-align: center !important;
+        }
+        
+        /* FIXED: Perfect mobile stacking order - Logo, Title, Logo */
+        .hero-section .logo-left {
+          order: 1 !important; /* First logo on top */
+          align-self: center !important;
+        }
+        
+        .hero-section .hero-title-section {
+          order: 2 !important; /* Title in middle */
+          text-align: center !important;
+          align-self: center !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        .hero-section .logo-right {
+          order: 3 !important; /* Second logo on bottom */
+          align-self: center !important;
+        }
+        
+        /* Mobile title styling */
+        .hero-section h1 {
+          font-size: clamp(1.1rem, 4vw, 1.4rem) !important;
+          margin: 0 !important;
+          line-height: 1.1 !important;
+          text-align: center !important;
+          white-space: normal !important; /* Allow text wrapping */
+          word-break: break-word !important; /* Break long words if needed */
+          max-width: 100% !important;
+        }
+        
+        /* Mobile subtitle styling */
+        .hero-section .hero-subtitle {
+          font-size: clamp(0.7rem, 2.5vw, 0.9rem) !important;
+          margin: 0.25rem 0 0 0 !important;
+          line-height: 1.2 !important;
+          text-align: center !important;
+        }
+        
+        /* Ensure both logos are visible and identical */
+        .hero-section .responsive-logo {
+          display: block !important; /* Force visibility */
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+      }
+      
+      /* Small mobile devices (320px - 480px) - Extra compact */
+      @media (max-width: 480px) {
+        .hero-section {
+          height: clamp(90px, 18vh, 120px) !important;
+          padding: 0.25rem var(--space-1) !important;
+        }
+        
+        .responsive-logo {
+          height: clamp(30px, 5vw, 42px) !important;
+        }
+        
+        .hero-section > div {
+          gap: 0.375rem !important; /* Even smaller gap */
+        }
+        
+        .hero-section h1 {
+          font-size: clamp(1rem, 3.5vw, 1.2rem) !important;
+        }
+        
+        .hero-section .hero-subtitle {
+          font-size: clamp(0.65rem, 2vw, 0.8rem) !important;
+        }
+      }
+      
+      /* Landscape orientation on mobile - horizontal layout */
+      @media (max-width: 767px) and (orientation: landscape) {
+        .hero-section {
+          height: clamp(60px, 15vh, 90px) !important;
+          padding: 0.25rem 1rem !important;
+        }
+        
+        /* Switch back to horizontal layout in landscape */
+        .hero-section > div {
+          flex-direction: row !important;
+          gap: clamp(0.5rem, 2vw, 1rem) !important;
+          justify-content: center !important;
+          align-items: center !important;
+        }
+        
+        /* Reset order for landscape */
+        .hero-section .logo-left {
+          order: 1 !important;
+        }
+        
+        .hero-section .hero-title-section {
+          order: 2 !important;
+          flex: 0 1 auto !important;
+        }
+        
+        .hero-section .logo-right {
+          order: 3 !important;
+        }
+        
+        .responsive-logo {
+          height: clamp(32px, 5vh, 48px) !important;
+        }
+        
+        .hero-section h1 {
+          font-size: clamp(1rem, 3vw, 1.3rem) !important;
+          white-space: nowrap !important; /* Prevent wrapping in landscape */
+        }
+      }
     
-    .responsive-logo {
-      height: clamp(42px, 8vw, 62px) !important;
-    }
     
-    /* Fix mobile logo alignment - stack vertically and center */
-    .hero-section > div {
-      flex-direction: column !important;
-      gap: 0.75rem !important;
-      justify-content: center !important;
-      align-items: center !important;
-      text-align: center !important;
-      width: 100% !important;
-    }
-    
-    /* Perfect mobile stacking order */
-    .hero-section .logo-left {
-      order: 1; /* Logo above title */
-      align-self: center !important;
-    }
-    
-    .hero-section h1 {
-      order: 2; /* Title in middle */
-      text-align: center !important;
-      align-self: center !important;
-      width: 100% !important;
-      font-size: clamp(1.2rem, 5vw, 1.6rem) !important;
-      min-width: 0 !important; /* Remove min-width constraint */
-      white-space: normal !important; /* Allow text wrapping if needed */
-    }
-    
-    .hero-section .logo-right {
-      order: 3; /* Logo below title */
-      align-self: center !important;
-    }
     
     /* Hide complex elements on mobile */
     .mobile-hide {

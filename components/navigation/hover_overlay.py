@@ -202,8 +202,7 @@ def create_hover_overlay_banner(current_theme="dark", is_authenticated=False, us
                     },
                     children=[
                         html.Div([
-                            html.Span("🌱", style={"fontSize": "1.5rem", "marginRight": "0.5rem"}),
-                            html.Span("Swaccha Andhra", style={
+                            html.Span("Built by Advitia Labs", style={
                                 "fontSize": "1.1rem", 
                                 "fontWeight": "700",
                                 "color": theme["text_primary"]

@@ -31,8 +31,9 @@ def create_responsive_logo(image_name, alt_text, position="left"):
         className=f"logo-{position} responsive-logo"
     )
 
+
 def create_hero_section(theme):
-    """Create compact hero section - 1.5 inches on 24-inch screen"""
+    """Create compact hero section with proper mobile logo layout"""
     return html.Div(
         className="hero-section",
         style={
@@ -40,22 +41,27 @@ def create_hero_section(theme):
             "borderRadius": "8px",
             "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.3)",
             "textAlign": "center",
-            # Let CSS handle all sizing - remove inline overrides
             "position": "relative",
             "overflow": "hidden"
         },
         children=[
-            # Main content - logos and title only
+            # Main content container - FIXED structure for mobile
             html.Div(
                 children=[
-                    # Left Logo - let CSS handle sizing
+                    # FIXED: Left/Top Logo - always visible
                     html.Img(
                         src="/assets/img/left.png",
                         alt="Left Organization Logo",
-                        className="logo-left responsive-logo"  # Only use CSS classes
+                        className="logo-left responsive-logo",
+                        style={
+                            # Ensure visibility on all devices
+                            "display": "block",
+                            "visibility": "visible",
+                            "opacity": "1"
+                        }
                     ),
                     
-                    # Title Section with main title and subtitle
+                    # Title Section - FIXED with proper mobile handling
                     html.Div(
                         className="hero-title-section",
                         children=[
@@ -63,8 +69,8 @@ def create_hero_section(theme):
                             html.H1(
                                 "Swaccha Andhra Corporation",
                                 style={
-                                    "color": theme["text_primary"],  # Only theme-specific styles
-                                    "margin": "0 0 0.25rem 0",  # Small margin below main title
+                                    "color": theme["text_primary"],
+                                    "margin": "0 0 0.25rem 0",
                                     "lineHeight": "1.1"
                                 }
                             ),
@@ -75,7 +81,7 @@ def create_hero_section(theme):
                                 className="hero-subtitle",
                                 style={
                                     "color": theme["text_secondary"],
-                                    "fontSize": "clamp(0.8rem, 2vw, 1rem)",  # Smaller responsive font
+                                    "fontSize": "clamp(0.8rem, 2vw, 1rem)",
                                     "fontWeight": "500",
                                     "margin": "0",
                                     "lineHeight": "1.2",
@@ -85,11 +91,17 @@ def create_hero_section(theme):
                         ]
                     ),
                     
-                    # Right Logo - let CSS handle sizing
+                    # FIXED: Right/Bottom Logo - always visible, duplicate for mobile
                     html.Img(
                         src="/assets/img/right.png",
                         alt="Right Organization Logo",
-                        className="logo-right responsive-logo"  # Only use CSS classes
+                        className="logo-right responsive-logo",
+                        style={
+                            # Ensure visibility on all devices
+                            "display": "block",
+                            "visibility": "visible", 
+                            "opacity": "1"
+                        }
                     )
                 ]
             )
