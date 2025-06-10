@@ -87,6 +87,7 @@ def create_navigation_tabs(theme, user_data):
         {"id": "tab-analytics", "label": "Analytics", "icon": "📈"},
         {"id": "tab-reports", "label": "Reports", "icon": "📋"},
         {"id": "tab-reviews", "label": "Reviews", "icon": "⭐"},
+        {"id": "tab-forecasting", "label": "Forecasting", "icon": "🔮"},
         {"id": "tab-upload", "label": "Upload", "icon": "📤"}
     ]
     
@@ -161,102 +162,7 @@ def create_navigation_tabs(theme, user_data):
 
 def create_minimal_dashboard_content(theme_styles, user_data):
     """Create minimal dashboard content - ONLY welcome message"""
-    theme = theme_styles["theme"]
-    
-    return html.Div(
-        style={
-            "textAlign": "center",
-            "padding": "4rem 2rem",
-            "backgroundColor": theme["card_bg"],
-            "borderRadius": "12px",
-            "border": f"2px solid {theme['accent_bg']}",
-            "margin": "2rem 0",
-            "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.2)"
-        },
-        children=[
-            html.Div(
-                "🎯",
-                style={
-                    "fontSize": "4rem",
-                    "marginBottom": "1rem",
-                    "filter": "drop-shadow(0 4px 8px rgba(0,0,0,0.3))"
-                }
-            ),
-            html.H2(
-                f"Welcome, {user_data.get('name', 'Administrator')}!",
-                style={
-                    "color": theme["text_primary"],
-                    "fontSize": "2rem",
-                    "fontWeight": "700",
-                    "marginBottom": "1rem",
-                    "lineHeight": "1.2"
-                }
-            ),
-            html.P(
-                "Dashboard content has been simplified. Use the navigation menu above to access different sections.",
-                style={
-                    "color": theme["text_secondary"],
-                    "fontSize": "1.1rem",
-                    "maxWidth": "600px",
-                    "margin": "0 auto",
-                    "lineHeight": "1.5"
-                }
-            ),
-            html.Div(
-                style={
-                    "display": "flex",
-                    "justifyContent": "center",
-                    "gap": "1rem",
-                    "marginTop": "2rem",
-                    "flexWrap": "wrap"
-                },
-                children=[
-                    html.Div(
-                        children=[
-                            html.Span("📊", style={"fontSize": "1.5rem", "marginRight": "0.5rem"}),
-                            "Analytics Ready"
-                        ],
-                        style={
-                            "backgroundColor": theme["accent_bg"],
-                            "color": theme["text_primary"],
-                            "padding": "0.75rem 1.5rem",
-                            "borderRadius": "8px",
-                            "fontSize": "1rem",
-                            "fontWeight": "600"
-                        }
-                    ),
-                    html.Div(
-                        children=[
-                            html.Span("⭐", style={"fontSize": "1.5rem", "marginRight": "0.5rem"}),
-                            "Reviews Available"
-                        ],
-                        style={
-                            "backgroundColor": theme["accent_bg"],
-                            "color": theme["text_primary"],
-                            "padding": "0.75rem 1.5rem",
-                            "borderRadius": "8px",
-                            "fontSize": "1rem",
-                            "fontWeight": "600"
-                        }
-                    ),
-                    html.Div(
-                        children=[
-                            html.Span("📋", style={"fontSize": "1.5rem", "marginRight": "0.5rem"}),
-                            "Reports Ready"
-                        ],
-                        style={
-                            "backgroundColor": theme["accent_bg"],
-                            "color": theme["text_primary"],
-                            "padding": "0.75rem 1.5rem",
-                            "borderRadius": "8px",
-                            "fontSize": "1rem",
-                            "fontWeight": "600"
-                        }
-                    )
-                ]
-            )
-        ]
-    )
+    pass
 
 
 def create_tab_content(active_tab, theme_styles, user_data, data=None):
@@ -272,6 +178,8 @@ def create_tab_content(active_tab, theme_styles, user_data, data=None):
         return create_simple_tab_content("📋 Reports", "Report generation and management will be available here.", theme_styles)
     elif active_tab == "tab-reviews":
         return create_simple_tab_content("⭐ Reviews", "Customer reviews and feedback will be displayed here.", theme_styles)
+    elif active_tab == "tab-forecasting":
+        return create_simple_tab_content("🔮 Forecasting", "Predictive analytics and waste management forecasting will be available here.", theme_styles)
     elif active_tab == "tab-upload":
         return create_simple_tab_content("📤 Upload", "File upload and data management tools will be available here.", theme_styles)
     else:

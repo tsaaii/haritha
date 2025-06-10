@@ -120,13 +120,57 @@ app.index_string = f'''
     </head>
     <body>
         <!-- Loading Screen -->
-        <div id="pwa-loading" class="pwa-loading">
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">🌱</div>
-                <div style="font-size: 2rem; font-weight: 900;">स्वच्छ आंध्र प्रदेश</div>
-                <div style="font-size: 1.2rem; color: #A0AEC0;">Loading Dashboard...</div>
-            </div>
+
+<div id="pwa-loading" class="pwa-loading">
+    <div style="text-align: center; color: white; position: relative;">
+        <!-- Logo container with aura -->
+        <div style="position: relative; display: inline-block; margin-bottom: 1rem;">
+            <!-- Your right.png logo -->
+            <img src="/assets/img/right.png" alt="Logo" style="
+                width: 80px; 
+                height: 80px; 
+                object-fit: contain; 
+                filter: drop-shadow(0 4px 15px rgba(255,255,255,0.3));
+                animation: logoFloat 2s ease-in-out infinite;
+                position: relative;
+                z-index: 2;
+            ">
+            
+            <!-- Aura rings -->
+            <div style="
+                position: absolute;
+                top: 50%; left: 50%;
+                width: 100px; height: 100px;
+                margin: -50px 0 0 -50px;
+                border: 2px solid rgba(49,130,206,0.6);
+                border-radius: 50%;
+                animation: auraExpand 2s linear infinite;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 50%; left: 50%;
+                width: 120px; height: 120px;
+                margin: -60px 0 0 -60px;
+                border: 2px solid rgba(56,178,172,0.4);
+                border-radius: 50%;
+                animation: auraExpand 2s linear infinite 0.5s;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 50%; left: 50%;
+                width: 140px; height: 140px;
+                margin: -70px 0 0 -70px;
+                border: 2px solid rgba(72,187,120,0.3);
+                border-radius: 50%;
+                animation: auraExpand 2s linear infinite 1s;
+            "></div>
         </div>
+        
+        <div style="font-size: 2rem; font-weight: 900;">స్వర్ణ ఆంధ్ర స్వచ్ఛ ఆంధ్ర</div>
+        <div style="font-size: 1.2rem; color: #A0AEC0;">Loading Dashboard...</div>
+    </div>
+</div>        
+
         
         {{%app_entry%}}
         {{%config%}}
