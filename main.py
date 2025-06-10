@@ -1219,7 +1219,7 @@ def get_current_theme():
     return session.get('current_theme', 'dark')
 
 def create_empty_themed_page(title, icon, theme_name="dark"):
-    """Create an empty themed page template"""
+    """Create an empty themed page template with user info moved to nav-tabs"""
     theme_styles = get_theme_styles(theme_name)
     theme = theme_styles["theme"]
     
@@ -1277,30 +1277,22 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 gap: 1rem;
             }}
             
-            .nav-brand {{
+            /* MODIFIED: Nav-tabs now contains both navigation and user info */
+            .nav-tabs {{
                 display: flex;
                 align-items: center;
                 gap: 1rem;
+                flex-wrap: wrap;
+                flex: 1;
+                justify-content: space-between;
             }}
             
-            .nav-brand img {{
-                height: 40px;
-                width: auto;
-                object-fit: contain;
-                filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-            }}
-            
-            .nav-brand h1 {{
-                color: {theme["text_primary"]};
-                font-size: 1.5rem;
-                font-weight: 800;
-                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-            }}
-            
-            .nav-tabs {{
+            /* Navigation buttons container */
+            .nav-buttons {{
                 display: flex;
                 gap: 0.5rem;
                 flex-wrap: wrap;
+                align-items: center;
             }}
             
             .nav-tab {{
@@ -1317,6 +1309,7 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 align-items: center;
                 gap: 0.5rem;
                 white-space: nowrap;
+                min-height: 44px;
             }}
             
             .nav-tab:hover {{
@@ -1333,6 +1326,7 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
             }}
             
+            /* MOVED: User info is now inside nav-tabs */
             .user-info {{
                 display: flex;
                 align-items: center;
@@ -1341,6 +1335,8 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 padding: 0.5rem 1rem;
                 border-radius: 8px;
                 border: 2px solid {theme["accent_bg"]};
+                min-height: 44px;
+                flex-shrink: 0;
             }}
             
             .user-avatar {{
@@ -1383,12 +1379,53 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 display: flex;
                 align-items: center;
                 gap: 0.25rem;
+                min-height: 36px;
             }}
             
             .logout-btn:hover {{
                 background: #C53030;
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(197, 48, 48, 0.4);
+            }}
+            
+            /* Theme Switcher - moved to right side */
+            .theme-switcher {{
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                background: {theme["card_bg"]};
+                border: 2px solid {theme["accent_bg"]};
+                border-radius: 8px;
+                padding: 0.25rem;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+                min-height: 44px;
+            }}
+            
+            .theme-btn {{
+                background: transparent;
+                border: 1px solid {theme["border_light"] if "border_light" in theme else theme["accent_bg"]};
+                color: {theme["text_primary"]};
+                padding: 0.25rem;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 1rem;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }}
+            
+            .theme-btn:hover {{
+                background: {theme["brand_primary"]};
+                color: white;
+                transform: scale(1.1);
+            }}
+            
+            .theme-btn.active {{
+                background: {theme["brand_primary"]};
+                color: white;
             }}
             
             /* Main Content */
@@ -1537,49 +1574,25 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 font-size: 0.9rem;
             }}
             
-            /* Theme Switcher */
-            .theme-switcher {{
-                position: fixed;
-                top: 1rem;
-                right: 1rem;
-                z-index: 10000;
-                background: {theme["card_bg"]};
-                border: 2px solid {theme["accent_bg"]};
-                border-radius: 8px;
-                padding: 0.5rem;
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-                display: flex;
-                gap: 0.25rem;
-            }}
-            
-            .theme-btn {{
-                background: transparent;
-                border: 1px solid {theme["border_light"] if "border_light" in theme else theme["accent_bg"]};
-                color: {theme["text_primary"]};
-                padding: 0.25rem;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 1rem;
-                width: 32px;
-                height: 32px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s ease;
-            }}
-            
-            .theme-btn:hover {{
-                background: {theme["brand_primary"]};
-                color: white;
-                transform: scale(1.1);
-            }}
-            
-            .theme-btn.active {{
-                background: {theme["brand_primary"]};
-                color: white;
-            }}
-            
             /* Responsive Design */
+            @media (max-width: 1200px) {{
+                .nav-tabs {{
+                    flex-direction: column;
+                    gap: 1rem;
+                    align-items: stretch;
+                }}
+                
+                .nav-buttons {{
+                    justify-content: center;
+                    width: 100%;
+                }}
+                
+                .user-info {{
+                    justify-content: center;
+                    width: 100%;
+                }}
+            }}
+            
             @media (max-width: 768px) {{
                 .nav-content {{
                     flex-direction: column;
@@ -1587,6 +1600,10 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 }}
                 
                 .nav-tabs {{
+                    width: 100%;
+                }}
+                
+                .nav-buttons {{
                     width: 100%;
                     justify-content: center;
                     flex-wrap: wrap;
@@ -1612,65 +1629,63 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                     padding: 2rem 1rem;
                 }}
                 
-                .user-info {{
-                    order: -1;
-                    width: 100%;
-                    justify-content: center;
-                }}
-                
                 .theme-switcher {{
-                    top: 0.5rem;
-                    right: 0.5rem;
+                    align-self: center;
                 }}
             }}
         </style>
     </head>
     <body>
         <div class="page-container">
-            <!-- Theme Switcher -->
-            <div class="theme-switcher">
-                <button class="theme-btn {'active' if theme_name == 'dark' else ''}" onclick="changeTheme('dark')" title="Dark Mode">🌙</button>
-                <button class="theme-btn {'active' if theme_name == 'light' else ''}" onclick="changeTheme('light')" title="Light Mode">☀️</button>
-                <button class="theme-btn {'active' if theme_name == 'high_contrast' else ''}" onclick="changeTheme('high_contrast')" title="High Contrast">🔳</button>
-                <button class="theme-btn {'active' if theme_name == 'swaccha_green' else ''}" onclick="changeTheme('swaccha_green')" title="Swaccha Green">🌿</button>
-            </div>
-            
             <!-- Navigation Header -->
             <nav class="navigation-header">
-                    
+                <div class="nav-content">
+                    <!-- MODIFIED: Nav-tabs now contains both navigation buttons and user info -->
                     <div class="nav-tabs">
-                        <a href="/dashboard" class="nav-tab {'active' if 'dashboard' in title.lower() else ''}">
-                            📊 Dashboard
-                        </a>
-                        <a href="/data-analytics" class="nav-tab {'active' if 'data analytics' in title.lower() else ''}">
-                            🔍 Data Analytics
-                        </a>
-                        <a href="/charts" class="nav-tab {'active' if 'charts' in title.lower() else ''}">
-                            📈 Charts
-                        </a>
-                        <a href="/reports" class="nav-tab {'active' if 'reports' in title.lower() else ''}">
-                            📋 Reports
-                        </a>
-                        <a href="/reviews" class="nav-tab {'active' if 'reviews' in title.lower() else ''}">
-                            ⭐ Reviews
-                        </a>
-                        <a href="/forecasting" class="nav-tab {'active' if 'forecasting' in title.lower() else ''}">
-                            🔮 Forecasting
-                        </a>
-                        <a href="/upload" class="nav-tab {'active' if 'upload' in title.lower() else ''}">
-                            📤 Upload
-                        </a>
+                        <!-- Left: Navigation Buttons -->
+                        <div class="nav-buttons">
+                            <a href="/dashboard" class="nav-tab {'active' if 'dashboard' in title.lower() else ''}">
+                                📊 Dashboard
+                            </a>
+                            <a href="/data-analytics" class="nav-tab {'active' if 'data analytics' in title.lower() else ''}">
+                                🔍 Data Analytics
+                            </a>
+                            <a href="/charts" class="nav-tab {'active' if 'charts' in title.lower() else ''}">
+                                📈 Charts
+                            </a>
+                            <a href="/reports" class="nav-tab {'active' if 'reports' in title.lower() else ''}">
+                                📋 Reports
+                            </a>
+                            <a href="/reviews" class="nav-tab {'active' if 'reviews' in title.lower() else ''}">
+                                ⭐ Reviews
+                            </a>
+                            <a href="/forecasting" class="nav-tab {'active' if 'forecasting' in title.lower() else ''}">
+                                🔮 Forecasting
+                            </a>
+                            <a href="/upload" class="nav-tab {'active' if 'upload' in title.lower() else ''}">
+                                📤 Upload
+                            </a>
+                        </div>
+                        
+                        <!-- Center/Right: User Info (now inside nav-tabs) -->
+                        <div class="user-info">
+                            <img src="/assets/img/default-avatar.png" alt="User Avatar" class="user-avatar">
+                            <div class="user-details">
+                                <div class="user-name">{user_name}</div>
+                                <div class="user-role">{user_role}</div>
+                            </div>
+                            <a href="/?logout=true" class="logout-btn">
+                                🚪 Logout
+                            </a>
+                        </div>
                     </div>
                     
-                    <div class="user-info">
-                        <img src="/assets/img/default-avatar.png" alt="User Avatar" class="user-avatar">
-                        <div class="user-details">
-                            <div class="user-name">{user_name}</div>
-                            <div class="user-role">{user_role}</div>
-                        </div>
-                        <a href="/?logout=true" class="logout-btn">
-                            🚪 Logout
-                        </a>
+                    <!-- Right: Theme Switcher -->
+                    <div class="theme-switcher">
+                        <button class="theme-btn {'active' if theme_name == 'dark' else ''}" onclick="changeTheme('dark')" title="Dark Mode">🌙</button>
+                        <button class="theme-btn {'active' if theme_name == 'light' else ''}" onclick="changeTheme('light')" title="Light Mode">☀️</button>
+                        <button class="theme-btn {'active' if theme_name == 'high_contrast' else ''}" onclick="changeTheme('high_contrast')" title="High Contrast">🔳</button>
+                        <button class="theme-btn {'active' if theme_name == 'swaccha_green' else ''}" onclick="changeTheme('swaccha_green')" title="Swaccha Green">🌿</button>
                     </div>
                 </div>
             </nav>
