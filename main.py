@@ -81,6 +81,8 @@ app = dash.Dash(
 )
 
 # Enhanced PWA configuration - SIMPLIFIED RELIABLE APPROACH
+# Replace the app.index_string section in your main.py with this:
+
 app.index_string = f'''
 <!DOCTYPE html>
 <html lang="en">
@@ -140,17 +142,25 @@ app.index_string = f'''
                 }}, 1500);
             }});
             
-            // RELIABLE EVENT DELEGATION APPROACH
-            // This will work regardless of when buttons are added to the DOM
+            // RELIABLE EVENT DELEGATION APPROACH - FIXED with clean navigation
             document.addEventListener('click', function(e) {{
                 console.log('🎯 Click detected on:', e.target.id, e.target.className);
+                
+                // Handle Admin Login button - FORCE clean navigation
+                if (e.target.id === 'admin-login-btn') {{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔐 Admin login button clicked - navigating to clean /login');
+                    window.location.replace('/login');  // Clean URL without parameters
+                    return false;
+                }}
                 
                 // Handle Google OAuth buttons
                 if (e.target.id === 'google-login-btn' || e.target.id === 'google-login-btn-alt') {{
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('🔵 Google OAuth button clicked - redirecting to /oauth/login');
-                    window.location.href = '/oauth/login';
+                    window.location.replace('/oauth/login');
                     return false;
                 }}
                 
@@ -159,22 +169,25 @@ app.index_string = f'''
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('🚪 Logout button clicked - redirecting to /?logout=true');
-                    window.location.href = '/?logout=true';
+                    window.location.replace('/?logout=true');
                     return false;
                 }}
                 
                 // Handle clicks on spans inside the buttons (for nested elements)
-                const parentButton = e.target.closest('#google-login-btn, #google-login-btn-alt, #overlay-logout-btn');
+                const parentButton = e.target.closest('#admin-login-btn, #google-login-btn, #google-login-btn-alt, #overlay-logout-btn');
                 if (parentButton) {{
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    if (parentButton.id === 'google-login-btn' || parentButton.id === 'google-login-btn-alt') {{
+                    if (parentButton.id === 'admin-login-btn') {{
+                        console.log('🔐 Admin login button (nested click) - navigating to clean /login');
+                        window.location.replace('/login');  // Clean URL without parameters
+                    }} else if (parentButton.id === 'google-login-btn' || parentButton.id === 'google-login-btn-alt') {{
                         console.log('🔵 Google OAuth button (nested click) - redirecting to /oauth/login');
-                        window.location.href = '/oauth/login';
+                        window.location.replace('/oauth/login');
                     }} else if (parentButton.id === 'overlay-logout-btn') {{
                         console.log('🚪 Logout button (nested click) - redirecting to /?logout=true');
-                        window.location.href = '/?logout=true';
+                        window.location.replace('/?logout=true');
                     }}
                     return false;
                 }}
@@ -655,7 +668,7 @@ app.layout = html.Div([
     prevent_initial_call=False
 )
 def route_and_authenticate(pathname, search):
-    """Core routing and authentication logic"""
+    """Core routing and authentication logic - FIXED to handle logout parameter"""
     if pathname:
         pathname = urllib.parse.unquote(pathname)
     
@@ -726,16 +739,25 @@ def route_and_authenticate(pathname, search):
     print(f"DEBUG: Final auth state - authenticated: {is_authenticated}")
     
     # Route determination with unauthorized access handling
+    # FIXED: Clean handling of login page regardless of parameters
     if not pathname or pathname == '/':
         return 'public_landing', is_authenticated, user_data, ''
     elif pathname == '/login':
-        error = params.get('error', '')
+        # FIXED: Always go to login page, completely ignore logout parameter
+        if params.get('logout') == 'true':
+            # If coming from logout, treat as normal login with no error
+            error = ''
+        else:
+            # Only check for actual error parameters if not from logout
+            error = params.get('error', '')
+        
         error_messages = {
             'oauth_not_available': 'Google OAuth not configured. Use demo login.',
             'oauth_failed': 'OAuth setup failed. Use demo login.',
             'unauthorized': 'You are not authorized. Contact administrator.',
             'invalid_pin': 'Invalid PIN. Try: 1234, 5678, or 9999'
         }
+        print(f"DEBUG: Routing to login page - error: {error}, logout param ignored")
         return 'login', is_authenticated, user_data, error_messages.get(error, error)
     elif pathname == '/dashboard':
         if is_authenticated:
@@ -836,13 +858,15 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
     prevent_initial_call=True
 )
 def handle_navigation(login_clicks, overview_clicks, analytics_clicks, reports_clicks):
-    """Handle basic navigation"""
+    """Handle basic navigation - FIXED to clear logout parameter"""
     if not ctx.triggered:
         raise PreventUpdate
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     if ctx.triggered[0]['value'] in [None, 0]:
         raise PreventUpdate
+    
+    print(f"DEBUG: Navigation button clicked: {button_id}")
     
     routes = {
         'admin-login-btn': '/login',
@@ -923,6 +947,21 @@ def handle_login_actions(demo_clicks, admin_clicks, dev_clicks,
             return '/login?error=invalid_email'
     
     raise PreventUpdate
+
+clientside_callback(
+    """
+    function(pathname) {
+        // Clean URL when navigating to login page
+        if (pathname === '/login' && window.location.search.includes('logout=true')) {
+            console.log('🧹 Cleaning URL - removing logout parameter from login page');
+            window.history.replaceState({}, '', '/login');
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('url', 'href'),
+    Input('url', 'pathname')
+)
 
 # 6. Admin dashboard actions - NO LOGOUT (handled by JavaScript)
 @callback(
