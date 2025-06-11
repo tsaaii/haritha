@@ -27,6 +27,8 @@ from layouts.admin_dashboard import (
     ensure_upload_directory,
     configure_upload_settings
 )
+from callbacks.filter_container_callbacks import register_filter_container_callbacks
+from data_loader import get_cached_data, refresh_cached_data
 from layouts.unauthorized_layout import create_unauthorized_layout, UNAUTHORIZED_CSS
 from services.auth_service import auth_service
 from callbacks.dashboard_filter_callbacks import register_dashboard_filter_callbacks
@@ -1164,6 +1166,9 @@ register_debug_routes(server)
 # Register dashboard Flask routes (moved from main to admin_dashboard)
 register_dashboard_flask_routes(server)
 register_dashboard_filter_callbacks()
+register_filter_container_callbacks("analytics-filter-container")
+# Add hidden div for export status (add to your layout)
+html.Div(id='dashboard-export-status', children=[], style={'display': 'none'})
 # Create upload directories
 upload_dir = Path('uploads')
 upload_dir.mkdir(exist_ok=True)
