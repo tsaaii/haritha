@@ -8,6 +8,152 @@ from dash import callback, Input, Output, State, html, ctx
 from dash.exceptions import PreventUpdate
 from config.themes import THEMES, DEFAULT_THEME
 import dash
+from dash import callback, Input, Output, State, ctx
+from dash.exceptions import PreventUpdate
+import pandas as pd
+from datetime import datetime, timedelta
+
+
+
+
+@callback(
+    [Output('filtered-data-display', 'children'),
+     Output('analytics-filter-container-status', 'style'),
+     Output('analytics-filter-container-status-text', 'children')],
+    [Input('analytics-filter-container-apply-btn', 'n_clicks')],
+    [State('analytics-filter-container-agency-filter', 'value'),
+     State('analytics-filter-container-cluster-filter', 'value'),
+     State('analytics-filter-container-site-filter', 'value'),
+     State('analytics-filter-container-date-filter', 'start_date'),
+     State('analytics-filter-container-date-filter', 'end_date'),
+     State('current-theme', 'data')],
+    prevent_initial_call=True
+)
+def apply_analytics_filters(n_clicks, agency, cluster, site, start_date, end_date, theme_name):
+    """Apply filters and update data display"""
+    if not n_clicks:
+        raise PreventUpdate
+    
+    # Get theme for styling
+    from utils.theme_utils import get_theme_styles
+    theme_styles = get_theme_styles(theme_name or 'dark')
+    theme = theme_styles["theme"]
+    
+    # TODO: Replace with your actual data filtering logic
+    # For now, showing sample filtered results
+    
+    # Create sample filtered display
+    filtered_display = create_filtered_data_display(
+        agency, cluster, site, start_date, end_date, theme
+    )
+    
+    # Update status
+    status_style = {"display": "block"}
+    status_text = f"✅ Filters applied: {agency}, {cluster}, {site} ({start_date} to {end_date})"
+    
+    return filtered_display, status_style, status_text
+
+@callback(
+    [Output('analytics-filter-container-agency-filter', 'value'),
+     Output('analytics-filter-container-cluster-filter', 'value'),
+     Output('analytics-filter-container-site-filter', 'value'),
+     Output('analytics-filter-container-date-filter', 'start_date'),
+     Output('analytics-filter-container-date-filter', 'end_date')],
+    [Input('analytics-filter-container-reset-btn', 'n_clicks')],
+    prevent_initial_call=True
+)
+def reset_analytics_filters(n_clicks):
+    """Reset all filters to default values"""
+    if not n_clicks:
+        raise PreventUpdate
+    
+    default_start_date = datetime.now() - timedelta(days=7)
+    default_end_date = datetime.now()
+    
+    return 'all', 'all', 'all', default_start_date, default_end_date
+
+def create_filtered_data_display(agency, cluster, site, start_date, end_date, theme):
+    """Create the filtered data display component"""
+    
+    # Sample implementation - replace with your actual data processing
+    return html.Div([
+        # Filter summary
+        html.Div([
+            html.H4("📊 Filtered Results", style={
+                "color": theme["text_primary"],
+                "marginBottom": "1rem"
+            }),
+            html.Div([
+                html.Span(f"Agency: {agency} | ", style={"color": theme["text_secondary"]}),
+                html.Span(f"Cluster: {cluster} | ", style={"color": theme["text_secondary"]}),
+                html.Span(f"Site: {site} | ", style={"color": theme["text_secondary"]}),
+                html.Span(f"Date: {start_date} to {end_date}", style={"color": theme["text_secondary"]})
+            ], style={"marginBottom": "1.5rem"})
+        ]),
+        
+        # Sample metrics cards
+        html.Div([
+            create_metric_card("Total Collections", "1,247", "📦", theme),
+            create_metric_card("Total Weight", "2,856 tons", "⚖️", theme),
+            create_metric_card("Efficiency", "94.2%", "⚡", theme),
+            create_metric_card("Active Vehicles", "23", "🚛", theme),
+        ], style={
+            "display": "grid",
+            "gridTemplateColumns": "repeat(auto-fit, minmax(200px, 1fr))",
+            "gap": "1rem",
+            "marginBottom": "2rem"
+        }),
+        
+        # Placeholder for charts/tables
+        html.Div([
+            html.H5("📈 Data Visualization", style={
+                "color": theme["text_primary"],
+                "marginBottom": "1rem"
+            }),
+            html.Div(
+                "Charts and detailed data tables will appear here based on your filtered data",
+                style={
+                    "padding": "2rem",
+                    "backgroundColor": theme["accent_bg"],
+                    "borderRadius": "8px",
+                    "textAlign": "center",
+                    "color": theme["text_secondary"],
+                    "border": f"2px dashed {theme['card_bg']}"
+                }
+            )
+        ])
+    ], style={
+        "backgroundColor": theme["card_bg"],
+        "padding": "1.5rem",
+        "borderRadius": "12px",
+        "border": f"2px solid {theme['accent_bg']}"
+    })
+
+def create_metric_card(title, value, icon, theme):
+    """Create a metric card for the filtered display"""
+    return html.Div([
+        html.Div([
+            html.Span(icon, style={"fontSize": "1.5rem", "marginRight": "0.5rem"}),
+            html.Span(title, style={"fontSize": "0.9rem", "color": theme["text_secondary"]})
+        ], style={"marginBottom": "0.5rem"}),
+        html.Div(value, style={
+            "fontSize": "1.5rem",
+            "fontWeight": "700",
+            "color": theme["text_primary"]
+        })
+    ], style={
+        "backgroundColor": theme["accent_bg"],
+        "padding": "1rem",
+        "borderRadius": "8px",
+        "border": f"1px solid {theme.get('border_light', theme['card_bg'])}",
+        "textAlign": "center"
+    })
+
+
+# 4. Update your main.py to include the new CSS
+# Add this to your app initialization:
+
+
 
 def register_dashboard_callbacks(app):
     """Register all dashboard-specific callbacks"""
@@ -227,3 +373,13 @@ def get_tab_content(tab_name, theme_name):
             )
         ]
     )
+
+
+app = dash.Dash(
+    __name__, 
+    suppress_callback_exceptions=True,
+    external_stylesheets=[
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
+        "/assets/filter_styles.css"  # Add this line
+    ]
+)

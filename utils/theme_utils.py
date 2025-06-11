@@ -163,3 +163,41 @@ def get_hover_overlay_css():
             opacity: 1;
         }
     """
+
+
+def get_theme_css_variables(theme_name):
+    """Generate CSS variables for the current theme"""
+    theme = THEMES[theme_name]
+    
+    return f"""
+    :root {{
+        --primary-bg: {theme['primary_bg']};
+        --card-bg: {theme['card_bg']};
+        --accent-bg: {theme['accent_bg']};
+        --text-primary: {theme['text_primary']};
+        --text-secondary: {theme['text_secondary']};
+        --brand-primary: {theme['brand_primary']};
+        --border-light: {theme.get('border_light', theme['accent_bg'])};
+    }}
+    """
+
+
+
+def inject_theme_css_variables(theme_name):
+    """Inject CSS variables for current theme"""
+    theme = THEMES[theme_name]
+    
+    css_variables = f"""
+    <style>
+    :root {{
+        --primary-bg: {theme['primary_bg']};
+        --card-bg: {theme['card_bg']};
+        --accent-bg: {theme['accent_bg']};
+        --text-primary: {theme['text_primary']};
+        --text-secondary: {theme['text_secondary']};
+        --brand-primary: {theme['brand_primary']};
+        --border-light: {theme.get('border_light', theme['accent_bg'])};
+    }}
+    </style>
+    """
+    return css_variables
