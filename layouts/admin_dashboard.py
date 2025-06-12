@@ -938,9 +938,14 @@ def create_tab_content(active_tab, theme_styles, user_data, data=None):
         return create_minimal_dashboard_content(theme_styles, user_data)
 
 
+# Find this function in your layouts/admin_dashboard.py and replace it completely:
+
 def create_minimal_dashboard_content(theme_styles, user_data):
-    """Create minimal dashboard content - welcome message and quick stats"""
+    """Create minimal dashboard content - welcome message, quick stats AND FILTER CONTAINER"""
     theme = theme_styles["theme"]
+    
+    # Import filter container
+    from components.filters.filter_container import create_filter_container
     
     return html.Div([
         # Welcome section
@@ -949,81 +954,219 @@ def create_minimal_dashboard_content(theme_styles, user_data):
                 f"👋 Welcome back, {user_data.get('name', 'Administrator')}!",
                 style={
                     "color": theme["text_primary"],
-                    "fontSize": "2rem",
-                    "fontWeight": "700",
+                    "fontSize": "2.5rem",
+                    "fontWeight": "800",
                     "marginBottom": "1rem",
                     "textAlign": "center"
                 }
             ),
-            html.P(
-                "Your dashboard is ready. Use the tabs above to navigate to different sections.",
-                style={
-                    "color": theme["text_secondary"],
-                    "fontSize": "1.1rem",
-                    "textAlign": "center",
-                    "marginBottom": "2rem",
-                    "lineHeight": "1.5"
-                }
-            )
+            html.P([
+                html.Span("📊", style={"marginRight": "0.5rem"}),
+                "Dashboard Analytics Ready • ",
+                html.Span("🚀", style={"marginLeft": "0.5rem", "marginRight": "0.5rem"}),
+                "Use filters below to analyze waste management data",
+                html.Span(" • ⚡", style={"marginLeft": "0.5rem"}),
+                f" Last updated: {datetime.now().strftime('%H:%M:%S')}"
+            ], style={
+                "color": theme["text_secondary"],
+                "fontSize": "1.2rem",
+                "textAlign": "center",
+                "marginBottom": "2rem",
+                "lineHeight": "1.5"
+            })
         ], style={
-            "backgroundColor": theme["card_bg"],
+            "padding": "2rem 0",
+            "backgroundColor": theme["accent_bg"],
             "borderRadius": "12px",
-            "border": f"2px solid {theme['accent_bg']}",
-            "padding": "2rem",
-            "margin": "2rem 0",
-            "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.2)"
+            "marginBottom": "2rem",
+            "border": f"2px solid {theme['card_bg']}"
         }),
         
-        # Quick access cards
+        # ✅ ADD FILTER CONTAINER TO MAIN DASHBOARD
+        create_filter_container(theme, "analytics-filter-container"),
+        
+        # Quick stats section (enhanced)
         html.Div([
             html.H3(
-                "🚀 Quick Access",
+                "📈 Quick Stats Overview",
                 style={
                     "color": theme["text_primary"],
-                    "fontSize": "1.5rem",
+                    "fontSize": "1.8rem",
                     "fontWeight": "700",
                     "marginBottom": "1.5rem",
                     "textAlign": "center"
                 }
             ),
-            html.Div(
-                style={
-                    "display": "grid",
-                    "gridTemplateColumns": "repeat(auto-fit, minmax(250px, 1fr))",
-                    "gap": "1.5rem"
-                },
-                children=[
-                    create_quick_access_card(
-                        "🔍", "Data Analytics", 
-                        "Filter and analyze waste management data with advanced tools",
-                        "tab-data-analytics", theme
-                    ),
-                    create_quick_access_card(
-                        "📈", "Charts & Visualizations", 
-                        "View interactive charts and data visualizations",
-                        "tab-analytics", theme
-                    ),
-                    create_quick_access_card(
-                        "📋", "Generate Reports", 
-                        "Create and export detailed operational reports",
-                        "tab-reports", theme
-                    ),
-                    create_quick_access_card(
-                        "📤", "Upload Data", 
-                        "Upload new data files and manage existing datasets",
-                        "tab-upload", theme
-                    )
-                ]
-            )
+            html.Div([
+                create_stat_card("🚛", "Active Vehicles", "67", "vehicles", theme),
+                create_stat_card("⚖️", "Today's Collection", "1,234", "tonnes", theme),
+                create_stat_card("📍", "Collection Points", "156", "sites", theme),
+                create_stat_card("✅", "Efficiency Score", "94%", "performance", theme),
+            ], style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(250px, 1fr))",
+                "gap": "1.5rem",
+                "marginBottom": "2rem"
+            })
         ], style={
-            "backgroundColor": theme["accent_bg"],
+            "backgroundColor": theme["card_bg"],
             "borderRadius": "12px",
-            "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}",
             "padding": "2rem",
-            "margin": "2rem 0"
+            "border": f"2px solid {theme['accent_bg']}",
+            "marginBottom": "2rem"
+        }),
+        
+        # ✅ ADD FILTERED DATA DISPLAY AREA
+        html.Div(
+            id="filtered-data-display",
+            children=[
+                html.Div([
+                    html.H3(
+                        "🔍 Filtered Data Results",
+                        style={
+                            "color": theme["text_primary"],
+                            "fontSize": "1.5rem",
+                            "fontWeight": "600",
+                            "marginBottom": "1rem",
+                            "textAlign": "center"
+                        }
+                    ),
+                    html.P(
+                        "📊 Apply filters above to view and analyze waste collection data",
+                        style={
+                            "textAlign": "center",
+                            "color": theme["text_secondary"],
+                            "fontSize": "1.1rem",
+                            "margin": "0"
+                        }
+                    )
+                ], style={
+                    "textAlign": "center",
+                    "padding": "3rem",
+                    "backgroundColor": theme["card_bg"],
+                    "borderRadius": "12px",
+                    "border": f"2px dashed {theme['accent_bg']}"
+                })
+            ],
+            style={"marginBottom": "2rem"}
+        ),
+        
+        # Action buttons section
+        html.Div([
+            html.H3(
+                "⚡ Quick Actions",
+                style={
+                    "color": theme["text_primary"],
+                    "fontSize": "1.8rem",
+                    "fontWeight": "700",
+                    "marginBottom": "1.5rem",
+                    "textAlign": "center"
+                }
+            ),
+            html.Div([
+                create_action_button("📊", "View Analytics", "Go to detailed analytics", theme),
+                create_action_button("📋", "Generate Reports", "Create comprehensive reports", theme),
+                create_action_button("⭐", "Check Reviews", "View customer feedback", theme),
+                create_action_button("📤", "Upload Data", "Import new data files", theme),
+            ], style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(250px, 1fr))",
+                "gap": "1.5rem"
+            })
+        ], style={
+            "backgroundColor": theme["card_bg"],
+            "borderRadius": "12px",
+            "padding": "2rem",
+            "border": f"2px solid {theme['accent_bg']}"
         })
     ])
 
+
+def create_stat_card(icon, title, value, unit, theme):
+    """Create a statistics card"""
+    return html.Div([
+        html.Div([
+            html.Span(icon, style={
+                "fontSize": "2.5rem",
+                "marginBottom": "0.5rem",
+                "display": "block"
+            }),
+            html.H4(title, style={
+                "color": theme["text_primary"],
+                "fontSize": "1rem",
+                "fontWeight": "600",
+                "marginBottom": "0.5rem"
+            }),
+            html.Div([
+                html.Span(value, style={
+                    "fontSize": "2rem",
+                    "fontWeight": "800",
+                    "color": theme["brand_primary"]
+                }),
+                html.Span(f" {unit}", style={
+                    "fontSize": "0.9rem",
+                    "color": theme["text_secondary"],
+                    "marginLeft": "0.5rem"
+                })
+            ])
+        ])
+    ], style={
+        "backgroundColor": theme["accent_bg"],
+        "borderRadius": "8px",
+        "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+        "padding": "1.5rem",
+        "textAlign": "center",
+        "transition": "transform 0.2s ease, box-shadow 0.2s ease",
+        "cursor": "default",
+        "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
+    })
+
+
+def create_action_button(icon, title, description, theme):
+    """Create an action button card"""
+    return html.Div([
+        html.Div(icon, style={
+            "fontSize": "2rem",
+            "marginBottom": "1rem",
+            "color": theme["brand_primary"]
+        }),
+        html.H4(title, style={
+            "color": theme["text_primary"],
+            "fontSize": "1.1rem",
+            "fontWeight": "600",
+            "marginBottom": "0.5rem"
+        }),
+        html.P(description, style={
+            "color": theme["text_secondary"],
+            "fontSize": "0.9rem",
+            "margin": "0"
+        }),
+        html.Button(
+            f"Open {title}",
+            style={
+                "backgroundColor": theme["brand_primary"],
+                "color": "white",
+                "border": "none",
+                "borderRadius": "6px",
+                "padding": "0.5rem 1rem",
+                "marginTop": "1rem",
+                "fontSize": "0.9rem",
+                "fontWeight": "600",
+                "cursor": "pointer",
+                "width": "100%",
+                "transition": "all 0.2s ease"
+            }
+        )
+    ], style={
+        "backgroundColor": theme["accent_bg"],
+        "borderRadius": "8px",
+        "border": f"1px solid {theme.get('border_light', theme['accent_bg'])}",
+        "padding": "1.5rem",
+        "textAlign": "center",
+        "transition": "transform 0.2s ease, box-shadow 0.2s ease",
+        "cursor": "pointer",
+        "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
+    })
 
 def create_quick_access_card(icon, title, description, tab_id, theme):
     """Create quick access cards for dashboard"""

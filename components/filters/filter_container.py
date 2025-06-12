@@ -1,7 +1,7 @@
 # components/filters/filter_container.py
 """
 Responsive Filter Container Component for Swaccha Andhra Dashboard
-Optimized for desktop and mobile with theme support
+Updated to work with dynamic CSV data - NO HARDCODED OPTIONS
 """
 
 from dash import html, dcc
@@ -22,35 +22,9 @@ def create_filter_container(theme, container_id="main-filter-container"):
         html.Div: Complete filter container component
     """
     
-    # Sample options - you'll replace these with real data later
-    agency_options = [
-        {'label': 'All Agencies', 'value': 'all'},
-        {'label': 'Zigma', 'value': 'zigma'},
-        {'label': 'Green Clean', 'value': 'green_clean'},
-        {'label': 'EcoServe', 'value': 'ecoserve'},
-        {'label': 'Urban Waste Solutions', 'value': 'urban_waste'}
-    ]
-    
-    cluster_options = [
-        {'label': 'All Clusters', 'value': 'all'},
-        {'label': 'Nellore Municipal Corporation', 'value': 'nellore'},
-        {'label': 'Chittor', 'value': 'chittor'},
-        {'label': 'Tirupathi', 'value': 'tirupathi'},
-        {'label': 'GVMC', 'value': 'gvmc'},
-        {'label': 'Kurnool', 'value': 'kurnool'},
-        {'label': 'Vijayawada', 'value': 'vijayawada'}
-    ]
-    
-    site_options = [
-        {'label': 'All Sites', 'value': 'all'},
-        {'label': 'Allipuram', 'value': 'allipuram'},
-        {'label': 'Donthalli', 'value': 'donthalli'},
-        {'label': 'Kuppam', 'value': 'kuppam'},
-        {'label': 'Palamaner', 'value': 'palamaner'},
-        {'label': 'Madanapalle', 'value': 'madanapalle'},
-        {'label': 'TPTY', 'value': 'tpty'},
-        {'label': 'Vizagsac', 'value': 'vizagsac'}
-    ]
+    # ✅ NO HARDCODED OPTIONS - These will be populated by callbacks from CSV data
+    # The consolidated callbacks will update these dropdowns with real data
+    initial_options = [{'label': 'Loading...', 'value': 'loading'}]
     
     # Base styles for filter components
     filter_input_style = {
@@ -97,6 +71,20 @@ def create_filter_container(theme, container_id="main-filter-container"):
                     "borderBottom": f"2px solid {theme['accent_bg']}",
                     "paddingBottom": "1rem"
                 },
+                children=[
+                    html.H3("🔍 Data Filters", style={
+                        "color": theme["text_primary"],
+                        "fontSize": "1.5rem",
+                        "fontWeight": "700",
+                        "margin": "0 0 0.5rem 0"
+                    }),
+                    html.P("Filter waste collection data by agency, location, and time period", style={
+                        "color": theme["text_secondary"],
+                        "fontSize": "0.9rem",
+                        "margin": "0",
+                        "lineHeight": "1.4"
+                    })
+                ]
             ),
             
             # Responsive Filter Grid
@@ -109,7 +97,7 @@ def create_filter_container(theme, container_id="main-filter-container"):
                     "marginBottom": "1.5rem"
                 },
                 children=[
-                    # Agency Filter
+                    # Agency Filter - Will be populated by callback
                     html.Div(
                         className="filter-item",
                         children=[
@@ -119,7 +107,7 @@ def create_filter_container(theme, container_id="main-filter-container"):
                             ),
                             dcc.Dropdown(
                                 id=f"{container_id}-agency-filter",
-                                options=agency_options,
+                                options=initial_options,  # Will be updated by callback
                                 value='all',
                                 placeholder="Select Agency...",
                                 clearable=False,
@@ -131,7 +119,7 @@ def create_filter_container(theme, container_id="main-filter-container"):
                         ]
                     ),
                     
-                    # Cluster Filter
+                    # Cluster Filter - Will be populated by callback
                     html.Div(
                         className="filter-item",
                         children=[
@@ -141,7 +129,7 @@ def create_filter_container(theme, container_id="main-filter-container"):
                             ),
                             dcc.Dropdown(
                                 id=f"{container_id}-cluster-filter",
-                                options=cluster_options,
+                                options=initial_options,  # Will be updated by callback
                                 value='all',
                                 placeholder="Select Cluster...",
                                 clearable=False,
@@ -153,7 +141,7 @@ def create_filter_container(theme, container_id="main-filter-container"):
                         ]
                     ),
                     
-                    # Site Filter
+                    # Site Filter - Will be populated by callback
                     html.Div(
                         className="filter-item",
                         children=[
@@ -163,7 +151,7 @@ def create_filter_container(theme, container_id="main-filter-container"):
                             ),
                             dcc.Dropdown(
                                 id=f"{container_id}-site-filter",
-                                options=site_options,
+                                options=initial_options,  # Will be updated by callback
                                 value='all',
                                 placeholder="Select Site...",
                                 clearable=False,
@@ -310,10 +298,66 @@ def create_filter_container(theme, container_id="main-filter-container"):
                 children=[
                     html.Span(id=f"{container_id}-status-text", children="Ready to filter data")
                 ]
+            ),
+            
+            # Data loading indicator
+            html.Div(
+                id=f"{container_id}-loading",
+                style={
+                    "marginTop": "1rem",
+                    "padding": "0.75rem",
+                    "backgroundColor": theme["accent_bg"],
+                    "borderRadius": "8px",
+                    "textAlign": "center",
+                    "fontSize": "0.85rem",
+                    "color": theme["text_secondary"],
+                    "display": "block"  # Shown initially
+                },
+                children=[
+                    html.Span("🔄 Loading filter options from CSV data...", style={
+                        "color": theme["brand_primary"]
+                    })
+                ]
             )
         ]
     )
 
+def create_analytics_filter_container(theme):
+    """
+    Create filter container specifically for analytics page
+    Uses 'analytics-filter-container' as ID to match consolidated callbacks
+    """
+    return create_filter_container(theme, container_id="analytics-filter-container")
+
+def get_filter_options_from_csv():
+    """
+    Get filter options from CSV data - called by callbacks
+    This is a helper function that the callbacks can use
+    """
+    try:
+        from data_loader import get_cached_data, get_filter_options
+        
+        df = get_cached_data()
+        
+        if df.empty:
+            logger.warning("No CSV data available for filter options")
+            return {
+                'agencies': [{'label': 'No Data Available', 'value': 'no_data'}],
+                'clusters': [{'label': 'No Data Available', 'value': 'no_data'}],
+                'sites': [{'label': 'No Data Available', 'value': 'no_data'}]
+            }
+        
+        options = get_filter_options(df)
+        logger.info(f"✅ Generated filter options from CSV: {len(options['agencies'])} agencies")
+        return options
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting filter options from CSV: {e}")
+        return {
+            'agencies': [{'label': 'Error Loading Data', 'value': 'error'}],
+            'clusters': [{'label': 'Error Loading Data', 'value': 'error'}],
+            'sites': [{'label': 'Error Loading Data', 'value': 'error'}]
+        }
 
 def create_filter_container_styles():
     """
@@ -406,12 +450,17 @@ def create_filter_container_styles():
         outline: 2px solid #3182CE !important;
         outline-offset: 2px !important;
     }
+    
+    /* Loading state styles */
+    .filter-container-wrapper[data-loading="true"] .custom-dropdown {
+        opacity: 0.6;
+        pointer-events: none;
+    }
     """
-
 
 def get_filter_callback_template():
     """
-    Template for filter callbacks - you can use this as a starting point
+    Template for filter callbacks - updated for CSV integration
     
     Returns:
         str: Python code template for implementing filter callbacks
@@ -419,55 +468,76 @@ def get_filter_callback_template():
     return '''
 from dash import callback, Input, Output, State
 from dash.exceptions import PreventUpdate
+from data_loader import get_cached_data, filter_data, create_filtered_data_display
 
 @callback(
     [Output('filtered-data-display', 'children'),
-     Output('main-filter-container-status', 'style'),
-     Output('main-filter-container-status-text', 'children')],
-    [Input('main-filter-container-apply-btn', 'n_clicks')],
-    [State('main-filter-container-agency-filter', 'value'),
-     State('main-filter-container-cluster-filter', 'value'),
-     State('main-filter-container-site-filter', 'value'),
-     State('main-filter-container-date-filter', 'start_date'),
-     State('main-filter-container-date-filter', 'end_date')],
+     Output('analytics-filter-container-status', 'style'),
+     Output('analytics-filter-container-status-text', 'children')],
+    [Input('analytics-filter-container-apply-btn', 'n_clicks')],
+    [State('analytics-filter-container-agency-filter', 'value'),
+     State('analytics-filter-container-cluster-filter', 'value'),
+     State('analytics-filter-container-site-filter', 'value'),
+     State('analytics-filter-container-date-filter', 'start_date'),
+     State('analytics-filter-container-date-filter', 'end_date'),
+     State('current-theme', 'data')],
     prevent_initial_call=True
 )
-def apply_filters(n_clicks, agency, cluster, site, start_date, end_date):
-    """Apply filters and update data display"""
+def apply_filters(n_clicks, agency, cluster, site, start_date, end_date, theme_name):
+    """Apply filters using real CSV data"""
     if not n_clicks:
         raise PreventUpdate
     
-    # Your filtering logic here
-    filtered_data = filter_data(agency, cluster, site, start_date, end_date)
+    # Load data from CSV
+    df = get_cached_data()
+    
+    # Apply filters
+    filtered_df = filter_data(df, agency, cluster, site, start_date, end_date)
+    
+    # Create display
+    from utils.theme_utils import get_theme_styles
+    theme_styles = get_theme_styles(theme_name or 'dark')
+    theme = theme_styles["theme"]
+    
+    display = create_filtered_data_display(filtered_df, theme)
     
     # Update status
     status_style = {"display": "block"}
-    status_text = f"Filtered {len(filtered_data)} records"
+    status_text = f"✅ Applied filters: {len(filtered_df)} records found"
     
-    # Return filtered display, status visibility, and status text
-    return create_filtered_display(filtered_data), status_style, status_text
+    return display, status_style, status_text
 
 @callback(
-    [Output('main-filter-container-agency-filter', 'value'),
-     Output('main-filter-container-cluster-filter', 'value'),
-     Output('main-filter-container-site-filter', 'value'),
-     Output('main-filter-container-date-filter', 'start_date'),
-     Output('main-filter-container-date-filter', 'end_date')],
-    [Input('main-filter-container-reset-btn', 'n_clicks')],
+    [Output('analytics-filter-container-agency-filter', 'options'),
+     Output('analytics-filter-container-cluster-filter', 'options'),
+     Output('analytics-filter-container-site-filter', 'options'),
+     Output('analytics-filter-container-loading', 'style')],
+    [Input('analytics-filter-container', 'id')],
     prevent_initial_call=True
 )
-def reset_filters(n_clicks):
-    """Reset all filters to default values"""
-    if not n_clicks:
-        raise PreventUpdate
-    
-    return 'all', 'all', 'all', default_start_date, default_end_date
+def update_filter_options(component_id):
+    """Update filter options from CSV data"""
+    try:
+        options = get_filter_options_from_csv()
+        
+        # Hide loading indicator
+        loading_style = {"display": "none"}
+        
+        return options['agencies'], options['clusters'], options['sites'], loading_style
+        
+    except Exception as e:
+        # Show error in loading indicator
+        loading_style = {"display": "block", "color": "#ff4444"}
+        
+        fallback_options = [{'label': 'Error Loading Data', 'value': 'error'}]
+        return fallback_options, fallback_options, fallback_options, loading_style
 '''
-
 
 # Export functions
 __all__ = [
     'create_filter_container',
+    'create_analytics_filter_container',
     'create_filter_container_styles', 
-    'get_filter_callback_template'
+    'get_filter_callback_template',
+    'get_filter_options_from_csv'
 ]
