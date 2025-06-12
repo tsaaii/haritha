@@ -495,40 +495,476 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
             
             <!-- Main Content -->
             <main class="main-content">
-                <div class="page-hero">
-                </div>
-                
-                <div class="coming-soon">
-                    <div class="coming-soon-icon">🚧</div>
-                    <h2>Coming Soon</h2>
-                    <p>
-                        We're working hard to bring you amazing features for this section. 
-                        Check back soon for updates and new functionality!
-                    </p>
-                    
-                    <div class="feature-preview">
-                        <div class="preview-item">
-                            <div class="preview-item-icon">⚡</div>
-                            <h4>Fast & Efficient</h4>
-                            <p>Optimized for performance</p>
+                <!-- Filter container -->
+                <div class="filter-container" style="
+                    background-color: var(--card-bg);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    margin: 0;
+                    width: 100%;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                    border: 1px solid var(--border-light);
+                ">
+                    <div class="filter-header" style="
+                        margin-bottom: 2rem;
+                        text-align: center;
+                        border-bottom: 2px solid var(--accent-bg);
+                        padding-bottom: 1.5rem;
+                    ">
+                        <h3 style="
+                            color: var(--text-primary);
+                            font-size: 2rem;
+                            font-weight: 700;
+                            margin: 0 0 1rem 0;
+                            letter-spacing: -0.5px;
+                        ">🔍 Data Filters</h3>
+                        <p style="
+                            color: var(--text-secondary);
+                            font-size: 1.1rem;
+                            margin: 0;
+                            line-height: 1.5;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        ">Filter waste collection data by agency, location, and time period</p>
+                    </div>
+
+                    <div class="filter-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 2rem;
+                        margin-bottom: 2rem;
+                    ">
+                        <!-- Agency Filter -->
+                        <div class="filter-item">
+                            <label style="
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 600;
+                                margin-bottom: 0.75rem;
+                                display: block;
+                            ">🏢 Agency</label>
+                            <select id="agency-filter" style="
+                                width: 100%;
+                                padding: 1rem;
+                                border: 2px solid var(--border-light);
+                                border-radius: 12px;
+                                background-color: var(--card-bg);
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 500;
+                                outline: none;
+                                transition: all 0.2s ease;
+                                cursor: pointer;
+                            ">
+                                <option value="all">All Agencies</option>
+                                <option value="swaccha_ap">Swaccha Andhra Pradesh</option>
+                                <option value="municipal_corp">Municipal Corporation</option>
+                                <option value="district_collector">District Collector Office</option>
+                            </select>
                         </div>
-                        <div class="preview-item">
-                            <div class="preview-item-icon">🎨</div>
-                            <h4>Beautiful Design</h4>
-                            <p>Modern and intuitive interface</p>
+
+                        <!-- Cluster Filter -->
+                        <div class="filter-item">
+                            <label style="
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 600;
+                                margin-bottom: 0.75rem;
+                                display: block;
+                            ">🗺️ Cluster</label>
+                            <select id="cluster-filter" style="
+                                width: 100%;
+                                padding: 1rem;
+                                border: 2px solid var(--border-light);
+                                border-radius: 12px;
+                                background-color: var(--card-bg);
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 500;
+                                outline: none;
+                                transition: all 0.2s ease;
+                                cursor: pointer;
+                            ">
+                                <option value="all">All Clusters</option>
+                                <option value="north">North Cluster</option>
+                                <option value="south">South Cluster</option>
+                                <option value="east">East Cluster</option>
+                                <option value="west">West Cluster</option>
+                            </select>
                         </div>
-                        <div class="preview-item">
-                            <div class="preview-item-icon">📱</div>
-                            <h4>Mobile Ready</h4>
-                            <p>Works on all devices</p>
+
+                        <!-- Site Filter -->
+                        <div class="filter-item">
+                            <label style="
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 600;
+                                margin-bottom: 0.75rem;
+                                display: block;
+                            ">📍 Site</label>
+                            <select id="site-filter" style="
+                                width: 100%;
+                                padding: 1rem;
+                                border: 2px solid var(--border-light);
+                                border-radius: 12px;
+                                background-color: var(--card-bg);
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 500;
+                                outline: none;
+                                transition: all 0.2s ease;
+                                cursor: pointer;
+                            ">
+                                <option value="all">All Sites</option>
+                                <option value="vsk_central">Visakhapatnam Central</option>
+                                <option value="vjw_junction">Vijayawada Junction</option>
+                                <option value="gnt_main">Guntur Main</option>
+                                <option value="ttp_temple">Tirupati Temple</option>
+                            </select>
                         </div>
-                        <div class="preview-item">
-                            <div class="preview-item-icon">🔒</div>
-                            <h4>Secure</h4>
-                            <p>Enterprise-level security</p>
+
+                        <!-- Date Filter -->
+                        <div class="filter-item">
+                            <label style="
+                                color: var(--text-primary);
+                                font-size: 1.1rem;
+                                font-weight: 600;
+                                margin-bottom: 0.75rem;
+                                display: block;
+                            ">📅 Date Range</label>
+                            <div style="
+                                display: flex;
+                                gap: 1rem;
+                            ">
+                                <input type="date" id="start-date" style="
+                                    flex: 1;
+                                    padding: 1rem;
+                                    border: 2px solid var(--border-light);
+                                    border-radius: 12px;
+                                    background-color: var(--card-bg);
+                                    color: var(--text-primary);
+                                    font-size: 1.1rem;
+                                    font-weight: 500;
+                                    outline: none;
+                                    transition: all 0.2s ease;
+                                    cursor: pointer;
+                                ">
+                                <input type="date" id="end-date" style="
+                                    flex: 1;
+                                    padding: 1rem;
+                                    border: 2px solid var(--border-light);
+                                    border-radius: 12px;
+                                    background-color: var(--card-bg);
+                                    color: var(--text-primary);
+                                    font-size: 1.1rem;
+                                    font-weight: 500;
+                                    outline: none;
+                                    transition: all 0.2s ease;
+                                    cursor: pointer;
+                                ">
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Filter Actions -->
+                    <div class="filter-actions" style="
+                        display: flex;
+                        justify-content: center;
+                        gap: 1.5rem;
+                        border-top: 2px solid var(--accent-bg);
+                        padding-top: 2rem;
+                    ">
+                        <button id="apply-filters" style="
+                            background-color: var(--brand-primary);
+                            color: white;
+                            border: none;
+                            padding: 1rem 2rem;
+                            border-radius: 12px;
+                            font-size: 1.2rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            min-width: 200px;
+                            justify-content: center;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        ">
+                            <span style="font-size: 1.4rem;">🔍</span>
+                            Apply Filters
+                        </button>
+                        <button id="reset-filters" style="
+                            background-color: var(--accent-bg);
+                            color: var(--text-primary);
+                            border: 2px solid var(--border-light);
+                            padding: 1rem 2rem;
+                            border-radius: 12px;
+                            font-size: 1.2rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            min-width: 200px;
+                            justify-content: center;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                        ">
+                            <span style="font-size: 1.4rem;">🔄</span>
+                            Reset
+                        </button>
+                    </div>
                 </div>
+                
+                <!-- Filtered Data Display -->
+                <div id="filtered-data" style="
+                    margin-top: 2rem;
+                    background-color: var(--card-bg);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    width: 100%;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                    border: 1px solid var(--border-light);
+                ">
+                    <div class="data-header" style="
+                        margin-bottom: 2rem;
+                        text-align: center;
+                        border-bottom: 2px solid var(--accent-bg);
+                        padding-bottom: 1.5rem;
+                    ">
+                        <h3 style="
+                            color: var(--text-primary);
+                            font-size: 2rem;
+                            font-weight: 700;
+                            margin: 0 0 1rem 0;
+                            letter-spacing: -0.5px;
+                        ">📊 Filtered Data</h3>
+                        <p style="
+                            color: var(--text-secondary);
+                            font-size: 1.1rem;
+                            margin: 0;
+                            line-height: 1.5;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        ">View and analyze the filtered waste collection data</p>
+                    </div>
+
+                    <div id="data-table-container" style="
+                        overflow-x: auto;
+                        margin-top: 1rem;
+                    ">
+                        <table id="data-table" style="
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 1rem;
+                        ">
+                            <thead>
+                                <tr style="
+                                    background-color: var(--accent-bg);
+                                    color: var(--text-primary);
+                                ">
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-light);">Agency</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-light);">Cluster</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-light);">Site</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-light);">Date</th>
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-light);">Waste Collected (kg)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-body">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <script>
+                    // Load and process the data
+                    let wasteData = null;
+                    
+                    async function loadData() {{
+                        try {{
+                            const response = await fetch('/data/waste_management_data_updated.csv');
+                            if (!response.ok) {{
+                                throw new Error(`HTTP error! status: ${{response.status}}`);
+                            }}
+                            const csvText = await response.text();
+                            
+                            // Use Papa Parse to convert CSV to JSON
+                            const results = Papa.parse(csvText, {{
+                                header: true,
+                                skipEmptyLines: true,
+                                transform: (value, field) => {{
+                                    if (field === 'waste_collected') {{
+                                        return parseFloat(value) || 0;
+                                    }}
+                                    return value.trim();
+                                }}
+                            }});
+                            
+                            wasteData = results.data;
+                            console.log('Loaded data:', wasteData); // Debug log
+                            
+                            // Populate filter options
+                            populateFilterOptions();
+                            // Show initial data
+                            applyFilters();
+                        }} catch (error) {{
+                            console.error('Error loading data:', error);
+                            document.getElementById('data-table-body').innerHTML = `
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                        Error loading data: ${{error.message}}
+                                    </td>
+                                </tr>
+                            `;
+                        }}
+                    }}
+
+                    function populateFilterOptions() {{
+                        if (!wasteData || wasteData.length === 0) return;
+
+                        // Get unique values for each column
+                        const agencies = [...new Set(wasteData.map(d => d.agency))].sort();
+                        const clusters = [...new Set(wasteData.map(d => d.cluster))].sort();
+                        const sites = [...new Set(wasteData.map(d => d.site))].sort();
+
+                        const agencyFilter = document.getElementById('agency-filter');
+                        const clusterFilter = document.getElementById('cluster-filter');
+                        const siteFilter = document.getElementById('site-filter');
+
+                        // Clear existing options except "All"
+                        agencyFilter.innerHTML = '<option value="all">All Agencies</option>';
+                        clusterFilter.innerHTML = '<option value="all">All Clusters</option>';
+                        siteFilter.innerHTML = '<option value="all">All Sites</option>';
+
+                        // Add new options
+                        agencies.forEach(agency => {{
+                            if (agency) {{
+                                const option = document.createElement('option');
+                                option.value = agency;
+                                option.textContent = agency;
+                                agencyFilter.appendChild(option);
+                            }}
+                        }});
+
+                        clusters.forEach(cluster => {{
+                            if (cluster) {{
+                                const option = document.createElement('option');
+                                option.value = cluster;
+                                option.textContent = cluster;
+                                clusterFilter.appendChild(option);
+                            }}
+                        }});
+
+                        sites.forEach(site => {{
+                            if (site) {{
+                                const option = document.createElement('option');
+                                option.value = site;
+                                option.textContent = site;
+                                siteFilter.appendChild(option);
+                            }}
+                        }});
+                    }}
+
+                    function applyFilters() {{
+                        if (!wasteData || wasteData.length === 0) return;
+
+                        const agency = document.getElementById('agency-filter').value;
+                        const cluster = document.getElementById('cluster-filter').value;
+                        const site = document.getElementById('site-filter').value;
+                        const startDate = document.getElementById('start-date').value;
+                        const endDate = document.getElementById('end-date').value;
+
+                        // Filter data using array methods (similar to pandas filtering)
+                        let filteredData = wasteData.filter(row => {{
+                            const agencyMatch = agency === 'all' || row.agency === agency;
+                            const clusterMatch = cluster === 'all' || row.cluster === cluster;
+                            const siteMatch = site === 'all' || row.site === site;
+                            const dateMatch = (!startDate || row.date >= startDate) && (!endDate || row.date <= endDate);
+                            
+                            return agencyMatch && clusterMatch && siteMatch && dateMatch;
+                        }});
+
+                        // Sort by date if needed
+                        filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                        displayFilteredData(filteredData);
+                    }}
+
+                    function displayFilteredData(data) {{
+                        const tbody = document.getElementById('data-table-body');
+                        tbody.innerHTML = '';
+
+                        if (data.length === 0) {{
+                            tbody.innerHTML = `
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                        No data found matching the selected filters
+                                    </td>
+                                </tr>
+                            `;
+                            return;
+                        }}
+
+                        // Calculate summary statistics
+                        const totalWaste = data.reduce((sum, row) => sum + row.waste_collected, 0);
+                        const avgWaste = totalWaste / data.length;
+
+                        // Add summary row
+                        const summaryRow = document.createElement('tr');
+                        summaryRow.style.backgroundColor = 'var(--accent-bg)';
+                        summaryRow.innerHTML = `
+                            <td colspan="4" style="padding: 1rem; font-weight: 600;">Summary</td>
+                            <td style="padding: 1rem; font-weight: 600;">
+                                Total: ${{totalWaste.toFixed(2)}} kg<br>
+                                Average: ${{avgWaste.toFixed(2)}} kg
+                            </td>
+                        `;
+                        tbody.appendChild(summaryRow);
+
+                        // Add data rows
+                        data.forEach(row => {{
+                            const tr = document.createElement('tr');
+                            tr.style.borderBottom = '1px solid var(--border-light)';
+                            
+                            const cells = [
+                                row.agency,
+                                row.cluster,
+                                row.site,
+                                row.date,
+                                row.waste_collected.toFixed(2)
+                            ];
+
+                            cells.forEach(cell => {{
+                                const td = document.createElement('td');
+                                td.style.padding = '1rem';
+                                td.textContent = cell;
+                                tr.appendChild(td);
+                            }});
+
+                            tbody.appendChild(tr);
+                        }});
+                    }}
+
+                    function resetFilters() {{
+                        document.getElementById('agency-filter').value = 'all';
+                        document.getElementById('cluster-filter').value = 'all';
+                        document.getElementById('site-filter').value = 'all';
+                        document.getElementById('start-date').value = '';
+                        document.getElementById('end-date').value = '';
+                        applyFilters();
+                    }}
+
+                    // Event Listeners
+                    document.getElementById('apply-filters').addEventListener('click', applyFilters);
+                    document.getElementById('reset-filters').addEventListener('click', resetFilters);
+
+                    // Load data when page loads
+                    document.addEventListener('DOMContentLoaded', loadData);
+                </script>
+                <!-- Add Papa Parse library -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
             </main>
             
             <!-- Footer -->
@@ -791,13 +1227,13 @@ def create_navigation_tabs(theme, user_data):
     """OPTIMIZED: Navigation tabs with uniform sizing and no user info"""
     
     tabs = [
-        {"href": "/admin/dashboard", "label": "Dashboard", "icon": "📊"},
-        {"href": "/admin/data-analytics", "label": "Data Analytics", "icon": "🔍"},
-        {"href": "/admin/charts", "label": "Charts", "icon": "📈"},
-        {"href": "/admin/reports", "label": "Reports", "icon": "📋"},
-        {"href": "/admin/reviews", "label": "Reviews", "icon": "⭐"},
-        {"href": "/admin/forecasting", "label": "Forecasting", "icon": "🔮"},
-        {"href": "/admin/upload", "label": "Upload", "icon": "📤"}
+        {"href": "/dashboard", "label": "Dashboard", "icon": "📊"},
+        {"href": "/data-analytics", "label": "Data Analytics", "icon": "🔍"},
+        {"href": "/charts", "label": "Charts", "icon": "📈"},
+        {"href": "/reports", "label": "Reports", "icon": "📋"},
+        {"href": "/reviews", "label": "Reviews", "icon": "⭐"},
+        {"href": "/forecasting", "label": "Forecasting", "icon": "🔮"},
+        {"href": "/upload", "label": "Upload", "icon": "📤"}
     ]
     
     return html.Div(
