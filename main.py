@@ -27,6 +27,7 @@ from layouts.admin_dashboard import (
     ensure_upload_directory,
     configure_upload_settings
 )
+from layouts.admin_dashboard import register_enhanced_csv_routes
 # ❌ REMOVED: from callbacks.filter_container_callbacks import register_filter_container_callbacks
 from data_loader import get_cached_data, refresh_cached_data
 from layouts.unauthorized_layout import create_unauthorized_layout, UNAUTHORIZED_CSS
@@ -1309,6 +1310,8 @@ register_dashboard_flask_routes(server)
 
 # ✅ ONLY REGISTER CONSOLIDATED CALLBACKS - NO DUPLICATES
 register_all_callbacks()
+
+register_enhanced_csv_routes(server)
 
 # Create upload directories
 upload_dir = Path('uploads')
