@@ -12,11 +12,11 @@ import os
 from pathlib import Path
 import pandas as pd
 import json
-
+from file_watcher import get_latest_data, get_data_timestamp
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
 from components.data.filterable_container import create_filterable_container
-
+from flask import jsonify
 
 def get_current_theme():
     """Get current theme from session or default"""
@@ -2180,6 +2180,12 @@ def register_dashboard_flask_routes(server):
                 'error': 'Error processing embedded CSV data',
                 'message': str(e)
             }), 500
+        
+    @server.route('/api/data-status')
+    def get_realtime_status():
+        """Get real-time data status"""
+        status = get_data_status()
+        return jsonify(status)
 
     @server.route('/api/csv-metadata')
     def get_csv_metadata():
@@ -2959,77 +2965,24 @@ __all__ = [
     'get_filter_options_from_embedded_data'
 ]
 
-def load_waste_data():
-    """Load waste data from CSV file"""
-    try:
-        # Get the absolute path to the data directory
-        data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-        csv_path = os.path.join(data_dir, 'waste_management_data_updated.csv')
-        
-        print(f"Loading data from: {csv_path}")
-        
-        # Read the CSV file using pandas
-        df = pd.read_csv(csv_path)
-        
-        # Print column names for debugging
-        print("Available columns:", df.columns.tolist())
-        
-        # Map possible column names for waste_collected
-        waste_collected_columns = ['waste_collected', 'Waste Collected', 'waste collected', 'net_weight', 'Net Weight']
-        for col in waste_collected_columns:
-            if col in df.columns:
-                df = df.rename(columns={col: 'waste_collected'})
-                break
-        
-        # Map possible column names for date
-        date_columns = ['date', 'Date', 'collection_date', 'Collection Date']
-        for col in date_columns:
-            if col in df.columns:
-                df = df.rename(columns={col: 'date'})
-                break
-        
-        # Map possible column names for site
-        site_columns = ['site', 'Site', 'location', 'Location', 'source_location']
-        for col in site_columns:
-            if col in df.columns:
-                df = df.rename(columns={col: 'site'})
-                break
-        
-        # Map possible column names for cluster
-        cluster_columns = ['cluster', 'Cluster', 'zone', 'Zone']
-        for col in cluster_columns:
-            if col in df.columns:
-                df = df.rename(columns={col: 'cluster'})
-                break
-        
-        # Map possible column names for agency
-        agency_columns = ['agency', 'Agency', 'operator', 'Operator']
-        for col in agency_columns:
-            if col in df.columns:
-                df = df.rename(columns={col: 'agency'})
-                break
-        
-        # Check for required columns
-        required_columns = ['waste_collected', 'date', 'site', 'cluster', 'agency']
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        
-        if missing_columns:
-            print(f"Warning: Missing required columns: {missing_columns}")
-            print("Available columns:", df.columns.tolist())
-            return pd.DataFrame()
-        
-        # Convert date column to datetime
-        df['date'] = pd.to_datetime(df['date'])
-        
-        # Convert waste_collected to numeric, handling any non-numeric values
-        df['waste_collected'] = pd.to_numeric(df['waste_collected'], errors='coerce')
-        
-        print(f"✅ Loaded waste data: {len(df)} rows")
-        return df
-        
-    except Exception as e:
-        print(f"Error loading waste data: {str(e)}")
-        return pd.DataFrame()
+def get_data_status():
+    """Get current data status for dashboard"""
+    timestamp = get_data_timestamp()
+    data = get_latest_data()
+    
+    if timestamp and data is not None:
+        return {
+            'last_updated': timestamp.strftime('%H:%M:%S'),
+            'record_count': len(data),
+            'status': 'Connected'
+        }
+    else:
+        return {
+            'last_updated': 'Never',
+            'record_count': 0,
+            'status': 'Disconnected'
+        }
+
 
 def filter_data(df, filters):
     """Filter DataFrame based on selected filters"""

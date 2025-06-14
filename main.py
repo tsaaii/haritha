@@ -27,6 +27,7 @@ from layouts.admin_dashboard import (
     ensure_upload_directory,
     configure_upload_settings
 )
+from file_watcher import start_file_monitoring, stop_file_monitoring
 from layouts.admin_dashboard import register_enhanced_csv_routes
 # ❌ REMOVED: from callbacks.filter_container_callbacks import register_filter_container_callbacks
 from data_loader import get_cached_data, refresh_cached_data
@@ -92,14 +93,15 @@ app = dash.Dash(
     title="Swaccha Andhra Dashboard",
     external_stylesheets=[
         "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
-        "/assets/style.css",
-        "/assets/dashboard.css",
-        "/assets/dashboard_filters.css"
+        "/assets/css/style.css",                    # Your existing CSS
+        "/assets/css/public_landing.css",           # NEW: Add this line
+        "/assets/css/dashboard.css",                # Keep existing
+        "/assets/css/dashboard_filters.css"         # Keep existing
     ],
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
         {"name": "theme-color", "content": "#0D1B2A"},
-        {"name": "description", "content": "स्वच्छ आंध्र प्रदेश - Real-time cleanliness monitoring dashboard"}
+        {"name": "description", "content": "Real-time cleanliness monitoring dashboard"}
     ]
 )
 
@@ -261,7 +263,7 @@ app.index_string = f'''
     </body>
 </html>
 '''
-
+start_file_monitoring()
 # ✅ CUSTOM DASHBOARD ROUTE REGISTRATION - AVOIDS CONFLICTS
 def register_custom_dashboard_routes(server):
     """Register dashboard routes without conflicts"""
@@ -385,6 +387,22 @@ def register_custom_dashboard_routes(server):
             }), 500
 
 # Enhanced Flask routes for Google OAuth
+
+@server.route('/')
+def public_dashboard():
+    """Simple, fast-loading public view"""
+    from layouts.public_layout import build_public_layout
+    theme_name = session.get('current_theme', 'dark')
+    return build_public_layout(theme_name)
+
+@server.route('/analytics')  
+def analytics_dashboard():
+    """Full analytics with charts (uses your existing callbacks)"""
+    from layouts.enhanced_public_landing import build_enhanced_public_landing
+    # Uses your existing public_landing_callbacks.py
+    return build_enhanced_public_landing()
+
+
 @server.route('/test/overlay')
 def test_overlay():
     """Test overlay components"""
@@ -434,6 +452,20 @@ def test_overlay():
 def test_flask():
     """Test if Flask routes are working"""
     return "Flask routes are working! OAuth status: " + str(GOOGLE_AUTH_AVAILABLE)
+
+@server.route('/test-public')
+def test_public_layouts():
+    # Test normal layout
+    normal = build_public_layout("dark")
+    
+    # Test loading state
+    loading = create_loading_layout()
+    
+    # Test error state
+    error = create_error_layout("Network connection failed")
+    
+    return normal  # or loading/error for testing
+
 
 @server.route('/oauth/status')
 def oauth_status():
