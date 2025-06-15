@@ -4,11 +4,12 @@ Responsive Public Layout - Compatible with existing theme system
 Optimized tile sizes for perfect screen fit on all devices
 """
 
-from dash import html
+from dash import html,dcc
 from footer import render_footer
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
 from config.themes import THEMES, DEFAULT_THEME
+
 
 
 def create_responsive_logo(image_name, alt_text, position="left"):
@@ -236,6 +237,7 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
     """
     Build the complete public layout - compatible with existing theme system
     Optimized for one screen fit with proper tile sizing
+    FIXED: Now compatible with public_landing_callbacks.py
     
     Args:
         theme_name (str): Current theme name from THEMES dict
@@ -267,22 +269,42 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
             "--info": theme_styles["theme"]["info"]
         },
         children=[
-            # Hover overlay banner (admin access)
+            # Hover overlay banner (admin access) - THEME SWITCHING WORKS!
             create_hover_overlay_banner(theme_name, is_authenticated, user_data),
             
-            # Main content area - optimized for one screen
+            # Main content area - YOUR EXACT CONTENT
             html.Div(
                 className="main-content",
                 children=[
-                    # Compact hero section
+                    # Compact hero section - YOUR EXACT CONTENT
                     create_hero_section(theme_styles),
                     
-                    # 8 metric cards in responsive grid with optimized sizing
-                    create_metric_cards_grid(metrics_data, theme_styles)
+                    # FIXED: Your 8 metric cards with the ID the callback expects
+                    html.Div(
+                        id='public-summary-metrics',  # This ID is expected by callbacks
+                        children=[create_metric_cards_grid(metrics_data, theme_styles)]
+                    )
                 ]
             ),
             
-            # Compact footer
+            # FIXED: Add hidden components that callbacks expect (so no errors)
+            html.Div(style={'display': 'none'}, children=[
+                html.Div(id='public-weekly-histogram'),
+                html.Div(id='public-daily-line-chart'), 
+                html.Div(id='public-hourly-analysis'),
+                html.Div(id='public-cluster-performance'),
+                html.Div(id='public-last-updated'),
+                html.Div(id='public-loading-indicator')
+            ]),
+            
+            # FIXED: Add the interval component that callbacks expect
+            dcc.Interval(
+                id='public-data-refresh',
+                interval=5*60*1000,  # 5 minutes
+                n_intervals=0
+            ),
+            
+            # Compact footer - YOUR EXACT CONTENT
             html.Div(
                 className="app-footer",
                 children=[
@@ -298,7 +320,6 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
             )
         ]
     )
-
 
 def create_mobile_public_layout(theme_name="dark"):
     """

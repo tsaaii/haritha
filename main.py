@@ -47,6 +47,15 @@ from callbacks.unified_dashboard_callbacks import register_unified_dashboard_cal
 
 from pathlib import Path
 
+app = dash.Dash(__name__)
+app.layout = html.Div([
+    dcc.Store(id='current-theme', data=DEFAULT_THEME),
+    dcc.Store(id='user-authenticated', data=False),
+    dcc.Store(id='current-page', data='public_landing'),
+    dcc.Location(id='url', refresh=False),
+    html.Div(id="main-layout")
+])
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -389,19 +398,193 @@ def register_custom_dashboard_routes(server):
 
 # Enhanced Flask routes for Google OAuth
 
-@server.route('/')
-def public_dashboard():
-    """Simple, fast-loading public view"""
-    from layouts.public_layout import build_public_layout
-    theme_name = session.get('current_theme', 'dark')
-    return build_public_layout(theme_name)
+@callback(
+    Output('current-theme', 'data'),
+    [
+        Input('theme-dark', 'n_clicks'),
+        Input('theme-light', 'n_clicks'),
+        Input('theme-high_contrast', 'n_clicks'),
+        Input('theme-swaccha_green', 'n_clicks')
+    ],
+    [State('current-theme', 'data')],  # Add current theme as state
+    prevent_initial_call=True
+)
+def update_theme_with_session_sync(dark_clicks, light_clicks, contrast_clicks, green_clicks, current_theme):
+    """
+    Handle theme switching from overlay banner with Flask session synchronization
+    FIXED: Prevents reset to dark theme
+    """
+    if not ctx.triggered:
+        return current_theme or DEFAULT_THEME  # Return current theme instead of default
+    
+    # Check if any button was actually clicked (not just initialized)
+    triggered_prop = ctx.triggered[0]
+    if triggered_prop['value'] is None or triggered_prop['value'] == 0:
+        return current_theme or DEFAULT_THEME
+    
+    button_id = triggered_prop['prop_id'].split('.')[0]
+    theme_map = {
+        'theme-dark': 'dark',
+        'theme-light': 'light', 
+        'theme-high_contrast': 'high_contrast',
+        'theme-swaccha_green': 'swaccha_green'
+    }
+    
+    new_theme = theme_map.get(button_id, current_theme or DEFAULT_THEME)
+    
+    # Only update if it's actually different
+    if new_theme != current_theme:
+        try:
+            session['current_theme'] = new_theme
+            logger.info(f"Theme successfully changed: {current_theme} → {new_theme}")
+        except Exception as e:
+            logger.warning(f"Could not sync theme to Flask session: {e}")
+    
+    return new_theme
+# Optional: Add a clientside callback for immediate CSS variable updates
+clientside_callback(
+    """
+    function(theme_name) {
+        if (!theme_name) return window.dash_clientside.no_update;
+        
+        console.log('🎨 Updating theme to:', theme_name);
+        
+        // Define theme colors - COMPLETE THEME DEFINITIONS
+        const themes = {
+            'dark': {
+                '--primary-bg': '#0D1B2A',
+                '--secondary-bg': '#1B263B', 
+                '--accent-bg': '#415A77',
+                '--card-bg': '#1B263B',
+                '--text-primary': '#E0E1DD',
+                '--text-secondary': '#778DA9',
+                '--brand-primary': '#3182CE',
+                '--border-light': '#415A77',
+                '--success': '#38A169',
+                '--warning': '#DD6B20', 
+                '--error': '#E53E3E',
+                '--info': '#3182CE'
+            },
+            'light': {
+                '--primary-bg': '#FFFFFF',
+                '--secondary-bg': '#F8F9FA',
+                '--accent-bg': '#E2E8F0', 
+                '--card-bg': '#FFFFFF',
+                '--text-primary': '#2D3748',
+                '--text-secondary': '#4A5568',
+                '--brand-primary': '#3182CE',
+                '--border-light': '#E2E8F0',
+                '--success': '#38A169',
+                '--warning': '#DD6B20',
+                '--error': '#E53E3E', 
+                '--info': '#3182CE'
+            },
+            'high_contrast': {
+                '--primary-bg': '#000000',
+                '--secondary-bg': '#1A1A1A',
+                '--accent-bg': '#333333',
+                '--card-bg': '#1A1A1A', 
+                '--text-primary': '#FFFFFF',
+                '--text-secondary': '#CCCCCC',
+                '--brand-primary': '#FFFF00',
+                '--border-light': '#333333',
+                '--success': '#00FF00',
+                '--warning': '#FFA500',
+                '--error': '#FF0000',
+                '--info': '#FFFF00'
+            },
+            'swaccha_green': {
+                '--primary-bg': '#064E3B',
+                '--secondary-bg': '#065F46',
+                '--accent-bg': '#047857',
+                '--card-bg': '#065F46',
+                '--text-primary': '#ECFDF5', 
+                '--text-secondary': '#A7F3D0',
+                '--brand-primary': '#10B981',
+                '--border-light': '#047857',
+                '--success': '#10B981',
+                '--warning': '#F59E0B',
+                '--error': '#EF4444',
+                '--info': '#06B6D4'
+            }
+        };
+        
+        const themeVars = themes[theme_name];
+        if (themeVars) {
+            const root = document.documentElement;
+            
+            // Apply all CSS variables
+            Object.keys(themeVars).forEach(key => {
+                root.style.setProperty(key, themeVars[key]);
+            });
+            
+            console.log('✅ Theme CSS variables updated successfully');
+            
+            // Also update theme attribute on body for additional styling
+            document.body.setAttribute('data-theme', theme_name);
+            
+        } else {
+            console.warn('⚠️ Theme not found:', theme_name);
+        }
+        
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('current-theme', 'data', allow_duplicate=True),
+    Input('current-theme', 'data'),
+    prevent_initial_call=True
+)
 
+
+@server.route('/', methods=['POST'])
+def handle_theme_change():
+    """Handle theme change requests from the frontend"""
+    try:
+        data = request.get_json()
+        if data and 'theme' in data:
+            session['current_theme'] = data['theme']
+            return {{"status": "success", "theme": data['theme']}}
+    except:
+        pass
+    return {{"status": "error"}}
+
+def generate_static_html_content(theme_name):
+    """Generate static HTML version of your layout for faster loading"""
+    from layouts.public_layout import get_eight_metric_cards
+    
+    metrics = get_eight_metric_cards()
+    
+    # Generate hero section
+    hero_html = '''
+    <div class="hero-section">
+        <div class="hero-content">
+            <div style="display: flex; align-items: center;">
+                <img src="/assets/img/left.png" alt="Left Logo" style="height: 60px;">
+            </div>
+            <div class="hero-title-section">
+                <h1>Swaccha Andhra Corporation</h1>
+                <p>Real Time Legacy Waste Remediation Progress Tracker</p>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <img src="/assets/img/right.png" alt="Right Logo" style="height: 60px;">
+            </div>
+        </div>
+    </div>
+    '''
+
+    
 @server.route('/analytics')  
 def analytics_dashboard():
     """Full analytics with charts (uses your existing callbacks)"""
     from layouts.enhanced_public_landing import build_enhanced_public_landing
+    
+    # Get theme and auth data
+    theme_name = session.get('current_theme', 'dark')
+    is_authenticated = session.get('authenticated', False)
+    user_data = session.get('user_data', None)
+    
     # Uses your existing public_landing_callbacks.py
-    return build_enhanced_public_landing()
+    return build_enhanced_public_landing(theme_name, is_authenticated, user_data)
 
 
 @server.route('/test/overlay')
@@ -990,6 +1173,7 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
             print(f"DEBUG: Enhanced dashboard layout rendered for {current_page}")
             return layout
         else:
+            # FIXED: Use your public layout (now with theme switching support)
             layout = build_public_layout(theme_name, is_authenticated, user_data)
             print(f"DEBUG: Public layout rendered with auth state: {is_authenticated}")
             return layout
