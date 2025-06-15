@@ -2028,16 +2028,158 @@ def register_dashboard_flask_routes(server):
         theme = get_current_theme()
         return create_empty_themed_page("Dashboard", "📊", theme)
 
-    # Analytics pages (with access control)
+
+# In layouts/admin_dashboard.py
+
+    @server.route('/upload')
+    def admin_upload():
+        """Upload Page - Simple working version with persistent header"""
+        has_access, redirect_response = check_tab_access('upload')
+        if not has_access:
+            return redirect_response
+        
+        theme_name = get_current_theme()
+        
+        # Get theme safely
+        from utils.theme_utils import get_theme_styles
+        theme_styles = get_theme_styles(theme_name)
+        theme = theme_styles["theme"]  # This exists!
+        
+        # Get user info
+        user_info = session.get('user_data', {})
+        user_name = user_info.get('name', 'Administrator')
+        user_role = user_info.get('role', 'administrator').replace('_', ' ').title()
+        
+        return f'''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Upload - Swaccha Andhra Dashboard</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                body {{ font-family: 'Inter', sans-serif; background: {theme['primary_bg']}; color: {theme['text_primary']}; min-height: 100vh; }}
+                .upload-content {{ display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 2rem; }}
+                .greeting-card {{ 
+                    text-align: center; max-width: 600px; padding: 3rem 2rem; 
+                    background: {theme['card_bg']}; border-radius: 20px; 
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); 
+                    border: 2px solid {theme['brand_primary']};
+                    animation: fadeInUp 0.8s ease-out;
+                }}
+                .greeting-icon {{ font-size: 5rem; margin-bottom: 1rem; animation: wave 2.5s ease-in-out infinite; }}
+                .greeting-title {{ 
+                    font-size: 3.5rem; font-weight: 900; color: {theme['text_primary']}; 
+                    margin-bottom: 1rem; background: linear-gradient(45deg, {theme['brand_primary']}, {theme['brand_primary']});
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                }}
+                @keyframes wave {{ 0%, 100% {{ transform: rotate(0deg); }} 25% {{ transform: rotate(-15deg); }} 75% {{ transform: rotate(15deg); }} }}
+                @keyframes fadeInUp {{ from {{ opacity: 0; transform: translateY(30px); }} to {{ opacity: 1; transform: translateY(0); }} }}
+            </style>
+        </head>
+        <body>
+            <!-- Persistent Header -->
+            <header style="background: linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%); border-bottom: 3px solid {theme['brand_primary']}; padding: 0.75rem 2rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000;">
+                <div style="max-width: 1600px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 2rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 2rem;">
+                        <div style="font-size: 1.2rem; font-weight: 800; color: {theme['text_primary']};">🏢 Swaccha Andhra</div>
+                        <nav style="display: flex; gap: 0.5rem;">
+                            <a href="/dashboard" style="padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; background: rgba(255,255,255,0.1); color: {theme['text_primary']}; display: flex; align-items: center; gap: 0.4rem;">📊 Dashboard</a>
+                            <a href="/upload" style="padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; background: {theme['brand_primary']}; color: white; display: flex; align-items: center; gap: 0.4rem;">📤 Upload</a>
+                            <a href="/data-analytics" style="padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; background: rgba(255,255,255,0.1); color: {theme['text_primary']}; display: flex; align-items: center; gap: 0.4rem;">📈 Analytics</a>
+                            <a href="/reports" style="padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; background: rgba(255,255,255,0.1); color: {theme['text_primary']}; display: flex; align-items: center; gap: 0.4rem;">📋 Reports</a>
+                        </nav>
+                    </div>
+                    <div style="color: {theme['text_primary']};">Welcome, {user_name}! <a href="/?logout=true" style="color: #ff6b6b; text-decoration: none;">🚪</a></div>
+                </div>
+            </header>
+            
+            <!-- Upload Page Content -->
+            <main class="upload-content">
+                <div class="greeting-card">
+                    <div class="greeting-icon">👋</div>
+                    <h1 class="greeting-title">Hi Sai!</h1>
+                    <p style="font-size: 1.3rem; color: {theme['text_secondary']}; margin-bottom: 2rem;">
+                        Welcome to your personalized upload center!
+                    </p>
+                    <button style="padding: 1rem 2rem; background: {theme['brand_primary']}; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;" onclick="alert('Upload functionality coming soon! 🚀')">
+                        📁 Start Uploading
+                    </button>
+                </div>
+            </main>
+        </body>
+        </html>
+        '''
+
+
+    def create_persistent_header_html(theme_name, active_page):
+        """Generate HTML for persistent header"""
+        theme = get_theme_styles(theme_name)["theme"]
+        user_info = session.get('user_data', {})
+        user_name = user_info.get('name', 'Administrator')
+        
+        # Nav items based on user access
+        nav_items = [
+            {"id": "dashboard", "href": "/dashboard", "icon": "📊", "label": "Dashboard"},
+            {"id": "upload", "href": "/upload", "icon": "📤", "label": "Upload"},
+            {"id": "analytics", "href": "/data-analytics", "icon": "📈", "label": "Analytics"},
+            {"id": "reports", "href": "/reports", "icon": "📋", "label": "Reports"},
+            {"id": "reviews", "href": "/reviews", "icon": "⭐", "label": "Reviews"},
+        ]
+        
+        nav_links = ""
+        for item in nav_items:
+            active_style = f"background: {theme['brand_primary']}; color: white;" if item['id'] == active_page else f"background: rgba(255,255,255,0.1); color: {theme['text_primary']};"
+            nav_links += f'''
+            <a href="{item['href']}" style="padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; {active_style} transition: all 0.3s ease; display: flex; align-items: center; gap: 0.4rem;">
+                <span>{item['icon']}</span>
+                <span>{item['label']}</span>
+            </a>
+            '''
+        
+        return f'''
+        <header style="background: linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%); border-bottom: 3px solid {theme['brand_primary']}; padding: 0.75rem 2rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000;">
+            <div style="max-width: 1600px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 2rem;">
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div style="font-size: 1.2rem; font-weight: 800; color: {theme['text_primary']};">
+                        🏢 Swaccha Andhra
+                    </div>
+                    <nav style="display: flex; gap: 0.5rem; align-items: center;">
+                        {nav_links}
+                    </nav>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="color: {theme['text_primary']};">{user_name}</span>
+                    <a href="/?logout=true" style="padding: 0.4rem 0.8rem; background: rgba(220, 38, 38, 0.8); color: white; text-decoration: none; border-radius: 6px;">🚪</a>
+                </div>
+            </div>
+        </header>
+        '''
+
     @server.route('/data-analytics')
     def admin_data_analytics():
-        """Data Analytics Page - Check access control"""
+        """Analytics Page with dedicated layout"""
         has_access, redirect_response = check_tab_access('analytics')
         if not has_access:
             return redirect_response
         
         theme = get_current_theme()
-        return create_empty_themed_page("Data Analytics", "🔍", theme)
+        # Import and use the dedicated analytics layout
+        from layouts.analytics_layout import create_analytics_layout
+        return create_analytics_layout(theme)
+
+    @server.route('/reports')
+    def admin_reports():
+        """Reports Page with dedicated layout"""
+        has_access, redirect_response = check_tab_access('reports')
+        if not has_access:
+            return redirect_response
+        
+        theme = get_current_theme()
+        # You can create reports_layout.py for this too
+        return create_reports_layout(theme)
 
     # Charts page (with access control)
     @server.route('/charts')
@@ -2050,16 +2192,6 @@ def register_dashboard_flask_routes(server):
         theme = get_current_theme()
         return create_empty_themed_page("Charts", "📈", theme)
 
-    # Reports page (with access control)
-    @server.route('/reports')
-    def admin_reports():
-        """Reports Page - Check access control"""
-        has_access, redirect_response = check_tab_access('reports')
-        if not has_access:
-            return redirect_response
-        
-        theme = get_current_theme()
-        return create_empty_themed_page("Reports", "📋", theme)
 
     # Reviews page (with access control)
     @server.route('/reviews')
@@ -2083,16 +2215,7 @@ def register_dashboard_flask_routes(server):
         theme = get_current_theme()
         return create_empty_themed_page("Forecasting", "🔮", theme)
 
-    # Upload page (with access control)
-    @server.route('/upload')
-    def admin_upload():
-        """Upload Page - Check access control"""
-        has_access, redirect_response = check_tab_access('upload')
-        if not has_access:
-            return redirect_response
-        
-        theme = get_current_theme()
-        return create_empty_themed_page("Upload", "📤", theme)
+
 
     # All your existing API routes remain the same...
     @server.route('/api/csv-data')

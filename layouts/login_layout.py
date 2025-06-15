@@ -8,113 +8,6 @@ from dash import html, dcc
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
 
-def create_login_hero(theme):
-    """Create login page hero section"""
-    return html.Div(
-        className="login-hero",
-        style={
-            "background": f"linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%)",
-            "borderRadius": "12px",
-            "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.3)",
-            "textAlign": "center",
-            "padding": "3rem 2rem",
-            "margin": "2rem 0",
-            "position": "relative",
-            "overflow": "hidden"
-        },
-        children=[
-            # Decorative background pattern
-            html.Div(
-                style={
-                    "position": "absolute",
-                    "top": "0",
-                    "left": "0",
-                    "right": "0",
-                    "bottom": "0",
-                    "background": f"radial-gradient(circle at 20% 80%, {theme['brand_primary']}22 0%, transparent 50%)",
-                    "pointerEvents": "none"
-                }
-            ),
-            
-            # Logo section
-            html.Div(
-                style={
-                    "display": "flex",
-                    "justifyContent": "center",
-                    "alignItems": "center",
-                    "gap": "2rem",
-                    "marginBottom": "2rem",
-                    "flexWrap": "wrap"
-                },
-                children=[
-                    html.Img(
-                        src="/assets/img/left.png",
-                        alt="Organization Logo",
-                        style={
-                            "height": "80px",
-                            "width": "auto",
-                            "objectFit": "contain",
-                            "filter": "drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.3))"
-                        }
-                    ),
-                    html.Div([
-                        html.H1(
-                            "Swaccha Andhra",
-                            style={
-                                "color": theme["text_primary"],
-                                "fontSize": "2.5rem",
-                                "fontWeight": "900",
-                                "margin": "0",
-                                "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.5)"
-                            }
-                        ),
-                        html.P(
-                            "Admin Portal",
-                            style={
-                                "color": theme["text_secondary"],
-                                "fontSize": "1.2rem",
-                                "fontWeight": "600",
-                                "margin": "0.5rem 0 0 0"
-                            }
-                        )
-                    ]),
-                    html.Img(
-                        src="/assets/img/right.png",
-                        alt="Government Logo", 
-                        style={
-                            "height": "80px",
-                            "width": "auto",
-                            "objectFit": "contain",
-                            "filter": "drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.3))"
-                        }
-                    )
-                ]
-            ),
-            
-            # Security message
-            html.Div([
-                html.Div("🔐", style={"fontSize": "2rem", "marginBottom": "1rem"}),
-                html.H3(
-                    "Secure Access Required",
-                    style={
-                        "color": theme["text_primary"],
-                        "fontSize": "1.5rem",
-                        "marginBottom": "0.5rem"
-                    }
-                ),
-                html.P(
-                    "This portal requires authorized access. Please authenticate with your authorized Google account.",
-                    style={
-                        "color": theme["text_secondary"],
-                        "fontSize": "1rem",
-                        "lineHeight": "1.6",
-                        "maxWidth": "500px",
-                        "margin": "0 auto"
-                    }
-                )
-            ])
-        ]
-    )
 
 def create_login_form(theme):
     """Create the main login form"""
@@ -430,9 +323,6 @@ def build_login_layout(theme_name="dark", error_message=""):
                             )
                         ]
                     ),
-                    
-                    # Login hero section
-                    create_login_hero(theme),
                     
                     # Error message card (conditionally displayed)
                     html.Div(
