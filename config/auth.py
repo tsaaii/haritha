@@ -20,7 +20,7 @@ ALLOWED_USERS = {
     
     # Viewers with read-only access
     "viewers": [
-        "viewer@swacchaandhra.gov.in",
+        "saiteja7050@gmail.com",
         "analyst@swacchaandhra.gov.in"
     ],
     
@@ -308,3 +308,58 @@ __all__ = [
     'remove_user',
     'get_environment_config'
 ]
+
+def get_tab_permissions(role: str) -> List[str]:
+    """
+    Get tab access permissions based on user role
+    
+    Args:
+        role (str): User role
+        
+    Returns:
+        list: List of allowed tab IDs
+    """
+    tab_permissions_map = {
+        "super_admin": [
+            "dashboard",
+            "analytics", 
+            "charts",
+            "reports",
+            "reviews",
+            "forecasting",
+            "upload"
+        ],
+        "administrator": [
+            "dashboard",
+            "analytics",
+            "charts", 
+            "reports",
+            "reviews",
+            "forecasting",
+            "upload"
+        ],
+        "viewer": [
+            "dashboard",
+            "analytics", 
+            "charts",
+            "reports"
+            # Note: 'reviews' and 'forecasting' are excluded for viewers
+        ]
+    }
+    
+    return tab_permissions_map.get(role, ["dashboard"])
+
+
+def can_user_access_tab(user_role: str, tab_id: str) -> bool:
+    """
+    Check if user can access a specific tab
+    
+    Args:
+        user_role (str): User role
+        tab_id (str): Tab identifier
+        
+    Returns:
+        bool: True if user can access tab, False otherwise
+    """
+    allowed_tabs = get_tab_permissions(user_role)
+    return tab_id in allowed_tabs

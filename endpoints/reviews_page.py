@@ -159,3 +159,37 @@ def delete_review(review_id):
 def register_reviews_routes(app):
     """Register reviews routes with the Flask app"""
     app.register_blueprint(reviews_bp)
+
+
+def require_tab_access(tab_name):
+    """
+    Decorator to require specific tab access for Flask routes
+    
+    Args:
+        tab_name (str): Name of the tab to check access for
+    """
+    def decorator(f):
+        def wrapper(*args, **kwargs):
+            from flask import session, redirect, url_for
+            
+            # Check if user is authenticated
+            user_data = session.get('user_data', {})
+            if not user_data:
+                return redirect('/login')
+            
+            user_role = user_data.get('role', 'viewer')
+            
+            # Check tab access
+            try:
+                from config.auth import can_user_access_tab
+                if not can_user_access_tab(user_role, tab_name):
+                    # Redirect to dashboard with error message
+                    return redirect('/dashboard?error=access_denied')
+            except ImportError:
+                pass  # Allow access in demo mode
+            
+            return f(*args, **kwargs)
+        
+        wrapper.__name__ = f.__name__
+        return wrapper
+    return decorator

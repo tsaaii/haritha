@@ -41,8 +41,9 @@ from endpoints.forecasting_page import register_forecasting_routes
 from endpoints.reviews_page import register_reviews_routes
 from endpoints.oauth_routes import register_oauth_routes
 from endpoints.debug_routes import register_debug_routes
+from callbacks.unified_dashboard_callbacks import register_unified_dashboard_callbacks
 # ✅ ONLY IMPORT: The consolidated callbacks
-from callbacks.consolidated_filter_callbacks import register_all_callbacks
+#from callbacks.consolidated_filter_callbacks import register_all_callbacks
 
 from pathlib import Path
 
@@ -816,6 +817,116 @@ app.layout = html.Div([
     )
 ])
 
+
+@callback(
+    [Output('tab-content', 'children'),
+     Output('tab-dashboard', 'style'),
+     Output('tab-analytics', 'style'),
+     Output('tab-reports', 'style'),
+     Output('tab-reviews', 'style'),
+     Output('tab-upload', 'style')],
+    [Input('tab-dashboard', 'n_clicks'),
+     Input('tab-analytics', 'n_clicks'),
+     Input('tab-reports', 'n_clicks'),
+     Input('tab-reviews', 'n_clicks'),
+     Input('tab-upload', 'n_clicks')],
+    [State('current-theme', 'data'),
+     State('user-session-data', 'data'),
+     State('current-page', 'data'),
+     State('user-authenticated', 'data')],
+    prevent_initial_call=True
+)
+def handle_tab_navigation(dashboard_clicks, analytics_clicks, reports_clicks, 
+                         reviews_clicks, upload_clicks, theme_name, user_data, 
+                         current_page, is_authenticated):
+    """ENHANCED: Handle tab navigation with role-based access control"""
+    # Only handle tabs if user is on admin dashboard and authenticated
+    if not is_authenticated or current_page != 'admin_dashboard':
+        raise PreventUpdate
+    
+    if not ctx.triggered:
+        raise PreventUpdate
+    
+    # Get user role
+    user_role = user_data.get('role', 'viewer') if user_data else 'viewer'
+    
+    # Import access control function
+    try:
+        from config.auth import can_user_access_tab
+    except ImportError:
+        # Fallback for demo mode
+        def can_user_access_tab(role, tab): 
+            return tab in ['dashboard', 'analytics', 'charts', 'reports']
+    
+    # Get the clicked tab
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    # Map button IDs to tab names
+    tab_mapping = {
+        'tab-dashboard': 'dashboard',
+        'tab-analytics': 'analytics', 
+        'tab-reports': 'reports',
+        'tab-reviews': 'reviews',
+        'tab-upload': 'upload'
+    }
+    
+    requested_tab = tab_mapping.get(button_id, 'dashboard')
+    
+    # CHECK ACCESS PERMISSION
+    if not can_user_access_tab(user_role, requested_tab):
+        # User tried to access a restricted tab - show error message
+        from layouts.admin_dashboard import get_theme_styles
+        from dash import html
+        
+        theme_styles = get_theme_styles(theme_name or DEFAULT_THEME)
+        
+        error_content = html.Div([
+            html.H2("🚫 Access Restricted", 
+                   style={"color": "#E53E3E", "textAlign": "center", "marginBottom": "1rem"}),
+            html.P(f"Sorry, users with '{user_role}' role cannot access the '{requested_tab}' section.", 
+                   style={"textAlign": "center", "fontSize": "1.1rem", "color": theme_styles['theme']['text_secondary']}),
+            html.P("Available sections: Dashboard, Data Analytics, Charts, Reports", 
+                   style={"textAlign": "center", "fontSize": "0.9rem", "color": theme_styles['theme']['text_secondary'], "marginTop": "1rem"})
+        ], style={"padding": "3rem", "textAlign": "center"})
+        
+        # Return error content and keep previous button styles unchanged  
+        default_style = {
+            "backgroundColor": theme_styles["theme"]["accent_bg"],
+            "color": theme_styles["theme"]["text_primary"],
+            "border": f"2px solid {theme_styles['theme']['card_bg']}"
+        }
+        return error_content, default_style, default_style, default_style, default_style, default_style
+    
+    # If access is allowed, proceed with normal tab switching
+    from layouts.admin_dashboard import create_tab_content, get_theme_styles
+    
+    theme_styles = get_theme_styles(theme_name or DEFAULT_THEME)
+    content = create_tab_content(button_id, theme_styles, user_data)
+    
+    # Define button styles
+    default_style = {
+        "backgroundColor": theme_styles["theme"]["accent_bg"],
+        "color": theme_styles["theme"]["text_primary"],
+        "border": f"2px solid {theme_styles['theme']['card_bg']}"
+    }
+    
+    active_style = {
+        "backgroundColor": theme_styles["theme"]["primary"],
+        "color": "white",
+        "border": f"2px solid {theme_styles['theme']['primary']}"
+    }
+    
+    # Return content and update button styles
+    return (
+        content,
+        active_style if button_id == 'tab-dashboard' else default_style,
+        active_style if button_id == 'tab-analytics' else default_style,
+        active_style if button_id == 'tab-reports' else default_style,
+        active_style if button_id == 'tab-reviews' else default_style,
+        active_style if button_id == 'tab-upload' else default_style
+    )
+
+
 # 1. Page routing and authentication
 @callback(
     [Output('current-page', 'data'),
@@ -1340,8 +1451,7 @@ register_debug_routes(server)
 # This handles the /dashboard route without conflicts
 register_dashboard_flask_routes(server)
 
-# ✅ ONLY REGISTER CONSOLIDATED CALLBACKS - NO DUPLICATES
-register_all_callbacks()
+register_unified_dashboard_callbacks()
 
 register_enhanced_csv_routes(server)
 

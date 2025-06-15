@@ -2383,36 +2383,54 @@ def create_admin_hero_section(theme):
 
 
 def create_navigation_tabs(theme, user_data):
-    """OPTIMIZED: Navigation tabs with uniform sizing and no user info"""
+    """
+    ENHANCED: Navigation tabs with role-based access control
+    Only shows tabs that the user has permission to access
+    """
     
-    tabs = [
-        {"href": "/dashboard", "label": "Dashboard", "icon": "📊"},
-        {"href": "/data-analytics", "label": "Data Analytics", "icon": "🔍"},
-        {"href": "/charts", "label": "Charts", "icon": "📈"},
-        {"href": "/reports", "label": "Reports", "icon": "📋"},
-        {"href": "/reviews", "label": "Reviews", "icon": "⭐"},
-        {"href": "/forecasting", "label": "Forecasting", "icon": "🔮"},
-        {"href": "/upload", "label": "Upload", "icon": "📤"}
+    # Get user role from session data
+    user_role = user_data.get('role', 'viewer')
+    
+    # Import the permission function
+    try:
+        from config.auth import get_tab_permissions
+        allowed_tabs = get_tab_permissions(user_role)
+    except ImportError:
+        # Fallback for demo mode
+        allowed_tabs = ["dashboard", "analytics", "charts", "reports"]
+    
+    # All possible tabs with their configuration
+    all_tabs = [
+        {"id": "dashboard", "href": "/dashboard", "label": "Dashboard", "icon": "📊"},
+        {"id": "analytics", "href": "/data-analytics", "label": "Data Analytics", "icon": "🔍"},
+        {"id": "charts", "href": "/charts", "label": "Charts", "icon": "📈"},
+        {"id": "reports", "href": "/reports", "label": "Reports", "icon": "📋"},
+        {"id": "reviews", "href": "/reviews", "label": "Reviews", "icon": "⭐"},
+        {"id": "forecasting", "href": "/forecasting", "label": "Forecasting", "icon": "🔮"},
+        {"id": "upload", "href": "/upload", "label": "Upload", "icon": "📤"}
     ]
+    
+    # Filter tabs based on user permissions
+    visible_tabs = [tab for tab in all_tabs if tab["id"] in allowed_tabs]
     
     return html.Div(
         className="navigation-tabs",
         style={
             "backgroundColor": theme["card_bg"],
-            "borderRadius": "8px",  # Reduced from 12px
+            "borderRadius": "8px",
             "border": f"2px solid {theme['accent_bg']}",
-            "padding": "0.75rem 1.5rem",  # Reduced padding for less height
-            "margin": "0.75rem 0",  # Reduced margin
+            "padding": "0.75rem 1.5rem",
+            "margin": "0.75rem 0",
             "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.2)"
         },
         children=[
-            # Single centered container for navigation tabs only
+            # Navigation tabs container with role-based filtering
             html.Div(
                 style={
                     "display": "flex",
-                    "justifyContent": "center",  # Center the tabs
+                    "justifyContent": "center",
                     "alignItems": "center",
-                    "gap": "0.75rem",  # Consistent gap between buttons
+                    "gap": "0.75rem",
                     "flexWrap": "wrap"
                 },
                 children=[
@@ -2428,7 +2446,7 @@ def create_navigation_tabs(theme, user_data):
                             "color": theme["text_primary"],
                             "border": f"2px solid {theme['card_bg']}",
                             "borderRadius": "8px",
-                            "padding": "1rem 1.5rem",  # Bigger padding for larger buttons
+                            "padding": "1rem 1.5rem",
                             "fontSize": "0.9rem",
                             "fontWeight": "600",
                             "cursor": "pointer",
@@ -2437,22 +2455,37 @@ def create_navigation_tabs(theme, user_data):
                             "alignItems": "center",
                             "justifyContent": "center",
                             "textDecoration": "none",
-                            "whiteSpace": "nowrap",  # Prevent text wrapping
+                            "whiteSpace": "nowrap",
                             
                             # UNIFORM SIZE CONSTRAINTS
-                            "minWidth": "140px",  # Consistent minimum width
-                            "maxWidth": "160px",  # Consistent maximum width
-                            "height": "48px",     # Fixed height for uniformity
-                            "flex": "0 0 auto",   # Don't grow or shrink
+                            "minWidth": "140px",
+                            "maxWidth": "160px",
+                            "height": "48px",
+                            "flex": "0 0 auto",
                             
                             # HOVER EFFECTS
                             "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
                         }
-                    ) for tab in tabs
-                ]
-            )
+                    ) for tab in visible_tabs  # Only show tabs user can access
+                ],
+                # Add user info display with role indicator
+                title=f"User: {user_data.get('name', 'User')} | Role: {user_role.replace('_', ' ').title()}"
+            ),
+            
+            # Optional: Add a small role indicator
+            html.Div(
+                f"Logged in as: {user_role.replace('_', ' ').title()}",
+                style={
+                    "fontSize": "0.8rem",
+                    "color": theme["text_secondary"],
+                    "textAlign": "center",
+                    "marginTop": "0.5rem",
+                    "fontStyle": "italic"
+                }
+            ) if user_role == "viewer" else None  # Only show for viewers
         ]
     )
+
 
 
 def create_tab_content(active_tab, theme_styles, user_data, data=None):
