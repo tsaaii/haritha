@@ -13,14 +13,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 def register_unified_dashboard_callbacks():
-    """
-    Register ALL dashboard callbacks in one place - NO DUPLICATES
-    This replaces all other callback registrations
-    """
+    """Register ALL dashboard callbacks with STRICT access control"""
     
-    # ========================================
-    # 1. MAIN TAB NAVIGATION WITH ACCESS CONTROL
-    # ========================================
     @callback(
         [Output('tab-content', 'children'),
          Output('tab-dashboard', 'style'),
@@ -42,8 +36,8 @@ def register_unified_dashboard_callbacks():
     def unified_tab_navigation(dashboard_clicks, analytics_clicks, reports_clicks, 
                               reviews_clicks, upload_clicks, theme_name, user_data, 
                               current_page, is_authenticated):
-        """UNIFIED: Handle tab navigation with role-based access control"""
-        # Only handle tabs if user is on admin dashboard and authenticated
+        """UNIFIED: Handle tab navigation with STRICT role-based access control"""
+        
         if not is_authenticated or current_page != 'admin_dashboard':
             raise PreventUpdate
         
@@ -53,13 +47,18 @@ def register_unified_dashboard_callbacks():
         # Get user role
         user_role = user_data.get('role', 'viewer') if user_data else 'viewer'
         
-        # Import access control function
+        # STRICT ACCESS CONTROL - No fallback that allows everything
         try:
             from config.auth import can_user_access_tab
         except ImportError:
-            # Fallback for demo mode
-            def can_user_access_tab(role, tab): 
-                return tab in ['dashboard', 'analytics', 'charts', 'reports']
+            # If import fails, create a RESTRICTIVE fallback
+            def can_user_access_tab(role, tab):
+                restrictive_permissions = {
+                    'viewer': ['dashboard', 'analytics', 'reports'],  # No charts, reviews, upload
+                    'administrator': ['dashboard', 'analytics', 'reports', 'reviews', 'upload'],
+                    'super_admin': ['dashboard', 'analytics', 'reports', 'reviews', 'upload', 'forecasting']
+                }
+                return tab in restrictive_permissions.get(role, ['dashboard'])
         
         # Get the clicked tab
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -69,15 +68,15 @@ def register_unified_dashboard_callbacks():
             'tab-dashboard': 'dashboard',
             'tab-analytics': 'analytics', 
             'tab-reports': 'reports',
-            'tab-reviews': 'reviews',
-            'tab-upload': 'upload'
+            'tab-reviews': 'reviews',  # This should be blocked for viewers
+            'tab-upload': 'upload'     # This should be blocked for viewers
         }
         
         requested_tab = tab_mapping.get(button_id, 'dashboard')
         
-        # CHECK ACCESS PERMISSION
+        # STRICT ACCESS CHECK
         if not can_user_access_tab(user_role, requested_tab):
-            # User tried to access a restricted tab - show error message
+            # Show access denied message
             from layouts.admin_dashboard import get_theme_styles
             
             theme_styles = get_theme_styles(theme_name or 'dark')
@@ -86,12 +85,14 @@ def register_unified_dashboard_callbacks():
                 html.H2("🚫 Access Restricted", 
                        style={"color": "#E53E3E", "textAlign": "center", "marginBottom": "1rem"}),
                 html.P(f"Sorry, users with '{user_role}' role cannot access the '{requested_tab}' section.", 
-                       style={"textAlign": "center", "fontSize": "1.1rem", "color": theme_styles['theme']['text_secondary']}),
-                html.P("Available sections: Dashboard, Data Analytics, Charts, Reports", 
-                       style={"textAlign": "center", "fontSize": "0.9rem", "color": theme_styles['theme']['text_secondary'], "marginTop": "1rem"})
+                       style={"textAlign": "center", "fontSize": "1.1rem", 
+                             "color": theme_styles['theme']['text_secondary']}),
+                html.P("Available sections: Dashboard, Analytics, Reports", 
+                       style={"textAlign": "center", "fontSize": "0.9rem", 
+                             "color": theme_styles['theme']['text_secondary'], "marginTop": "1rem"})
             ], style={"padding": "3rem", "textAlign": "center"})
             
-            # Return error content and keep previous button styles unchanged  
+            # Keep all button styles as default (no highlighting of restricted tab)
             default_style = {
                 "backgroundColor": theme_styles["theme"]["accent_bg"],
                 "color": theme_styles["theme"]["text_primary"],
@@ -127,7 +128,6 @@ def register_unified_dashboard_callbacks():
             active_style if button_id == 'tab-reviews' else default_style,
             active_style if button_id == 'tab-upload' else default_style
         )
-
     # ========================================
     # 2. FILTER OPTIONS CALLBACK
     # ========================================

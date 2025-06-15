@@ -817,117 +817,8 @@ app.layout = html.Div([
     )
 ])
 
-
-@callback(
-    [Output('tab-content', 'children'),
-     Output('tab-dashboard', 'style'),
-     Output('tab-analytics', 'style'),
-     Output('tab-reports', 'style'),
-     Output('tab-reviews', 'style'),
-     Output('tab-upload', 'style')],
-    [Input('tab-dashboard', 'n_clicks'),
-     Input('tab-analytics', 'n_clicks'),
-     Input('tab-reports', 'n_clicks'),
-     Input('tab-reviews', 'n_clicks'),
-     Input('tab-upload', 'n_clicks')],
-    [State('current-theme', 'data'),
-     State('user-session-data', 'data'),
-     State('current-page', 'data'),
-     State('user-authenticated', 'data')],
-    prevent_initial_call=True
-)
-def handle_tab_navigation(dashboard_clicks, analytics_clicks, reports_clicks, 
-                         reviews_clicks, upload_clicks, theme_name, user_data, 
-                         current_page, is_authenticated):
-    """ENHANCED: Handle tab navigation with role-based access control"""
-    # Only handle tabs if user is on admin dashboard and authenticated
-    if not is_authenticated or current_page != 'admin_dashboard':
-        raise PreventUpdate
-    
-    if not ctx.triggered:
-        raise PreventUpdate
-    
-    # Get user role
-    user_role = user_data.get('role', 'viewer') if user_data else 'viewer'
-    
-    # Import access control function
-    try:
-        from config.auth import can_user_access_tab
-    except ImportError:
-        # Fallback for demo mode
-        def can_user_access_tab(role, tab): 
-            return tab in ['dashboard', 'analytics', 'charts', 'reports']
-    
-    # Get the clicked tab
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    
-    # Map button IDs to tab names
-    tab_mapping = {
-        'tab-dashboard': 'dashboard',
-        'tab-analytics': 'analytics', 
-        'tab-reports': 'reports',
-        'tab-reviews': 'reviews',
-        'tab-upload': 'upload'
-    }
-    
-    requested_tab = tab_mapping.get(button_id, 'dashboard')
-    
-    # CHECK ACCESS PERMISSION
-    if not can_user_access_tab(user_role, requested_tab):
-        # User tried to access a restricted tab - show error message
-        from layouts.admin_dashboard import get_theme_styles
-        from dash import html
-        
-        theme_styles = get_theme_styles(theme_name or DEFAULT_THEME)
-        
-        error_content = html.Div([
-            html.H2("🚫 Access Restricted", 
-                   style={"color": "#E53E3E", "textAlign": "center", "marginBottom": "1rem"}),
-            html.P(f"Sorry, users with '{user_role}' role cannot access the '{requested_tab}' section.", 
-                   style={"textAlign": "center", "fontSize": "1.1rem", "color": theme_styles['theme']['text_secondary']}),
-            html.P("Available sections: Dashboard, Data Analytics, Charts, Reports", 
-                   style={"textAlign": "center", "fontSize": "0.9rem", "color": theme_styles['theme']['text_secondary'], "marginTop": "1rem"})
-        ], style={"padding": "3rem", "textAlign": "center"})
-        
-        # Return error content and keep previous button styles unchanged  
-        default_style = {
-            "backgroundColor": theme_styles["theme"]["accent_bg"],
-            "color": theme_styles["theme"]["text_primary"],
-            "border": f"2px solid {theme_styles['theme']['card_bg']}"
-        }
-        return error_content, default_style, default_style, default_style, default_style, default_style
-    
-    # If access is allowed, proceed with normal tab switching
-    from layouts.admin_dashboard import create_tab_content, get_theme_styles
-    
-    theme_styles = get_theme_styles(theme_name or DEFAULT_THEME)
-    content = create_tab_content(button_id, theme_styles, user_data)
-    
-    # Define button styles
-    default_style = {
-        "backgroundColor": theme_styles["theme"]["accent_bg"],
-        "color": theme_styles["theme"]["text_primary"],
-        "border": f"2px solid {theme_styles['theme']['card_bg']}"
-    }
-    
-    active_style = {
-        "backgroundColor": theme_styles["theme"]["primary"],
-        "color": "white",
-        "border": f"2px solid {theme_styles['theme']['primary']}"
-    }
-    
-    # Return content and update button styles
-    return (
-        content,
-        active_style if button_id == 'tab-dashboard' else default_style,
-        active_style if button_id == 'tab-analytics' else default_style,
-        active_style if button_id == 'tab-reports' else default_style,
-        active_style if button_id == 'tab-reviews' else default_style,
-        active_style if button_id == 'tab-upload' else default_style
-    )
-
-
 # 1. Page routing and authentication
+
 @callback(
     [Output('current-page', 'data'),
      Output('user-authenticated', 'data'), 
@@ -937,7 +828,7 @@ def handle_tab_navigation(dashboard_clicks, analytics_clicks, reports_clicks,
     prevent_initial_call=False
 )
 def route_and_authenticate(pathname, search):
-    """Core routing and authentication logic - FIXED to handle logout parameter"""
+    """Core routing and authentication logic - FIXED with access control"""
     if pathname:
         pathname = urllib.parse.unquote(pathname)
     
@@ -951,11 +842,7 @@ def route_and_authenticate(pathname, search):
     # Handle logout FIRST before any other logic
     if params.get('logout') == 'true':
         print("DEBUG: Logout detected - clearing all session data")
-        
-        # Clear Flask session completely
         flask.session.clear()
-        
-        # Also clear any OAuth manager sessions if available
         if GOOGLE_AUTH_AVAILABLE and google_auth_manager:
             try:
                 session_id = flask.session.get('swaccha_session_id')
@@ -964,11 +851,10 @@ def route_and_authenticate(pathname, search):
                     print(f"DEBUG: Cleared OAuth session: {session_id}")
             except Exception as e:
                 print(f"DEBUG: OAuth logout error: {e}")
-        
         print("DEBUG: Logout complete - returning to public landing")
         return 'public_landing', False, {}, 'Logged out successfully.'
     
-    # Session validation
+    # Session validation (your existing code)
     session_id = flask.session.get('swaccha_session_id')
     user_data = flask.session.get('user_data', {})
     oauth_user_info = flask.session.get('oauth_user_info', {})
@@ -1007,19 +893,14 @@ def route_and_authenticate(pathname, search):
     
     print(f"DEBUG: Final auth state - authenticated: {is_authenticated}")
     
-    # Route determination with unauthorized access handling
-    # FIXED: Clean handling of login page regardless of parameters
+    # 🚨 NEW: Route determination with ROLE-BASED ACCESS CONTROL
     if not pathname or pathname == '/':
         return 'public_landing', is_authenticated, user_data, ''
     elif pathname == '/login':
-        # FIXED: Always go to login page, completely ignore logout parameter
         if params.get('logout') == 'true':
-            # If coming from logout, treat as normal login with no error
             error = ''
         else:
-            # Only check for actual error parameters if not from logout
             error = params.get('error', '')
-        
         error_messages = {
             'oauth_not_available': 'Google OAuth not configured. Use demo login.',
             'oauth_failed': 'OAuth setup failed. Use demo login.',
@@ -1033,9 +914,31 @@ def route_and_authenticate(pathname, search):
             return 'admin_dashboard', True, user_data, ''
         else:
             return 'unauthorized_access', False, {}, 'Please log in to access dashboard.'
-    elif pathname in ['/analytics', '/reports']:
-        page = 'analytics_page' if pathname == '/analytics' else 'reports_page'
+    elif pathname in ['/analytics', '/reports', '/data-analytics']:
         if is_authenticated:
+            # 🚨 CHECK ACCESS BEFORE ROUTING
+            user_role = user_data.get('role', 'viewer')
+            required_tab = 'analytics' if pathname in ['/analytics', '/data-analytics'] else 'reports'
+            
+            # Check access
+            try:
+                from config.auth import can_user_access_tab
+                has_access = can_user_access_tab(user_role, required_tab)
+            except ImportError:
+                # Restrictive fallback
+                allowed_tabs = {
+                    'viewer': ['dashboard', 'analytics', 'reports'],
+                    'administrator': ['dashboard', 'analytics', 'reports', 'reviews', 'upload'],
+                    'super_admin': ['dashboard', 'analytics', 'reports', 'reviews', 'upload', 'forecasting']
+                }.get(user_role, ['dashboard'])
+                has_access = required_tab in allowed_tabs
+            
+            if not has_access:
+                print(f"DEBUG: User {user_role} denied access to {required_tab}, redirecting to dashboard")
+                return 'admin_dashboard', True, user_data, f'Access denied to {required_tab} section.'
+            
+            # User has access
+            page = 'analytics_page' if pathname in ['/analytics', '/data-analytics'] else 'reports_page'
             return page, True, user_data, ''
         else:
             return 'unauthorized_access', False, {}, 'Please log in to access this page.'
@@ -1044,30 +947,10 @@ def route_and_authenticate(pathname, search):
     else:
         return 'public_landing', is_authenticated, user_data, ''
 
-# 2. Theme switching
-@callback(
-    Output('current-theme', 'data'),
-    [Input('theme-dark', 'n_clicks'),
-     Input('theme-light', 'n_clicks'), 
-     Input('theme-high_contrast', 'n_clicks'),
-     Input('theme-swaccha_green', 'n_clicks')],
-    prevent_initial_call=True
-)
-def update_theme(dark, light, contrast, green):
-    """Theme switching"""
-    if not ctx.triggered:
-        return DEFAULT_THEME
-    
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    themes = {
-        'theme-dark': 'dark',
-        'theme-light': 'light',
-        'theme-high_contrast': 'high_contrast', 
-        'theme-swaccha_green': 'swaccha_green'
-    }
-    return themes.get(button_id, DEFAULT_THEME)
+# 2. Then, replace the layout rendering section in main.py (around line 374):
 
-# 3. Layout rendering
+# 2. Then, replace the layout rendering section in main.py (around line 374):
+
 @callback(
     Output('main-layout', 'children'),
     [Input('current-theme', 'data'),
@@ -1101,6 +984,7 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
             print("DEBUG: Enhanced dashboard layout rendered")
             return layout
         elif current_page in ['analytics_page', 'reports_page'] and is_authenticated:
+            # Since we already checked access in routing, just render with correct tab
             active_tab = 'tab-analytics' if current_page == 'analytics_page' else 'tab-reports'
             layout = build_enhanced_dashboard(theme_name, user_data, active_tab)
             print(f"DEBUG: Enhanced dashboard layout rendered for {current_page}")
@@ -1114,6 +998,10 @@ def render_layout(theme_name, is_authenticated, current_page, user_data, error_m
         import traceback
         print(f"ERROR: Full traceback: {traceback.format_exc()}")
         return build_public_layout(DEFAULT_THEME, False, {})
+
+# 3. MOST IMPORTANT: Update the Flask routes in admin_dashboard.py to check access:
+
+# In admin_dashboard.py, update these routes:
 
 # 4. Basic navigation
 @callback(
@@ -1337,88 +1225,7 @@ def handle_manual_redirect(manual_clicks, login_clicks, current_page):
     
     raise PreventUpdate
 
-# 9. Tab navigation callback for admin dashboard
-@callback(
-    [Output('tab-content', 'children'),
-     Output('tab-dashboard', 'style'),
-     Output('tab-analytics', 'style'),
-     Output('tab-reports', 'style'),
-     Output('tab-reviews', 'style'),
-     Output('tab-upload', 'style')],
-    [Input('tab-dashboard', 'n_clicks'),
-     Input('tab-analytics', 'n_clicks'),
-     Input('tab-reports', 'n_clicks'),
-     Input('tab-reviews', 'n_clicks'),
-     Input('tab-upload', 'n_clicks')],
-    [State('current-theme', 'data'),
-     State('user-session-data', 'data'),
-     State('current-page', 'data'),
-     State('user-authenticated', 'data')],
-    prevent_initial_call=True
-)
-def handle_tab_navigation(dashboard_clicks, analytics_clicks, reports_clicks, 
-                         reviews_clicks, upload_clicks, theme_name, user_data, 
-                         current_page, is_authenticated):
-    """Handle tab navigation in admin dashboard"""
-    # Only handle tabs if user is on admin dashboard and authenticated
-    if not is_authenticated or current_page != 'admin_dashboard':
-        raise PreventUpdate
-    
-    if not ctx.triggered:
-        raise PreventUpdate
-    
-    # Get the clicked tab
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    if ctx.triggered[0]['value'] in [None, 0]:
-        raise PreventUpdate
-    
-    # Import necessary functions
-    from utils.theme_utils import get_theme_styles
-    from layouts.admin_dashboard import (
-        create_tab_content, 
-        generate_sample_data
-    )
-    
-    theme_styles = get_theme_styles(theme_name or "dark")
-    theme = theme_styles["theme"]
-    data = generate_sample_data()
-    
-    # Determine active tab
-    active_tab = button_id
-    
-    # Create tab content
-    tab_content = create_tab_content(active_tab, theme_styles, user_data or {}, data)
-    
-    # Create button styles
-    def get_tab_style(tab_id, is_active=False):
-        return {
-            "backgroundColor": theme["brand_primary"] if is_active else theme["accent_bg"],
-            "color": "white" if is_active else theme["text_primary"],
-            "border": f"2px solid {theme['brand_primary']}" if is_active else f"1px solid {theme.get('border_light', theme['accent_bg'])}",
-            "padding": "0.75rem 1.5rem",
-            "borderRadius": "8px",
-            "fontSize": "0.95rem",
-            "fontWeight": "600",
-            "cursor": "pointer",
-            "transition": "all 0.2s ease",
-            "display": "flex",
-            "alignItems": "center",
-            "gap": "0.5rem",
-            "minWidth": "120px",
-            "justifyContent": "center"
-        }
-    
-    # Get styles for all tabs
-    dashboard_style = get_tab_style('tab-dashboard', active_tab == 'tab-dashboard')
-    analytics_style = get_tab_style('tab-analytics', active_tab == 'tab-analytics')
-    reports_style = get_tab_style('tab-reports', active_tab == 'tab-reports')
-    reviews_style = get_tab_style('tab-reviews', active_tab == 'tab-reviews')
-    upload_style = get_tab_style('tab-upload', active_tab == 'tab-upload')
-    
-    return (tab_content, dashboard_style, analytics_style, reports_style, 
-            reviews_style, upload_style)
 
-# Helper functions
 def create_demo_session(user_id, name, role):
     """Create demo session (stable)"""
     session_data = {
@@ -1440,58 +1247,34 @@ ensure_upload_directory(server)
 
 # ✅ FIXED: Register routes WITH custom dashboard routes (no conflicts)
 register_custom_dashboard_routes(server)  # Custom routes for dashboard functionality
-register_analytics_routes(server)
-register_reports_routes(server)
-register_reviews_routes(server)
-register_forecasting_routes(server)
 register_oauth_routes(server, google_auth_manager, GOOGLE_AUTH_AVAILABLE, logger)
 register_debug_routes(server)
-
+register_dashboard_flask_routes(server)
 # ✅ KEEP: Register dashboard Flask routes (moved from main to admin_dashboard)
 # This handles the /dashboard route without conflicts
-register_dashboard_flask_routes(server)
-
-register_unified_dashboard_callbacks()
-
 register_enhanced_csv_routes(server)
-
 # Create upload directories
 upload_dir = Path('uploads')
 upload_dir.mkdir(exist_ok=True)
 user_upload_dir = upload_dir / 'dash_uploads'
 user_upload_dir.mkdir(exist_ok=True)
 
-if __name__ == "__main__":
-    print("🚀 Starting Swaccha Andhra Dashboard...")
-    print(f"🔑 Google OAuth Utils: {'✅ Available' if GOOGLE_AUTH_AVAILABLE else '❌ Not Available'}")
-    print(f"🔑 Real OAuth Config: {'✅ Available' if REAL_OAUTH_AVAILABLE else '❌ Not Available'}")
-    print(f"🔑 Auth Manager: {type(google_auth_manager).__name__ if google_auth_manager else 'None'}")
-    
-    if google_auth_manager and hasattr(google_auth_manager, 'client_secrets_file'):
-        secrets_exists = os.path.exists(google_auth_manager.client_secrets_file)
-        print(f"🔑 client_secrets.json: {'✅ Found' if secrets_exists else '❌ Missing'}")
-    
-    print("🔐 Login Methods: Google OAuth (real), Demo, PIN (1234/5678/9999), Manual")
-    print("🔧 Debug OAuth: http://localhost:8050/debug/oauth")
-    print("🧪 Test Overlay: http://localhost:8050/test/overlay")
-    print("🧪 Test Flask: http://localhost:8050/test/flask")
-    print("📊 OAuth Status: http://localhost:8050/oauth/status")
-    print("")
-    print("✅ DASHBOARD ROUTE FIX COMPLETED:")
-    print("✅ Added: register_custom_dashboard_routes() - CSV filter endpoints")
-    print("✅ Kept: register_dashboard_flask_routes() - Main /dashboard route handler")
-    print("✅ Added: /dashboard/csv-relationships - Cascading filter data")
-    print("✅ Added: /dashboard/filtered-csv-data - Real CSV filtering")
-    print("✅ No more route conflicts - filter functionality restored")
-    print("")
-    print("📝 Fixed Issues:")
-    print("1. Dashboard filter section restored with CSV data")
-    print("2. Cascading filters working (Agency → Cluster → Site)")
-    print("3. Real CSV data integration in filter dropdowns")
-    print("4. Filter results showing actual data statistics")
-    print("5. All dashboard functionality preserved")
-    print("")
-    
-    app.run(debug=True, host='0.0.0.0', port=8050)
-
-__all__ = ['app', 'server']
+if __name__ == '__main__':
+    try:
+        # Register unified callbacks BEFORE starting the app
+        register_unified_dashboard_callbacks()
+        logger.info("✅ Unified callbacks registered successfully")
+        
+        # Start the app
+        app.run_server(debug=True, host='0.0.0.0', port=8050)
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to start app: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+    finally:
+        # Clean up file monitoring
+        try:
+            stop_file_monitoring()
+        except:
+            pass

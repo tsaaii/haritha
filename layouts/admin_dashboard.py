@@ -509,14 +509,155 @@ def csv_to_javascript_string(csv_data):
     
     return '\n'.join(csv_lines)
 
+
+# def create_empty_themed_page(title, icon, theme_name="dark"):
+#     """Create an empty themed page template with ROLE-BASED TAB FILTERING"""
+#     theme_styles = get_theme_styles(theme_name)
+#     theme = theme_styles["theme"]
+    
+#     user_info = session.get('user_data', {})
+#     user_name = user_info.get('name', 'Administrator')
+#     user_role = user_info.get('role', 'administrator').replace('_', ' ').title()
+    
+#     # ✅ GET USER ROLE AND APPLY ACCESS CONTROL
+#     user_role_raw = user_info.get('role', 'viewer')
+    
+#     # ✅ APPLY SAME ACCESS CONTROL AS create_navigation_tabs
+#     try:
+#         from config.auth import get_tab_permissions
+#         allowed_tabs = get_tab_permissions(user_role_raw)
+#     except ImportError:
+#         # RESTRICTIVE fallback
+#         restrictive_permissions = {
+#             'viewer': ['dashboard', 'analytics', 'reports'],  # ONLY these 3 tabs
+#             'administrator': ['dashboard', 'analytics', 'reports', 'reviews', 'upload'],
+#             'super_admin': ['dashboard', 'analytics', 'reports', 'reviews', 'upload', 'forecasting']
+#         }
+#         allowed_tabs = restrictive_permissions.get(user_role_raw, ['dashboard'])
+    
+#     # ✅ ALL POSSIBLE TABS
+#     all_tabs = [
+#         {"id": "dashboard", "href": "/dashboard", "label": "📊 Dashboard", "icon": "📊"},
+#         {"id": "analytics", "href": "/data-analytics", "label": "🔍 Data Analytics", "icon": "🔍"},
+#         {"id": "reports", "href": "/reports", "label": "📋 Reports", "icon": "📋"},
+#         {"id": "reviews", "href": "/reviews", "label": "⭐ Reviews", "icon": "⭐"},
+#         {"id": "upload", "href": "/upload", "label": "📤 Upload", "icon": "📤"},
+#         {"id": "forecasting", "href": "/forecasting", "label": "🔮 Forecasting", "icon": "🔮"}
+#     ]
+    
+#     # ✅ FILTER TABS BASED ON USER PERMISSIONS
+#     visible_tabs = [tab for tab in all_tabs if tab["id"] in allowed_tabs]
+    
+#     print(f"🔒 HTML PAGE - USER ROLE: {user_role_raw}")
+#     print(f"🔒 HTML PAGE - ALLOWED TABS: {allowed_tabs}")
+#     print(f"🔒 HTML PAGE - VISIBLE TABS: {[t['id'] for t in visible_tabs]}")
+    
+#     # ✅ BUILD NAVIGATION BUTTONS ONLY FOR VISIBLE TABS
+#     nav_buttons_html = ""
+#     for tab in visible_tabs:
+#         active_class = "active" if tab["id"].lower() in title.lower() else ""
+#         nav_buttons_html += f'''
+#             <a href="{tab["href"]}" class="nav-tab {active_class}">
+#                 {tab["label"]}
+#             </a>
+#         '''
+    
+#     # Load CSV data and get filter options (existing code)
+#     csv_data = get_embedded_csv_data()
+#     embedded_csv_string = csv_to_javascript_string(csv_data)
+#     filter_options = get_filter_options_from_embedded_data()
+    
+#     return f'''
+#     <!DOCTYPE html>
+#     <html lang="en">
+#     <head>
+#         <!-- ... existing head content ... -->
+#     </head>
+#     <body>
+#         <div class="page-container">
+#             <!-- Navigation Header -->
+#             <nav class="navigation-header">
+#                 <div class="nav-content">
+#                     <div class="nav-tabs">
+#                         <div class="nav-buttons">
+#                             {nav_buttons_html}
+#                         </div>
+                        
+#                         <div class="user-info">
+#                             <img src="/assets/img/default-avatar.png" alt="User Avatar" class="user-avatar">
+#                             <div class="user-details">
+#                                 <div class="user-name">{user_name}</div>
+#                                 <div class="user-role">{user_role}</div>
+#                             </div>
+#                             <a href="/?logout=true" class="logout-btn">
+#                                 🚪 Logout
+#                             </a>
+#                         </div>
+#                     </div>
+                    
+#                     <div class="theme-switcher">
+#                         <!-- ... existing theme switcher ... -->
+#                     </div>
+#                 </div>
+#             </nav>
+            
+#             <!-- ... rest of the HTML remains the same ... -->
+#         </div>
+#     </body>
+#     </html>
+#     '''
+
 def create_empty_themed_page(title, icon, theme_name="dark"):
-    """Create an empty themed page template with REAL CSV DATA INTEGRATION"""
+    """Create an empty themed page template with ROLE-BASED ACCESS CONTROL"""
     theme_styles = get_theme_styles(theme_name)
     theme = theme_styles["theme"]
     
     user_info = session.get('user_data', {})
     user_name = user_info.get('name', 'Administrator')
-    user_role = user_info.get('role', 'administrator').replace('_', ' ').title()
+    user_role_display = user_info.get('role', 'administrator').replace('_', ' ').title()
+    
+    # ✅ GET USER ROLE AND APPLY ACCESS CONTROL
+    user_role_raw = user_info.get('role', 'viewer')
+    
+    # ✅ APPLY ROLE-BASED ACCESS CONTROL
+    try:
+        from config.auth import get_tab_permissions
+        allowed_tabs = get_tab_permissions(user_role_raw)
+    except ImportError:
+        # RESTRICTIVE fallback
+        restrictive_permissions = {
+            'viewer': ['dashboard', 'analytics', 'reports'],  # ONLY these 3 tabs
+            'administrator': ['dashboard', 'analytics', 'reports', 'reviews', 'upload'],
+            'super_admin': ['dashboard', 'analytics', 'reports', 'reviews', 'upload', 'forecasting']
+        }
+        allowed_tabs = restrictive_permissions.get(user_role_raw, ['dashboard'])
+    
+    # ✅ ALL POSSIBLE TABS
+    all_tabs = [
+        {"id": "dashboard", "href": "/dashboard", "label": "📊 Dashboard", "active_check": "dashboard"},
+        {"id": "analytics", "href": "/data-analytics", "label": "🔍 Data Analytics", "active_check": "data analytics"},
+        {"id": "reports", "href": "/reports", "label": "📋 Reports", "active_check": "reports"},
+        {"id": "reviews", "href": "/reviews", "label": "⭐ Reviews", "active_check": "reviews"},
+        {"id": "upload", "href": "/upload", "label": "📤 Upload", "active_check": "upload"},
+        {"id": "forecasting", "href": "/forecasting", "label": "🔮 Forecasting", "active_check": "forecasting"}
+    ]
+    
+    # ✅ FILTER TABS BASED ON USER PERMISSIONS
+    visible_tabs = [tab for tab in all_tabs if tab["id"] in allowed_tabs]
+    
+    print(f"🔒 HTML PAGE - USER ROLE: {user_role_raw}")
+    print(f"🔒 HTML PAGE - ALLOWED TABS: {allowed_tabs}")
+    print(f"🔒 HTML PAGE - VISIBLE TABS: {[t['id'] for t in visible_tabs]}")
+    
+    # ✅ BUILD NAVIGATION BUTTONS ONLY FOR VISIBLE TABS
+    nav_buttons_html = ""
+    for tab in visible_tabs:
+        active_class = "active" if tab["active_check"] in title.lower() else ""
+        nav_buttons_html += f'''
+            <a href="{tab["href"]}" class="nav-tab {active_class}">
+                {tab["label"]}
+            </a>
+        '''
     
     # ✅ LOAD REAL CSV DATA USING PANDAS
     csv_data = get_embedded_csv_data()
@@ -1040,125 +1181,7 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 color: var(--text-primary);
             }}
             
-            .stat-card .trend {{
-                position: absolute;
-                top: 1rem;
-                right: 1rem;
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background: #10B981;
-                opacity: 0;
-                transform: scale(0);
-                transition: all 0.3s ease;
-                animation: pulse 2s infinite;
-            }}
-            
-            .stat-card:hover .trend {{
-                opacity: 1;
-                transform: scale(1);
-            }}
-            
-            @keyframes pulse {{
-                0%, 100% {{
-                    transform: scale(1);
-                    opacity: 0.7;
-                }}
-                50% {{
-                    transform: scale(1.2);
-                    opacity: 1;
-                }}
-            }}
-            
-            .stat-card .progress-bar {{
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                height: 4px;
-                background: var(--brand-primary);
-                border-radius: 0 0 16px 16px;
-                transition: width 0.6s ease;
-                opacity: 0;
-            }}
-            
-            .stat-card:hover .progress-bar {{
-                opacity: 1;
-            }}
-            
-            .stat-card.animate-in {{
-                animation: cardSlideIn 0.6s ease forwards;
-            }}
-            
-            @keyframes cardSlideIn {{
-                from {{
-                    opacity: 0;
-                    transform: translateY(30px);
-                }}
-                to {{
-                    opacity: 1;
-                    transform: translateY(0);
-                }}
-            }}
-            
-            .stat-card.loading .value {{
-                color: transparent;
-                position: relative;
-            }}
-            
-            .stat-card.loading .value::after {{
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 20px;
-                height: 20px;
-                margin: -10px 0 0 -10px;
-                border: 2px solid var(--accent-bg);
-                border-top: 2px solid var(--brand-primary);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }}
-            
-            @keyframes spin {{
-                0% {{ transform: rotate(0deg); }}
-                100% {{ transform: rotate(360deg); }}
-            }}
-            
-            /* Individual card themes */
-            .stat-card.records-card:hover {{
-                background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
-                color: white;
-            }}
-            
-            .stat-card.weight-card:hover {{
-                background: linear-gradient(135deg, #10B981 0%, #047857 100%);
-                color: white;
-            }}
-            
-            .stat-card.vehicles-card:hover {{
-                background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-                color: white;
-            }}
-            
-            .stat-card.materials-card:hover {{
-                background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
-                color: white;
-            }}
-            
-            .stat-card.records-card:hover .value,
-            .stat-card.weight-card:hover .value,
-            .stat-card.vehicles-card:hover .value,
-            .stat-card.materials-card:hover .value {{
-                color: white;
-            }}
-            
-            .stat-card.records-card:hover .label,
-            .stat-card.weight-card:hover .label,
-            .stat-card.vehicles-card:hover .label,
-            .stat-card.materials-card:hover .label {{
-                color: rgba(255, 255, 255, 0.9);
-            }}
-            
+            /* Data Table Styles */
             .data-table-container {{
                 overflow-x: auto;
                 margin-top: 1rem;
@@ -1211,6 +1234,11 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 border-top-color: var(--brand-primary);
                 animation: spin 1s ease-in-out infinite;
                 margin-bottom: 1rem;
+            }}
+            
+            @keyframes spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
             }}
             
             .no-data {{
@@ -1291,10 +1319,6 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                     font-size: 2rem;
                 }}
                 
-                .page-hero {{
-                    padding: 2rem 1rem;
-                }}
-                
                 .filter-grid {{
                     grid-template-columns: 1fr;
                 }}
@@ -1327,34 +1351,14 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                 <div class="nav-content">
                     <div class="nav-tabs">
                         <div class="nav-buttons">
-                            <a href="/dashboard" class="nav-tab {'active' if 'dashboard' in title.lower() else ''}">
-                                📊 Dashboard
-                            </a>
-                            <a href="/data-analytics" class="nav-tab {'active' if 'data analytics' in title.lower() else ''}">
-                                🔍 Data Analytics
-                            </a>
-                            <a href="/charts" class="nav-tab {'active' if 'charts' in title.lower() else ''}">
-                                📈 Charts
-                            </a>
-                            <a href="/reports" class="nav-tab {'active' if 'reports' in title.lower() else ''}">
-                                📋 Reports
-                            </a>
-                            <a href="/reviews" class="nav-tab {'active' if 'reviews' in title.lower() else ''}">
-                                ⭐ Reviews
-                            </a>
-                            <a href="/forecasting" class="nav-tab {'active' if 'forecasting' in title.lower() else ''}">
-                                🔮 Forecasting
-                            </a>
-                            <a href="/upload" class="nav-tab {'active' if 'upload' in title.lower() else ''}">
-                                📤 Upload
-                            </a>
+                            {nav_buttons_html}
                         </div>
                         
                         <div class="user-info">
                             <img src="/assets/img/default-avatar.png" alt="User Avatar" class="user-avatar">
                             <div class="user-details">
                                 <div class="user-name">{user_name}</div>
-                                <div class="user-role">{user_role}</div>
+                                <div class="user-role">{user_role_display}</div>
                             </div>
                             <a href="/?logout=true" class="logout-btn">
                                 🚪 Logout
@@ -1443,32 +1447,24 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                     <!-- Interactive Data Statistics -->
                     <div id="data-stats" class="data-stats">
                         <div class="stat-card records-card" onclick="showRecordsDetail()">
-                            <div class="trend"></div>
                             <span class="icon">📊</span>
                             <div class="label">Total Records</div>
                             <div class="value" id="total-records">-</div>
-                            <div class="progress-bar" style="width: 85%;"></div>
                         </div>
                         <div class="stat-card weight-card" onclick="showWeightDetail()">
-                            <div class="trend"></div>
                             <span class="icon">⚖️</span>
                             <div class="label">Total Weight</div>
                             <div class="value" id="total-weight">-</div>
-                            <div class="progress-bar" style="width: 92%;"></div>
                         </div>
                         <div class="stat-card vehicles-card" onclick="showVehiclesDetail()">
-                            <div class="trend"></div>
                             <span class="icon">🚛</span>
                             <div class="label">Unique Vehicles</div>
                             <div class="value" id="unique-vehicles">-</div>
-                            <div class="progress-bar" style="width: 68%;"></div>
                         </div>
                         <div class="stat-card materials-card" onclick="showMaterialsDetail()">
-                            <div class="trend"></div>
                             <span class="icon">♻️</span>
                             <div class="label">Material Types</div>
                             <div class="value" id="material-types">-</div>
-                            <div class="progress-bar" style="width: 75%;"></div>
                         </div>
                     </div>
 
@@ -1729,47 +1725,18 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
                                 .filter(m => m !== null && m !== undefined && m !== '')
                         ).size;
                         
-                        // Animate stat card updates
-                        animateStatCard('total-records', totalRecords.toLocaleString());
-                        animateStatCard('total-weight', `${{totalWeight.toLocaleString()}} kg`);
-                        animateStatCard('unique-vehicles', uniqueVehicles);
-                        animateStatCard('unique-materials', uniqueMaterials);
+                        // Update stat cards
+                        const totalRecordsEl = safeGetElement('total-records');
+                        const totalWeightEl = safeGetElement('total-weight');
+                        const uniqueVehiclesEl = safeGetElement('unique-vehicles');
+                        const materialTypesEl = safeGetElement('material-types');
+                        
+                        if (totalRecordsEl) totalRecordsEl.textContent = totalRecords.toLocaleString();
+                        if (totalWeightEl) totalWeightEl.textContent = `${{totalWeight.toLocaleString()}} kg`;
+                        if (uniqueVehiclesEl) uniqueVehiclesEl.textContent = uniqueVehicles;
+                        if (materialTypesEl) materialTypesEl.textContent = uniqueMaterials;
                         
                         console.log('📊 Statistics updated:', {{ totalRecords, totalWeight, uniqueVehicles, uniqueMaterials }});
-                    }}
-                    
-                    // Animate individual stat cards
-                    function animateStatCard(elementId, newValue) {{
-                        const element = safeGetElement(elementId);
-                        if (!element) return;
-                        
-                        // Add loading state
-                        const card = element.closest('.stat-card');
-                        if (card) {{
-                            card.classList.add('loading');
-                        }}
-                        
-                        // Simulate loading delay for better UX
-                        setTimeout(() => {{
-                            // Remove loading state
-                            if (card) {{
-                                card.classList.remove('loading');
-                            }}
-                            
-                            // Animate value change
-                            element.style.transform = 'scale(0.8)';
-                            element.style.opacity = '0.5';
-                            
-                            setTimeout(() => {{
-                                element.textContent = newValue;
-                                element.style.transform = 'scale(1.1)';
-                                element.style.opacity = '1';
-                                
-                                setTimeout(() => {{
-                                    element.style.transform = 'scale(1)';
-                                }}, 150);
-                            }}, 100);
-                        }}, Math.random() * 300 + 200);
                     }}
 
                     // Update data table
@@ -2021,74 +1988,113 @@ def create_empty_themed_page(title, icon, theme_name="dark"):
 
 def register_dashboard_flask_routes(server):
     """
-    Register all Flask routes that were in main.py for dashboard functionality
-    UPDATED WITH REAL CSV DATA INTEGRATION
+    Register ALL dashboard page routes with ROLE-BASED ACCESS CONTROL
+    This replaces the individual endpoint files to avoid conflicts
     """
     
+    def check_tab_access(required_tab):
+        """Helper function to check if user can access a specific tab"""
+        if not session.get('swaccha_session_id'):
+            return False, redirect('/login')
+        
+        user_data = session.get('user_data', {})
+        user_role = user_data.get('role', 'viewer')
+        
+        # Apply same access control as Dash callbacks
+        try:
+            from config.auth import can_user_access_tab
+            if not can_user_access_tab(user_role, required_tab):
+                return False, redirect('/dashboard')  # Redirect to dashboard if no access
+        except ImportError:
+            # RESTRICTIVE fallback
+            restrictive_permissions = {
+                'viewer': ['dashboard', 'analytics', 'reports'],
+                'administrator': ['dashboard', 'analytics', 'reports', 'reviews', 'upload'],
+                'super_admin': ['dashboard', 'analytics', 'reports', 'reviews', 'upload', 'forecasting']
+            }
+            allowed_tabs = restrictive_permissions.get(user_role, ['dashboard'])
+            if required_tab not in allowed_tabs:
+                return False, redirect('/dashboard')  # Redirect to dashboard if no access
+        
+        return True, None
+    
+    # Main dashboard (always accessible to authenticated users)
     @server.route('/dashboard')
     def admin_dashboard():
-        """Main Dashboard Page with real CSV data integration"""
+        """Main Dashboard Page - Always accessible to authenticated users"""
         if not session.get('swaccha_session_id'):
             return redirect('/login')
         
         theme = get_current_theme()
         return create_empty_themed_page("Dashboard", "📊", theme)
 
+    # Analytics pages (with access control)
     @server.route('/data-analytics')
     def admin_data_analytics():
-        """Data Analytics Page with real CSV data integration"""
-        if not session.get('swaccha_session_id'):
-            return redirect('/login')
+        """Data Analytics Page - Check access control"""
+        has_access, redirect_response = check_tab_access('analytics')
+        if not has_access:
+            return redirect_response
         
         theme = get_current_theme()
         return create_empty_themed_page("Data Analytics", "🔍", theme)
 
+    # Charts page (with access control)
     @server.route('/charts')
     def admin_charts():
-        """Charts Page"""
-        if not session.get('swaccha_session_id'):
-            return redirect('/login')
+        """Charts Page - Check access control"""
+        has_access, redirect_response = check_tab_access('charts')
+        if not has_access:
+            return redirect_response
         
         theme = get_current_theme()
         return create_empty_themed_page("Charts", "📈", theme)
 
+    # Reports page (with access control)
     @server.route('/reports')
     def admin_reports():
-        """Reports Page"""
-        if not session.get('swaccha_session_id'):
-            return redirect('/login')
+        """Reports Page - Check access control"""
+        has_access, redirect_response = check_tab_access('reports')
+        if not has_access:
+            return redirect_response
         
         theme = get_current_theme()
         return create_empty_themed_page("Reports", "📋", theme)
 
+    # Reviews page (with access control)
     @server.route('/reviews')
     def admin_reviews():
-        """Reviews Page"""
-        if not session.get('swaccha_session_id'):
-            return redirect('/login')
+        """Reviews Page - Check access control"""
+        has_access, redirect_response = check_tab_access('reviews')
+        if not has_access:
+            return redirect_response
         
         theme = get_current_theme()
         return create_empty_themed_page("Reviews", "⭐", theme)
 
+    # Forecasting page (with access control)
     @server.route('/forecasting')
     def admin_forecasting():
-        """Forecasting Page"""
-        if not session.get('swaccha_session_id'):
-            return redirect('/login')
+        """Forecasting Page - Check access control"""
+        has_access, redirect_response = check_tab_access('forecasting')
+        if not has_access:
+            return redirect_response
         
         theme = get_current_theme()
         return create_empty_themed_page("Forecasting", "🔮", theme)
 
+    # Upload page (with access control)
     @server.route('/upload')
     def admin_upload():
-        """Upload Page"""
-        if not session.get('swaccha_session_id'):
-            return redirect('/login')
+        """Upload Page - Check access control"""
+        has_access, redirect_response = check_tab_access('upload')
+        if not has_access:
+            return redirect_response
         
         theme = get_current_theme()
         return create_empty_themed_page("Upload", "📤", theme)
 
-    # ENHANCED CSV DATA API ENDPOINTS
+    # All your existing API routes remain the same...
     @server.route('/api/csv-data')
     def get_csv_data():
         """API endpoint to get embedded CSV data with filtering"""
@@ -2268,6 +2274,129 @@ def register_dashboard_flask_routes(server):
             print(f"Download error: {e}")
             return "Download failed", 500
 
+# Also update the register_custom_dashboard_routes function to only include API routes
+
+def register_custom_dashboard_routes(server):
+    """Register dashboard API routes without page conflicts"""
+    
+    @server.route('/dashboard/csv-relationships')
+    def csv_relationships():
+        """API endpoint to get CSV data relationships for cascading filters"""
+        if not session.get('swaccha_session_id'):
+            return {'error': 'Authentication required'}, 401
+        
+        try:
+            from data_loader import get_cached_data
+            df = get_cached_data()
+            
+            if df.empty:
+                return flask.jsonify({
+                    'agency_clusters': {},
+                    'cluster_sites': {},
+                    'message': 'No CSV data available'
+                })
+            
+            # Build relationships from CSV data
+            agency_clusters = {}
+            cluster_sites = {}
+            
+            # Group by agency to get clusters
+            if 'agency' in df.columns and 'cluster' in df.columns:
+                grouped = df.groupby('agency')['cluster'].unique()
+                for agency, clusters in grouped.items():
+                    agency_clusters[agency] = list(clusters)
+            
+            # Group by cluster to get sites
+            if 'cluster' in df.columns and 'site' in df.columns:
+                grouped = df.groupby('cluster')['site'].unique()
+                for cluster, sites in grouped.items():
+                    cluster_sites[cluster] = list(sites)
+            
+            logger.info(f"✅ CSV relationships: {len(agency_clusters)} agencies, {len(cluster_sites)} clusters")
+            
+            return flask.jsonify({
+                'agency_clusters': agency_clusters,
+                'cluster_sites': cluster_sites,
+                'total_records': len(df)
+            })
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting CSV relationships: {e}")
+            return flask.jsonify({
+                'error': 'Error processing CSV data',
+                'message': str(e)
+            }), 500
+    
+    @server.route('/dashboard/filtered-csv-data')
+    def filtered_csv_data():
+        """API endpoint to get filtered CSV data - RENAMED TO AVOID CONFLICT"""
+        if not session.get('swaccha_session_id'):
+            return {'error': 'Authentication required'}, 401
+        
+        try:
+            from data_loader import get_cached_data, filter_data
+            
+            # Get filter parameters from request
+            agency = request.args.get('agency', 'all')
+            cluster = request.args.get('cluster', 'all')
+            site = request.args.get('site', 'all')
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
+            
+            # Load and filter CSV data
+            df = get_cached_data()
+            
+            if df.empty:
+                return flask.jsonify({
+                    "error": "No CSV data available",
+                    "message": "Please upload a CSV file"
+                })
+            
+            # Apply filters
+            filtered_df = filter_data(df, agency, cluster, site, start_date, end_date)
+            
+            # Calculate statistics using correct column names from your CSV
+            record_count = len(filtered_df)
+            
+            # Use 'Net Weight' column (as per your CSV structure)
+            total_weight = 0
+            if 'Net Weight' in filtered_df.columns and not filtered_df.empty:
+                total_weight = filtered_df['Net Weight'].sum()
+            elif 'weight' in filtered_df.columns and not filtered_df.empty:
+                total_weight = filtered_df['weight'].sum()
+            
+            # Use 'Vehicle No' column (as per your CSV structure)
+            vehicle_count = 0
+            if 'Vehicle No' in filtered_df.columns and not filtered_df.empty:
+                vehicle_count = filtered_df['Vehicle No'].nunique()
+            elif 'vehicle' in filtered_df.columns and not filtered_df.empty:
+                vehicle_count = filtered_df['vehicle'].nunique()
+            
+            filter_response = {
+                "agency": agency,
+                "cluster": cluster,
+                "site": site,
+                "start_date": start_date,
+                "end_date": end_date,
+                "record_count": record_count,
+                "total_weight": f"{total_weight:,.0f} kg",
+                "vehicle_count": vehicle_count,
+                "timestamp": time.time(),
+                "source": "CSV Data with Cascading Filters",
+                "total_records_available": len(df)
+            }
+            
+            logger.info(f"✅ Filtered CSV data: {record_count} records from {len(df)} total")
+            
+            return flask.jsonify(filter_response)
+            
+        except Exception as e:
+            logger.error(f"❌ Error filtering CSV data: {e}")
+            return flask.jsonify({
+                "error": "Error processing CSV data",
+                "message": str(e)
+            }), 500
+
 
 # Keep all the other existing functions unchanged
 def ensure_upload_directory(server):
@@ -2391,101 +2520,140 @@ def create_navigation_tabs(theme, user_data):
     # Get user role from session data
     user_role = user_data.get('role', 'viewer')
     
-    # Import the permission function
+    # STRICT TAB PERMISSIONS
     try:
         from config.auth import get_tab_permissions
         allowed_tabs = get_tab_permissions(user_role)
     except ImportError:
-        # Fallback for demo mode
-        allowed_tabs = ["dashboard", "analytics", "charts", "reports"]
+        # RESTRICTIVE fallback if import fails
+        restrictive_permissions = {
+            'viewer': ['dashboard', 'analytics', 'reports'],  # ONLY these 3 tabs
+            'administrator': ['dashboard', 'analytics', 'reports', 'reviews', 'upload'],
+            'super_admin': ['dashboard', 'analytics', 'reports', 'reviews', 'upload', 'forecasting']
+        }
+        allowed_tabs = restrictive_permissions.get(user_role, ['dashboard'])
     
     # All possible tabs with their configuration
     all_tabs = [
-        {"id": "dashboard", "href": "/dashboard", "label": "Dashboard", "icon": "📊"},
-        {"id": "analytics", "href": "/data-analytics", "label": "Data Analytics", "icon": "🔍"},
-        {"id": "charts", "href": "/charts", "label": "Charts", "icon": "📈"},
-        {"id": "reports", "href": "/reports", "label": "Reports", "icon": "📋"},
-        {"id": "reviews", "href": "/reviews", "label": "Reviews", "icon": "⭐"},
-        {"id": "forecasting", "href": "/forecasting", "label": "Forecasting", "icon": "🔮"},
-        {"id": "upload", "href": "/upload", "label": "Upload", "icon": "📤"}
+        {"id": "dashboard", "tab_id": "tab-dashboard", "label": "📊 Dashboard", "icon": "📊"},
+        {"id": "analytics", "tab_id": "tab-analytics", "label": "🔍 Data Analytics", "icon": "🔍"},
+        {"id": "reports", "tab_id": "tab-reports", "label": "📋 Reports", "icon": "📋"},
+        {"id": "reviews", "tab_id": "tab-reviews", "label": "⭐ Reviews", "icon": "⭐"},
+        {"id": "upload", "tab_id": "tab-upload", "label": "📤 Upload", "icon": "📤"},
+        {"id": "forecasting", "tab_id": "tab-forecasting", "label": "🔮 Forecasting", "icon": "🔮"}
     ]
     
-    # Filter tabs based on user permissions
+    # FILTER TABS: Only show tabs the user has access to
     visible_tabs = [tab for tab in all_tabs if tab["id"] in allowed_tabs]
     
+    print(f"🔒 USER ROLE: {user_role}")
+    print(f"🔒 ALLOWED TABS: {allowed_tabs}")
+    print(f"🔒 VISIBLE TABS: {[t['id'] for t in visible_tabs]}")
+    
+    # Create tab buttons - ONLY for allowed tabs
+    tab_buttons = []
+    for tab in visible_tabs:
+        tab_button = html.Button(
+            tab["label"],
+            id=tab["tab_id"],
+            n_clicks=0,
+            className="nav-tab-button",
+            style={
+                "padding": "0.8rem 1.5rem",
+                "margin": "0 0.5rem",
+                "borderRadius": "8px",
+                "border": f"2px solid {theme['card_bg']}",
+                "backgroundColor": theme["accent_bg"],
+                "color": theme["text_primary"],
+                "fontSize": "0.9rem",
+                "fontWeight": "600",
+                "cursor": "pointer",
+                "transition": "all 0.3s ease",
+                "whiteSpace": "nowrap"
+            }
+        )
+        tab_buttons.append(tab_button)
+    
+    # User info section
+    user_avatar = html.Img(
+        src=user_data.get('picture', '/assets/img/default-avatar.png'),
+        alt="User Avatar",
+        style={
+            "width": "40px",
+            "height": "40px",
+            "borderRadius": "50%",
+            "marginRight": "0.5rem",
+            "border": f"2px solid {theme['primary']}"
+        }
+    )
+    
+    user_info = html.Div([
+        user_avatar,
+        html.Div([
+            html.Div(
+                user_data.get('name', 'User'),
+                style={
+                    "color": theme["text_primary"],
+                    "fontSize": "0.9rem",
+                    "fontWeight": "600",
+                    "margin": "0"
+                }
+            ),
+            html.Div(
+                f"Role: {user_role.title()}",  # Show the role
+                style={
+                    "color": theme["text_secondary"],
+                    "fontSize": "0.75rem",
+                    "margin": "0"
+                }
+            )
+        ])
+    ], style={"display": "flex", "alignItems": "center"})
+    
+    # Logout button
+    logout_button = html.Button(
+        "🚪 Logout",
+        id="logout-btn",
+        n_clicks=0,
+        style={
+            "padding": "0.6rem 1.2rem",
+            "borderRadius": "6px",
+            "border": f"2px solid {theme['danger']}",
+            "backgroundColor": "transparent",
+            "color": theme["danger"],
+            "fontSize": "0.8rem",
+            "fontWeight": "600",
+            "cursor": "pointer",
+            "marginLeft": "1rem"
+        }
+    )
+    
+    # Return the complete navigation
     return html.Div(
         className="navigation-tabs",
         style={
+            "display": "flex",
+            "justifyContent": "space-between",
+            "alignItems": "center",
+            "padding": "1rem 2rem",
             "backgroundColor": theme["card_bg"],
-            "borderRadius": "8px",
-            "border": f"2px solid {theme['accent_bg']}",
-            "padding": "0.75rem 1.5rem",
-            "margin": "0.75rem 0",
-            "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.2)"
+            "borderBottom": f"1px solid {theme['border_light']}",
+            "flexWrap": "wrap",
+            "gap": "1rem"
         },
         children=[
-            # Navigation tabs container with role-based filtering
+            # Left: Tab buttons (only visible tabs)
             html.Div(
-                style={
-                    "display": "flex",
-                    "justifyContent": "center",
-                    "alignItems": "center",
-                    "gap": "0.75rem",
-                    "flexWrap": "wrap"
-                },
-                children=[
-                    html.A(
-                        [
-                            html.Span(tab["icon"], style={"marginRight": "0.5rem", "fontSize": "1rem"}),
-                            html.Span(tab["label"], style={"fontSize": "0.9rem", "fontWeight": "600"})
-                        ],
-                        href=tab["href"],
-                        style={
-                            # UNIFORM SIZING FOR ALL BUTTONS
-                            "backgroundColor": theme["accent_bg"],
-                            "color": theme["text_primary"],
-                            "border": f"2px solid {theme['card_bg']}",
-                            "borderRadius": "8px",
-                            "padding": "1rem 1.5rem",
-                            "fontSize": "0.9rem",
-                            "fontWeight": "600",
-                            "cursor": "pointer",
-                            "transition": "all 0.2s ease",
-                            "display": "flex",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                            "textDecoration": "none",
-                            "whiteSpace": "nowrap",
-                            
-                            # UNIFORM SIZE CONSTRAINTS
-                            "minWidth": "140px",
-                            "maxWidth": "160px",
-                            "height": "48px",
-                            "flex": "0 0 auto",
-                            
-                            # HOVER EFFECTS
-                            "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.1)"
-                        }
-                    ) for tab in visible_tabs  # Only show tabs user can access
-                ],
-                # Add user info display with role indicator
-                title=f"User: {user_data.get('name', 'User')} | Role: {user_role.replace('_', ' ').title()}"
+                style={"display": "flex", "alignItems": "center", "gap": "0.5rem"},
+                children=tab_buttons
             ),
-            
-            # Optional: Add a small role indicator
+            # Right: User info and logout
             html.Div(
-                f"Logged in as: {user_role.replace('_', ' ').title()}",
-                style={
-                    "fontSize": "0.8rem",
-                    "color": theme["text_secondary"],
-                    "textAlign": "center",
-                    "marginTop": "0.5rem",
-                    "fontStyle": "italic"
-                }
-            ) if user_role == "viewer" else None  # Only show for viewers
+                style={"display": "flex", "alignItems": "center"},
+                children=[user_info, logout_button]
+            )
         ]
     )
-
 
 
 def create_tab_content(active_tab, theme_styles, user_data, data=None):
