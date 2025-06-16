@@ -1,6 +1,6 @@
-# layouts/reports_layout.py
+# layouts/analytics_layout.py
 """
-Reports Page Layout with Comprehensive Theme Support
+Analytics Page Layout with Comprehensive Theme Support
 Following themes.py structure with Agency, Cluster, Site, and Date filters
 """
 
@@ -8,16 +8,16 @@ from dash import html, dcc
 from datetime import datetime, timedelta
 from config.themes import THEMES, DEFAULT_THEME
 
-def create_reports_layout(theme_name=None, user_data=None):
+def create_analytics_layout(theme_name=None, user_data=None):
     """
-    Create comprehensive reports page layout with filter container
+    Create comprehensive analytics page layout with filter container
     
     Args:
         theme_name (str): Current theme name
         user_data (dict): User information
         
     Returns:
-        html.Div: Complete reports layout
+        html.Div: Complete analytics layout
     """
     if theme_name is None:
         theme_name = DEFAULT_THEME
@@ -33,7 +33,7 @@ def create_reports_layout(theme_name=None, user_data=None):
         },
         children=[
             # Page Header
-            create_reports_header(theme),
+            create_analytics_header(theme),
             
             # Filter Container
             create_filter_container(theme),
@@ -43,8 +43,8 @@ def create_reports_layout(theme_name=None, user_data=None):
         ]
     )
 
-def create_reports_header(theme):
-    """Create reports page header section"""
+def create_analytics_header(theme):
+    """Create analytics page header section"""
     return html.Div(
         style={
             'background': f"linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%)",
@@ -65,7 +65,7 @@ def create_reports_header(theme):
                     # Title Section
                     html.Div([
                         html.H1(
-                            "📋 Reports Dashboard",
+                            "📈 Analytics Dashboard",
                             style={
                                 'color': theme['text_primary'],
                                 'fontSize': '2.5rem',
@@ -77,7 +77,7 @@ def create_reports_header(theme):
                             }
                         ),
                         html.P(
-                            "Generate, view, and manage comprehensive reports",
+                            "Real-time data analytics and insights",
                             style={
                                 'color': theme['text_secondary'],
                                 'fontSize': '1.1rem',
@@ -90,9 +90,9 @@ def create_reports_header(theme):
                     # Status Indicator
                     html.Div([
                         html.Div(
-                            "📊 Ready",
+                            "🟢 Live Data",
                             style={
-                                'background': theme['brand_primary'],
+                                'background': theme['success'],
                                 'color': 'white',
                                 'padding': '0.5rem 1rem',
                                 'borderRadius': '20px',
@@ -122,7 +122,7 @@ def create_filter_container(theme):
                 },
                 children=[
                     html.H3(
-                        "📝 Report Filters",
+                        "🔍 Data Filters",
                         style={
                             'color': theme['text_primary'],
                             'fontSize': '1.3rem',
@@ -138,35 +138,6 @@ def create_filter_container(theme):
                             'alignItems': 'end'
                         },
                         children=[
-                            # Report Type Filter
-                            html.Div([
-                                html.Label(
-                                    "Report Type:",
-                                    style={
-                                        'color': theme['text_secondary'],
-                                        'fontSize': '0.9rem',
-                                        'fontWeight': '500',
-                                        'marginBottom': '0.5rem',
-                                        'display': 'block'
-                                    }
-                                ),
-                                dcc.Dropdown(
-                                    id='reports-type-filter',
-                                    options=[
-                                        {'label': 'All Reports', 'value': 'all'},
-                                        {'label': 'Monthly Summary', 'value': 'monthly'},
-                                        {'label': 'Weekly Progress', 'value': 'weekly'},
-                                        {'label': 'Daily Operations', 'value': 'daily'},
-                                        {'label': 'Custom Reports', 'value': 'custom'}
-                                    ],
-                                    value='all',
-                                    style={
-                                        'backgroundColor': theme['card_bg'],
-                                        'color': theme['text_primary']
-                                    }
-                                )
-                            ]),
-                            
                             # Agency Filter
                             html.Div([
                                 html.Label(
@@ -180,12 +151,40 @@ def create_filter_container(theme):
                                     }
                                 ),
                                 dcc.Dropdown(
-                                    id='reports-agency-filter',
+                                    id='analytics-agency-filter',
                                     options=[
                                         {'label': 'All Agencies', 'value': 'all'},
                                         {'label': 'Municipal Corporation', 'value': 'municipal'},
                                         {'label': 'Panchayat Raj', 'value': 'panchayat'},
                                         {'label': 'Urban Development', 'value': 'urban'}
+                                    ],
+                                    value='all',
+                                    style={
+                                        'backgroundColor': theme['card_bg'],
+                                        'color': theme['text_primary']
+                                    }
+                                )
+                            ]),
+                            
+                            # Cluster Filter
+                            html.Div([
+                                html.Label(
+                                    "Cluster:",
+                                    style={
+                                        'color': theme['text_secondary'],
+                                        'fontSize': '0.9rem',
+                                        'fontWeight': '500',
+                                        'marginBottom': '0.5rem',
+                                        'display': 'block'
+                                    }
+                                ),
+                                dcc.Dropdown(
+                                    id='analytics-cluster-filter',
+                                    options=[
+                                        {'label': 'All Clusters', 'value': 'all'},
+                                        {'label': 'North Region', 'value': 'north'},
+                                        {'label': 'South Region', 'value': 'south'},
+                                        {'label': 'Central Region', 'value': 'central'}
                                     ],
                                     value='all',
                                     style={
@@ -208,7 +207,7 @@ def create_filter_container(theme):
                                     }
                                 ),
                                 dcc.DatePickerRange(
-                                    id='reports-date-filter',
+                                    id='analytics-date-filter',
                                     start_date=datetime.now() - timedelta(days=30),
                                     end_date=datetime.now(),
                                     style={
@@ -217,11 +216,11 @@ def create_filter_container(theme):
                                 )
                             ]),
                             
-                            # Generate Button
+                            # Apply Button
                             html.Div([
                                 html.Button(
-                                    "📊 Generate Report",
-                                    id='reports-generate-btn',
+                                    "📊 Apply Filters",
+                                    id='analytics-apply-filters',
                                     style={
                                         'backgroundColor': theme['brand_primary'],
                                         'color': 'white',
@@ -263,7 +262,7 @@ def create_content_area(theme):
                 },
                 children=[
                     html.H2(
-                        "👋 Hi! Welcome to Reports",
+                        "👋 Hi! Welcome to Analytics",
                         style={
                             'color': theme['text_primary'],
                             'fontSize': '1.8rem',
@@ -272,7 +271,7 @@ def create_content_area(theme):
                         }
                     ),
                     html.P(
-                        "Your comprehensive reports dashboard is ready. Use the filters above to generate detailed reports on waste management activities.",
+                        "Your comprehensive analytics dashboard is ready. Use the filters above to explore waste management data, trends, and insights.",
                         style={
                             'color': theme['text_secondary'],
                             'fontSize': '1.1rem',
@@ -284,7 +283,7 @@ def create_content_area(theme):
                 ]
             ),
             
-            # Reports Grid
+            # Analytics Cards Grid
             html.Div(
                 style={
                     'display': 'grid',
@@ -293,65 +292,58 @@ def create_content_area(theme):
                     'marginBottom': '2rem'
                 },
                 children=[
-                    create_report_card(
-                        "📊 Summary Reports",
-                        "Comprehensive overview of operations",
-                        ["Monthly collections summary", "Performance metrics", "Efficiency indicators"],
+                    create_analytics_card(
+                        "📊 Data Overview",
+                        "Real-time waste collection and processing metrics",
+                        ["Active sites: 142", "Daily collections: 1,250 tons", "Processing efficiency: 94%"],
                         theme
                     ),
-                    create_report_card(
-                        "📈 Trend Analysis",
-                        "Historical data and patterns",
-                        ["Quarterly trends", "Year-over-year comparison", "Seasonal variations"],
+                    create_analytics_card(
+                        "📈 Trends",
+                        "Weekly and monthly performance trends",
+                        ["Collection up 12%", "Processing efficiency +3%", "Customer satisfaction: 4.8/5"],
                         theme
                     ),
-                    create_report_card(
-                        "🎯 Compliance Reports",
-                        "Regulatory and compliance tracking",
-                        ["Environmental compliance", "Safety standards", "Quality metrics"],
+                    create_analytics_card(
+                        "🎯 Targets",
+                        "Progress toward sustainability goals",
+                        ["Recycling rate: 76%", "Waste reduction: 18%", "Carbon footprint: -15%"],
                         theme
                     )
                 ]
             ),
             
-            # Available Reports List
+            # Data Table Placeholder
             html.Div(
                 style={
                     'backgroundColor': theme['card_bg'],
                     'padding': '2rem',
                     'borderRadius': '12px',
-                    'border': f"1px solid {theme['border_light']}"
+                    'border': f"1px solid {theme['border_light']}",
+                    'textAlign': 'center'
                 },
                 children=[
                     html.H3(
-                        "📋 Available Reports",
+                        "📋 Data Table",
                         style={
                             'color': theme['text_primary'],
-                            'marginBottom': '1.5rem',
-                            'fontSize': '1.4rem',
-                            'fontWeight': '600'
+                            'marginBottom': '1rem'
                         }
                     ),
-                    html.Div(
+                    html.P(
+                        "Interactive data table will appear here when filters are applied",
                         style={
-                            'display': 'grid',
-                            'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
-                            'gap': '1rem'
-                        },
-                        children=[
-                            create_report_item("Daily Operations Report", "Today's activities and metrics", "Updated 2 hours ago", theme),
-                            create_report_item("Weekly Summary", "7-day performance overview", "Updated yesterday", theme),
-                            create_report_item("Monthly Dashboard", "Comprehensive monthly analysis", "Updated 3 days ago", theme),
-                            create_report_item("Quarterly Review", "Strategic performance review", "Updated last week", theme)
-                        ]
+                            'color': theme['text_secondary'],
+                            'fontSize': '1rem'
+                        }
                     )
                 ]
             )
         ]
     )
 
-def create_report_card(title, description, features, theme):
-    """Create a report category card component"""
+def create_analytics_card(title, description, metrics, theme):
+    """Create an analytics card component"""
     return html.Div(
         style={
             'backgroundColor': theme['card_bg'],
@@ -381,56 +373,14 @@ def create_report_card(title, description, features, theme):
             ),
             html.Div([
                 html.P(
-                    f"• {feature}",
+                    metric,
                     style={
-                        'color': theme['text_primary'],
-                        'fontSize': '0.85rem',
+                        'color': theme['success'] if any(char in metric for char in ['+', '↑']) else theme['text_primary'],
+                        'fontSize': '0.9rem',
                         'margin': '0.25rem 0',
-                        'fontWeight': '400'
+                        'fontWeight': '500'
                     }
-                ) for feature in features
+                ) for metric in metrics
             ])
-        ]
-    )
-
-def create_report_item(title, description, last_updated, theme):
-    """Create a report item component"""
-    return html.Div(
-        style={
-            'backgroundColor': theme['accent_bg'],
-            'padding': '1rem',
-            'borderRadius': '8px',
-            'border': f"1px solid {theme['border_light']}",
-            'cursor': 'pointer',
-            'transition': 'transform 0.2s ease'
-        },
-        children=[
-            html.H5(
-                title,
-                style={
-                    'color': theme['text_primary'],
-                    'fontSize': '1rem',
-                    'fontWeight': '600',
-                    'marginBottom': '0.5rem'
-                }
-            ),
-            html.P(
-                description,
-                style={
-                    'color': theme['text_secondary'],
-                    'fontSize': '0.85rem',
-                    'marginBottom': '0.5rem',
-                    'lineHeight': '1.3'
-                }
-            ),
-            html.P(
-                last_updated,
-                style={
-                    'color': theme['brand_primary'],
-                    'fontSize': '0.75rem',
-                    'fontWeight': '500',
-                    'margin': '0'
-                }
-            )
         ]
     )

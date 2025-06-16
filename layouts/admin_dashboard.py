@@ -2158,28 +2158,601 @@ def register_dashboard_flask_routes(server):
         </header>
         '''
 
+# Fix for layouts/admin_dashboard.py - Replace the broken routes
+
     @server.route('/data-analytics')
     def admin_data_analytics():
-        """Analytics Page with dedicated layout"""
+        """Analytics Page - Fixed to return HTML string"""
         has_access, redirect_response = check_tab_access('analytics')
         if not has_access:
             return redirect_response
         
-        theme = get_current_theme()
-        # Import and use the dedicated analytics layout
-        from layouts.analytics_layout import create_analytics_layout
-        return create_analytics_layout(theme)
+        theme_name = get_current_theme()
+        theme_styles = get_theme_styles(theme_name)
+        theme = theme_styles["theme"]
+        
+        user_info = session.get('user_data', {})
+        user_name = user_info.get('name', 'Administrator')
+        user_role = user_info.get('role', 'administrator').replace('_', ' ').title()
+        
+        # Return HTML string instead of Dash component
+        return f'''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>📈 Data Analytics - Swaccha Andhra Corporation</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                * {{
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }}
+                
+                body {{
+                    font-family: 'Inter', sans-serif;
+                    background: {theme['primary_bg']};
+                    color: {theme['text_primary']};
+                    min-height: 100vh;
+                }}
+                
+                .navigation-header {{
+                    background: linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%);
+                    padding: 1rem 2rem;
+                    border-bottom: 1px solid {theme['border_light']};
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                
+                .nav-content {{
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }}
+                
+                .nav-tabs {{
+                    display: flex;
+                    gap: 1rem;
+                    align-items: center;
+                }}
+                
+                .nav-tab {{
+                    color: {theme['text_primary']};
+                    text-decoration: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                }}
+                
+                .nav-tab:hover {{
+                    background: rgba(255, 255, 255, 0.1);
+                    transform: translateY(-2px);
+                }}
+                
+                .nav-tab.active {{
+                    background: {theme['brand_primary']};
+                    color: white;
+                }}
+                
+                .user-info {{
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }}
+                
+                .logout-btn {{
+                    background: rgba(220, 38, 38, 0.8);
+                    color: white;
+                    text-decoration: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
+                }}
+                
+                .logout-btn:hover {{
+                    background: rgba(220, 38, 38, 1);
+                    transform: translateY(-2px);
+                }}
+                
+                .page-container {{
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 2rem;
+                }}
+                
+                .welcome-section {{
+                    background: linear-gradient(135deg, {theme['accent_bg']} 0%, {theme['card_bg']} 100%);
+                    padding: 2rem;
+                    border-radius: 12px;
+                    margin-bottom: 2rem;
+                    border: 1px solid {theme['border_light']};
+                    text-align: center;
+                }}
+                
+                .analytics-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                }}
+                
+                .analytics-card {{
+                    background: {theme['card_bg']};
+                    padding: 1.5rem;
+                    border-radius: 12px;
+                    border: 1px solid {theme['border_light']};
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }}
+                
+                .analytics-card h4 {{
+                    color: {theme['text_primary']};
+                    font-size: 1.2rem;
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                }}
+                
+                .analytics-card p {{
+                    color: {theme['text_secondary']};
+                    font-size: 0.9rem;
+                    margin-bottom: 1rem;
+                    line-height: 1.4;
+                }}
+                
+                .metric {{
+                    color: {theme['success']};
+                    font-size: 0.9rem;
+                    margin: 0.25rem 0;
+                    font-weight: 500;
+                }}
+                
+                .filter-section {{
+                    background: {theme['accent_bg']};
+                    padding: 1.5rem;
+                    border-radius: 12px;
+                    border: 1px solid {theme['border_light']};
+                    margin-bottom: 2rem;
+                }}
+                
+                .filter-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 1rem;
+                    margin-top: 1rem;
+                }}
+                
+                .filter-item label {{
+                    color: {theme['text_secondary']};
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    margin-bottom: 0.5rem;
+                    display: block;
+                }}
+                
+                .filter-item select {{
+                    width: 100%;
+                    padding: 0.5rem;
+                    border: 1px solid {theme['border_light']};
+                    border-radius: 6px;
+                    background: {theme['card_bg']};
+                    color: {theme['text_primary']};
+                    font-size: 0.9rem;
+                }}
+                
+                .apply-btn {{
+                    background: {theme['brand_primary']};
+                    color: white;
+                    border: none;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 6px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    width: 100%;
+                    transition: all 0.2s ease;
+                }}
+                
+                .apply-btn:hover {{
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                }}
+            </style>
+        </head>
+        <body>
+            <!-- Navigation Header -->
+            <nav class="navigation-header">
+                <div class="nav-content">
+                    <div class="nav-tabs">
+                        <a href="/dashboard" class="nav-tab">📊 Dashboard</a>
+                        <a href="/data-analytics" class="nav-tab active">📈 Data Analytics</a>
+                        <a href="/reports" class="nav-tab">📋 Reports</a>
+                        <a href="/reviews" class="nav-tab">⭐ Reviews</a>
+                        <a href="/upload" class="nav-tab">📤 Upload</a>
+                    </div>
+                    <div class="user-info">
+                        <span>{user_name} ({user_role})</span>
+                        <a href="/?logout=true" class="logout-btn">🚪 Logout</a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="page-container">
+                <!-- Welcome Section -->
+                <div class="welcome-section">
+                    <h1 style="color: {theme['text_primary']}; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">
+                        📈 Hi! Welcome to Analytics
+                    </h1>
+                    <p style="color: {theme['text_secondary']}; font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                        Your comprehensive analytics dashboard is ready. Explore waste management data, trends, and insights.
+                    </p>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <h3 style="color: {theme['text_primary']}; font-size: 1.3rem; margin-bottom: 1rem; font-weight: 600;">
+                        🔍 Data Filters
+                    </h3>
+                    <div class="filter-grid">
+                        <div class="filter-item">
+                            <label>Agency:</label>
+                            <select>
+                                <option>All Agencies</option>
+                                <option>Municipal Corporation</option>
+                                <option>Panchayat Raj</option>
+                                <option>Urban Development</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Cluster:</label>
+                            <select>
+                                <option>All Clusters</option>
+                                <option>North Region</option>
+                                <option>South Region</option>
+                                <option>Central Region</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Site:</label>
+                            <select>
+                                <option>All Sites</option>
+                                <option>Site A</option>
+                                <option>Site B</option>
+                                <option>Site C</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>&nbsp;</label>
+                            <button class="apply-btn">📊 Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Grid -->
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h4>📊 Data Overview</h4>
+                        <p>Real-time waste collection and processing metrics</p>
+                        <div class="metric">Active sites: 142</div>
+                        <div class="metric">Daily collections: 1,250 tons</div>
+                        <div class="metric">Processing efficiency: 94%</div>
+                    </div>
+
+                    <div class="analytics-card">
+                        <h4>📈 Trends</h4>
+                        <p>Weekly and monthly performance trends</p>
+                        <div class="metric">Collection up 12%</div>
+                        <div class="metric">Processing efficiency +3%</div>
+                        <div class="metric">Customer satisfaction: 4.8/5</div>
+                    </div>
+
+                    <div class="analytics-card">
+                        <h4>🎯 Targets</h4>
+                        <p>Progress toward sustainability goals</p>
+                        <div class="metric">Recycling rate: 76%</div>
+                        <div class="metric">Waste reduction: 18%</div>
+                        <div class="metric">Carbon footprint: -15%</div>
+                    </div>
+                </div>
+
+                <!-- Data Table Placeholder -->
+                <div style="background: {theme['card_bg']}; padding: 2rem; border-radius: 12px; border: 1px solid {theme['border_light']}; text-align: center;">
+                    <h3 style="color: {theme['text_primary']}; margin-bottom: 1rem;">📋 Data Table</h3>
+                    <p style="color: {theme['text_secondary']}; font-size: 1rem;">
+                        Interactive data table will appear here when filters are applied
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
 
     @server.route('/reports')
     def admin_reports():
-        """Reports Page with dedicated layout"""
+        """Reports Page - Fixed to return HTML string"""
         has_access, redirect_response = check_tab_access('reports')
         if not has_access:
             return redirect_response
         
-        theme = get_current_theme()
-        # You can create reports_layout.py for this too
-        return create_reports_layout(theme)
+        theme_name = get_current_theme()
+        theme_styles = get_theme_styles(theme_name)
+        theme = theme_styles["theme"]
+        
+        user_info = session.get('user_data', {})
+        user_name = user_info.get('name', 'Administrator')
+        user_role = user_info.get('role', 'administrator').replace('_', ' ').title()
+        
+        # Return HTML string instead of Dash component
+        return f'''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>📋 Reports - Swaccha Andhra Corporation</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                * {{
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }}
+                
+                body {{
+                    font-family: 'Inter', sans-serif;
+                    background: {theme['primary_bg']};
+                    color: {theme['text_primary']};
+                    min-height: 100vh;
+                }}
+                
+                .navigation-header {{
+                    background: linear-gradient(135deg, {theme['secondary_bg']} 0%, {theme['accent_bg']} 100%);
+                    padding: 1rem 2rem;
+                    border-bottom: 1px solid {theme['border_light']};
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                
+                .nav-content {{
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }}
+                
+                .nav-tabs {{
+                    display: flex;
+                    gap: 1rem;
+                    align-items: center;
+                }}
+                
+                .nav-tab {{
+                    color: {theme['text_primary']};
+                    text-decoration: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                }}
+                
+                .nav-tab:hover {{
+                    background: rgba(255, 255, 255, 0.1);
+                    transform: translateY(-2px);
+                }}
+                
+                .nav-tab.active {{
+                    background: {theme['brand_primary']};
+                    color: white;
+                }}
+                
+                .user-info {{
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }}
+                
+                .logout-btn {{
+                    background: rgba(220, 38, 38, 0.8);
+                    color: white;
+                    text-decoration: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
+                }}
+                
+                .logout-btn:hover {{
+                    background: rgba(220, 38, 38, 1);
+                    transform: translateY(-2px);
+                }}
+                
+                .page-container {{
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 2rem;
+                }}
+                
+                .welcome-section {{
+                    background: linear-gradient(135deg, {theme['accent_bg']} 0%, {theme['card_bg']} 100%);
+                    padding: 2rem;
+                    border-radius: 12px;
+                    margin-bottom: 2rem;
+                    border: 1px solid {theme['border_light']};
+                    text-align: center;
+                }}
+                
+                .reports-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                }}
+                
+                .report-card {{
+                    background: {theme['card_bg']};
+                    padding: 1.5rem;
+                    border-radius: 12px;
+                    border: 1px solid {theme['border_light']};
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }}
+                
+                .report-card h4 {{
+                    color: {theme['text_primary']};
+                    font-size: 1.2rem;
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                }}
+                
+                .report-card p {{
+                    color: {theme['text_secondary']};
+                    font-size: 0.9rem;
+                    margin-bottom: 1rem;
+                    line-height: 1.4;
+                }}
+                
+                .feature {{
+                    color: {theme['text_primary']};
+                    font-size: 0.85rem;
+                    margin: 0.25rem 0;
+                    font-weight: 400;
+                }}
+                
+                .reports-list {{
+                    background: {theme['card_bg']};
+                    padding: 2rem;
+                    border-radius: 12px;
+                    border: 1px solid {theme['border_light']};
+                }}
+                
+                .report-item {{
+                    background: {theme['accent_bg']};
+                    padding: 1rem;
+                    border-radius: 8px;
+                    border: 1px solid {theme['border_light']};
+                    cursor: pointer;
+                    transition: transform 0.2s ease;
+                    margin-bottom: 1rem;
+                }}
+                
+                .report-item:hover {{
+                    transform: translateY(-2px);
+                }}
+                
+                .report-item h5 {{
+                    color: {theme['text_primary']};
+                    font-size: 1rem;
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                }}
+                
+                .report-item .description {{
+                    color: {theme['text_secondary']};
+                    font-size: 0.85rem;
+                    margin-bottom: 0.5rem;
+                    line-height: 1.3;
+                }}
+                
+                .report-item .updated {{
+                    color: {theme['brand_primary']};
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                }}
+            </style>
+        </head>
+        <body>
+            <!-- Navigation Header -->
+            <nav class="navigation-header">
+                <div class="nav-content">
+                    <div class="nav-tabs">
+                        <a href="/dashboard" class="nav-tab">📊 Dashboard</a>
+                        <a href="/data-analytics" class="nav-tab">📈 Data Analytics</a>
+                        <a href="/reports" class="nav-tab active">📋 Reports</a>
+                        <a href="/reviews" class="nav-tab">⭐ Reviews</a>
+                        <a href="/upload" class="nav-tab">📤 Upload</a>
+                    </div>
+                    <div class="user-info">
+                        <span>{user_name} ({user_role})</span>
+                        <a href="/?logout=true" class="logout-btn">🚪 Logout</a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="page-container">
+                <!-- Welcome Section -->
+                <div class="welcome-section">
+                    <h1 style="color: {theme['text_primary']}; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">
+                        📋 Hi! Welcome to Reports
+                    </h1>
+                    <p style="color: {theme['text_secondary']}; font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                        Your comprehensive reports dashboard is ready. Generate detailed reports on waste management activities.
+                    </p>
+                </div>
+
+                <!-- Reports Grid -->
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h4>📊 Summary Reports</h4>
+                        <p>Comprehensive overview of operations</p>
+                        <div class="feature">• Monthly collections summary</div>
+                        <div class="feature">• Performance metrics</div>
+                        <div class="feature">• Efficiency indicators</div>
+                    </div>
+
+                    <div class="report-card">
+                        <h4>📈 Trend Analysis</h4>
+                        <p>Historical data and patterns</p>
+                        <div class="feature">• Quarterly trends</div>
+                        <div class="feature">• Year-over-year comparison</div>
+                        <div class="feature">• Seasonal variations</div>
+                    </div>
+
+                    <div class="report-card">
+                        <h4>🎯 Compliance Reports</h4>
+                        <p>Regulatory and compliance tracking</p>
+                        <div class="feature">• Environmental compliance</div>
+                        <div class="feature">• Safety standards</div>
+                        <div class="feature">• Quality metrics</div>
+                    </div>
+                </div>
+
+                <!-- Available Reports -->
+                <div class="reports-list">
+                    <h3 style="color: {theme['text_primary']}; margin-bottom: 1.5rem; font-size: 1.4rem; font-weight: 600;">
+                        📋 Available Reports
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div class="report-item">
+                            <h5>Daily Operations Report</h5>
+                            <div class="description">Today's activities and metrics</div>
+                            <div class="updated">Updated 2 hours ago</div>
+                        </div>
+                        <div class="report-item">
+                            <h5>Weekly Summary</h5>
+                            <div class="description">7-day performance overview</div>
+                            <div class="updated">Updated yesterday</div>
+                        </div>
+                        <div class="report-item">
+                            <h5>Monthly Dashboard</h5>
+                            <div class="description">Comprehensive monthly analysis</div>
+                            <div class="updated">Updated 3 days ago</div>
+                        </div>
+                        <div class="report-item">
+                            <h5>Quarterly Review</h5>
+                            <div class="description">Strategic performance review</div>
+                            <div class="updated">Updated last week</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
+
 
     # Charts page (with access control)
     @server.route('/charts')
