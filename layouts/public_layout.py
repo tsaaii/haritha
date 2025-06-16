@@ -1,107 +1,792 @@
 # layouts/public_layout.py
 """
-Responsive Public Layout - Compatible with existing theme system
-Optimized tile sizes for perfect screen fit on all devices
+Enhanced Auto-Rotating Public Landing Page Layout for Swaccha Andhra Corporation
+Complete implementation with all requested enhancements
 """
 
-from dash import html,dcc
-from footer import render_footer
+from dash import html, dcc, callback, Input, Output, clientside_callback
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+from datetime import datetime, timedelta
+import logging
+import os
+import numpy as np
+
 from utils.theme_utils import get_theme_styles
 from components.navigation.hover_overlay import create_hover_overlay_banner
-from config.themes import THEMES, DEFAULT_THEME
 
+logger = logging.getLogger(__name__)
 
+def load_csv_visualization_data():
+    """Load data from csv_outputs_data_viz.csv"""
+    try:
+        csv_path = 'data/csv_outputs_data_viz.csv'
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            logger.info(f"✅ Loaded {len(df)} records from CSV visualization data")
+            
+            # Convert date column to datetime if needed
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            
+            return df
+        else:
+            logger.warning(f"CSV file not found at {csv_path}")
+            return create_sample_data()
+    except Exception as e:
+        logger.error(f"Error loading CSV data: {e}")
+        return create_sample_data()
 
-def create_responsive_logo(image_name, alt_text, position="left"):
-    """Create responsive logo that auto-resizes for all devices"""
+def create_sample_data():
+    """Create sample data matching CSV structure for testing"""
+    agencies = ['Swaccha Andhra Corporation', 'Municipal Corp', 'Zigma Agency', 'Green Solutions']
+    clusters = ['Nellore Municipal Corporation', 'Chittor', 'Tirupathi', 'GVMC', 'Kurnool']
+    sites = ['Site A', 'Site B', 'Site C', 'Site D', 'Site E', 'Site F']
+    
+    data = []
+    base_date = datetime.now() - timedelta(days=2)
+    
+    for i in range(100):
+        # Create multiple tickets per day with different hours
+        ticket_date = base_date + timedelta(days=i//20, hours=i%24)
+        data.append({
+            'Agency': np.random.choice(agencies),
+            'Sub_contractor': f'Contractor {i%3 + 1}',
+            'Cluster': np.random.choice(clusters),
+            'Site': np.random.choice(sites),
+            'Machines': f'Machine Type {i%4 + 1}',
+            'Total_capacity_per_day': np.random.randint(100, 500),
+            'Total_waste_to_be_remediated': f'{np.random.randint(500, 2000)} tons',
+            'date': ticket_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'ticket_no': f'TKT{i:03d}',
+            'net_weight_calculated': np.random.randint(50, 300)
+        })
+    
+    return pd.DataFrame(data)
+
+def format_indian_number(number):
+    """Format number in Indian numbering system (xx,xx,xxx)"""
+    if number == 0:
+        return "0"
+    
+    # Convert to string and reverse for easier processing
+    num_str = str(int(number))
+    if len(num_str) <= 3:
+        return num_str
+    
+    # Indian numbering: last 3 digits, then groups of 2
+    result = num_str[-3:]  # Last 3 digits
+    remaining = num_str[:-3]
+    
+    # Add groups of 2 digits from right to left
+    while remaining:
+        if len(remaining) >= 2:
+            result = remaining[-2:] + ',' + result
+            remaining = remaining[:-2]
+        else:
+            result = remaining + ',' + result
+            remaining = ''
+    
+    return result
+
+def get_last_available_date(df):
+    """Get the last available date from the dataset"""
+    if df.empty or 'date' not in df.columns:
+        return datetime.now().date()
+    
+    try:
+        # Convert to datetime if string
+        if str(df['date'].dtype) == 'object':
+            date_series = pd.to_datetime(df['date'], errors='coerce')
+        else:
+            date_series = df['date']
+        
+        # Get the most recent date, excluding NaT values
+        valid_dates = date_series.dropna()
+        if valid_dates.empty:
+            return datetime.now().date()
+        
+        last_date = valid_dates.max()
+        if pd.isna(last_date):
+            return datetime.now().date()
+        
+        return last_date.date()
+        
+    except Exception as e:
+        logger.error(f"Error getting last available date: {e}")
+        return datetime.now().date()
+
+def get_rotation_data(df, rotation_index=0):
+    """Get data for current rotation view"""
+    if df.empty:
+        return {
+            'agencies': [],
+            'clusters': [], 
+            'sites': [],
+            'current_focus': 'No Data',
+            'current_agency': '',
+            'current_cluster': '',
+            'current_site': ''
+        }
+    
+    try:
+        # Get all unique values safely
+        agencies = []
+        if 'Agency' in df.columns:
+            agencies = df['Agency'].dropna().unique().tolist()
+        
+        clusters = []
+        if 'Cluster' in df.columns:
+            clusters = df['Cluster'].dropna().unique().tolist()
+        
+        sites = []
+        if 'Site' in df.columns:
+            sites = df['Site'].dropna().unique().tolist()
+        
+        # For now, let's cycle through sites (since we want site-specific data)
+        # Each site will show its agency and cluster info
+        total_sites = len(sites)
+        if total_sites == 0:
+            return {
+                'agencies': agencies, 
+                'clusters': clusters, 
+                'sites': sites, 
+                'current_focus': 'No Sites Available',
+                'current_agency': '',
+                'current_cluster': '',
+                'current_site': ''
+            }
+        
+        # Get current site
+        current_site_index = rotation_index % total_sites
+        current_site = sites[current_site_index]
+        
+        # Find agency and cluster for this site safely
+        current_agency = ''
+        current_cluster = ''
+        
+        if len(df) > 0:
+            site_data_mask = df['Site'] == current_site if 'Site' in df.columns else pd.Series([True] * len(df))
+            site_data_df = df[site_data_mask]
+            
+            if len(site_data_df) > 0:
+                if 'Agency' in site_data_df.columns:
+                    agency_values = site_data_df['Agency'].dropna()
+                    current_agency = agency_values.iloc[0] if len(agency_values) > 0 else ''
+                
+                if 'Cluster' in site_data_df.columns:
+                    cluster_values = site_data_df['Cluster'].dropna()
+                    current_cluster = cluster_values.iloc[0] if len(cluster_values) > 0 else ''
+        
+        return {
+            'current_type': 'site',
+            'current_site': current_site,
+            'current_agency': current_agency,
+            'current_cluster': current_cluster,
+            'agencies': agencies,
+            'clusters': clusters,
+            'sites': sites,
+            'current_focus': f"Site: {current_site}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting rotation data: {e}")
+        return {
+            'agencies': [],
+            'clusters': [], 
+            'sites': [],
+            'current_focus': 'Error Loading',
+            'current_agency': '',
+            'current_cluster': '',
+            'current_site': ''
+        }
+
+def calculate_site_metrics(df, site_name, last_date):
+    """Calculate metrics for specific site on last available date"""
+    if df.empty:
+        return {
+            'total_waste': 0,
+            'total_trips': 0,
+            'trips_by_hour': {},
+            'daily_capacity': 0,
+            'debug_info': 'No data available'
+        }
+
+    try:
+        # Filter data for specific site and date
+        if 'Site' in df.columns and len(df) > 0:
+            site_mask = df['Site'] == site_name
+            site_df = df[site_mask].copy()
+        else:
+            site_df = df.copy()
+        
+        debug_info = f"Site: {site_name}, Records found: {len(site_df)}"
+        
+        # Check if we have any data for this site
+        if site_df.empty:
+            return {
+                'total_waste': 0,
+                'total_trips': 0,
+                'trips_by_hour': {},
+                'daily_capacity': 0,
+                'debug_info': f'{debug_info}, No site data found'
+            }
+        
+        if 'date' in site_df.columns and len(site_df) > 0:
+            # Convert date to datetime if needed
+            if str(site_df['date'].dtype) == 'object':
+                site_df['date'] = pd.to_datetime(site_df['date'], errors='coerce')
+            
+            # Filter for last available date
+            if not site_df['date'].isna().all():
+                site_df['date_only'] = site_df['date'].dt.date
+                date_mask = site_df['date_only'] == last_date
+                site_df = site_df[date_mask]
+                debug_info += f", After date filter: {len(site_df)}"
+
+        # Calculate total waste with debugging
+        total_waste = 0
+        if 'net_weight_calculated' in site_df.columns and len(site_df) > 0:
+            # Convert to numeric, replacing non-numeric values with 0
+            weight_series = pd.to_numeric(site_df['net_weight_calculated'], errors='coerce')
+            weight_series = weight_series.fillna(0)  # Replace NaN with 0
+            total_waste = weight_series.sum()
+            debug_info += f", Net weights: {weight_series.tolist()}, Sum: {total_waste}"
+        else:
+            debug_info += ", No net_weight_calculated column"
+        
+        total_trips = len(site_df)  # Each ticket represents a trip
+        
+        # Calculate trips per 3-hour windows
+        trips_by_hour_window = {}
+        if 'date' in site_df.columns and len(site_df) > 0 and not site_df['date'].isna().all():
+            site_df['hour'] = site_df['date'].dt.hour
+            
+            # Create 3-hour windows: 0-3, 3-6, 6-9, 9-12, 12-15, 15-18, 18-21, 21-24
+            window_labels = ['0-3', '3-6', '6-9', '9-12', '12-15', '15-18', '18-21', '21-24']
+            for i, label in enumerate(window_labels):
+                start_hour = i * 3
+                end_hour = (i + 1) * 3
+                window_mask = (site_df['hour'] >= start_hour) & (site_df['hour'] < end_hour)
+                trips_by_hour_window[label] = len(site_df[window_mask])
+        
+        # Calculate daily capacity (sum of unique machines' capacity)
+        daily_capacity = 0
+        if 'Total_capacity_per_day' in site_df.columns and 'Machines' in site_df.columns and len(site_df) > 0:
+            # Group by unique machines and sum their capacities
+            machine_capacity = site_df.groupby('Machines')['Total_capacity_per_day'].first().sum()
+            daily_capacity = int(machine_capacity) if not pd.isna(machine_capacity) else 0
+            debug_info += f", Daily capacity: {daily_capacity}"
+        
+        return {
+            'total_waste': int(total_waste) if not pd.isna(total_waste) else 0,
+            'total_trips': total_trips,
+            'trips_by_hour': trips_by_hour_window,
+            'daily_capacity': daily_capacity,
+            'debug_info': debug_info
+        }
+        
+    except Exception as e:
+        logger.error(f"Error calculating site metrics for {site_name}: {e}")
+        return {
+            'total_waste': 0,
+            'total_trips': 0,
+            'trips_by_hour': {},
+            'daily_capacity': 0,
+            'debug_info': f'Error: {str(e)}'
+        }
+
+def create_trips_per_hour_chart(trips_by_hour_window, theme):
+    """Create histogram of trips per 3-hour window"""
+    if not trips_by_hour_window or len(trips_by_hour_window) == 0:
+        return html.Div(
+            "No hourly data available",
+            style={
+                'textAlign': 'center',
+                'color': theme.get('text_secondary', '#999'),
+                'fontSize': '0.8rem',
+                'padding': '2rem',
+                'height': '120px',
+                'display': 'flex',
+                'alignItems': 'center',
+                'justifyContent': 'center'
+            }
+        )
+    
+    try:
+        # 3-hour windows
+        window_labels = ['0-3', '3-6', '6-9', '9-12', '12-15', '15-18', '18-21', '21-24']
+        trip_counts = [trips_by_hour_window.get(window, 0) for window in window_labels]
+        
+        # Only show windows that have data for cleaner chart
+        non_zero_data = [(label, count) for label, count in zip(window_labels, trip_counts) if count > 0]
+        
+        if len(non_zero_data) == 0:
+            return html.Div(
+                "No trips recorded",
+                style={
+                    'textAlign': 'center',
+                    'color': theme.get('text_secondary', '#999'),
+                    'fontSize': '0.8rem',
+                    'padding': '2rem',
+                    'height': '120px',
+                    'display': 'flex',
+                    'alignItems': 'center',
+                    'justifyContent': 'center'
+                }
+            )
+        
+        # Use all windows for better visualization, but highlight non-zero ones
+        x_labels, y_values = zip(*[(label, trips_by_hour_window.get(label, 0)) for label in window_labels])
+        
+        # Create colors - highlight non-zero bars
+        colors = [theme.get('brand_primary', '#3182CE') if count > 0 else theme.get('accent_bg', '#4A5568') 
+                 for count in y_values]
+        
+        fig = go.Figure(data=[
+            go.Bar(
+                x=list(x_labels),
+                y=list(y_values),
+                marker_color=colors,
+                hovertemplate='<b>%{x} hours</b><br>Trips: %{y}<extra></extra>',
+                text=list(y_values),
+                textposition='outside',
+                textfont=dict(size=10)
+            )
+        ])
+        
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color=theme.get('text_primary', '#FFF'), size=10),
+            margin=dict(l=20, r=10, t=10, b=30),
+            height=120,
+            showlegend=False,
+            xaxis=dict(
+                title='3-Hour Windows',
+                showgrid=True,
+                gridcolor='rgba(255,255,255,0.1)',
+                tickfont=dict(size=9),
+                tickangle=0
+            ),
+            yaxis=dict(
+                title='Trips',
+                showgrid=True,
+                gridcolor='rgba(255,255,255,0.1)',
+                tickfont=dict(size=9)
+            )
+        )
+        
+        return dcc.Graph(
+            figure=fig,
+            config={'displayModeBar': False},
+            style={'height': '120px', 'marginTop': '0.5rem'}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error creating trips per 3-hour window chart: {e}")
+        return html.Div(
+            "Chart error",
+            style={
+                'textAlign': 'center',
+                'color': theme.get('error', '#dc3545'),
+                'fontSize': '0.8rem',
+                'padding': '2rem',
+                'height': '120px',
+                'display': 'flex',
+                'alignItems': 'center',
+                'justifyContent': 'center'
+            }
+        )
+
+def create_animated_number_component(value, prefix="", suffix="", animation_class="counter-animation"):
+    """Create an animated number component with counting effect"""
+    # Ensure value is a valid number
+    if not isinstance(value, (int, float)) or pd.isna(value):
+        value = 0
+    
+    return html.Div([
+        html.Span(prefix, className="number-prefix"),
+        html.Span(
+            str(int(value)),
+            className=f"animated-number {animation_class}",
+            **{"data-target": str(int(value))}
+        ),
+        html.Span(suffix, className="number-suffix")
+    ], className="animated-number-container")
+
+def get_enhanced_metric_cards_for_rotation(df, rotation_data, theme_styles):
+    """Get enhanced metric cards with specific requirements"""
+    theme = theme_styles["theme"]
+    
+    try:
+        # Get current site details safely
+        current_site = rotation_data.get('current_site', 'Unknown')
+        current_agency = rotation_data.get('current_agency', 'Unknown')
+        current_cluster = rotation_data.get('current_cluster', 'Unknown')
+        
+        # Get last available date
+        last_date = get_last_available_date(df)
+        
+        # Calculate site-specific metrics
+        site_metrics = calculate_site_metrics(df, current_site, last_date)
+        
+        # Format waste amount in Indian numbering safely
+        waste_amount = site_metrics.get('total_waste', 0)
+        waste_formatted = format_indian_number(waste_amount) if waste_amount > 0 else "0"
+        
+        # Get debug info
+        debug_info = site_metrics.get('debug_info', 'No debug info')
+        
+        # Get additional metrics safely
+        total_tickets = 0
+        machine_types = 0
+        
+        if not df.empty and 'Site' in df.columns:
+            site_mask = df['Site'] == current_site
+            site_data = df[site_mask]
+            
+            total_tickets = len(site_data)
+            
+            if 'Machines' in site_data.columns:
+                machine_types = site_data['Machines'].nunique()
+
+        return [
+            {
+                "icon": "🏢",
+                "title": "",  # Remove title for Card 1
+                "value": f"Agency: {current_agency}",
+                "secondary_value": f"Cluster: {current_cluster}",
+                "tertiary_value": f"Site: {current_site}",
+                "unit": "",
+                "status": "online",
+                "icon_animation": "pulse-slow"
+            },
+            {
+                "icon": "⚖️",
+                "title": "Total Waste Remediated",
+                "value": waste_formatted,
+                "unit": "kgs",
+                "sub_text": f"on {last_date.strftime('%d %b %Y')}",
+                "debug_text": f"Debug: {debug_info}",
+                "status": "online",
+                "animation_type": "counter",
+                "raw_value": waste_amount,
+                "icon_animation": "bounce-subtle"
+            },
+            {
+                "icon": "🚛",
+                "title": "Total Trips Done",
+                "value": str(site_metrics.get('total_trips', 0)),
+                "unit": "trips",
+                "sub_text": f"on {last_date.strftime('%d %b %Y')}",
+                "status": "online",
+                "animation_type": "counter",
+                "raw_value": site_metrics.get('total_trips', 0),
+                "icon_animation": "move-truck"
+            },
+            {
+                "icon": "📊",
+                "title": "Trips Per 3-Hour Window",
+                "value": "Distribution",
+                "unit": "Time Windows",
+                "status": "info",
+                "chart_data": site_metrics.get('trips_by_hour', {}),
+                "chart_type": "trips_histogram"
+            },
+            {
+                "icon": "🎫",
+                "title": "Active Tickets",
+                "value": str(total_tickets),
+                "unit": "total",
+                "status": "info",
+                "animation_type": "counter",
+                "raw_value": total_tickets,
+                "icon_animation": "flip"
+            },
+            {
+                "icon": "🔧",
+                "title": "Machine Types",
+                "value": str(machine_types),
+                "unit": "active",
+                "status": "online",
+                "icon_animation": "rotate"
+            },
+            {
+                "icon": "🏭",
+                "title": "Daily Capacity",
+                "value": str(site_metrics.get('daily_capacity', 0)),
+                "unit": "per day",
+                "status": "info",
+                "animation_type": "counter",
+                "raw_value": site_metrics.get('daily_capacity', 0),
+                "icon_animation": "scale-pulse"
+            },
+            {
+                "icon": "⏰",
+                "title": "Next Update",
+                "value": "15s",
+                "unit": "auto-rotate",
+                "status": "info",
+                "icon_animation": "spin-slow"
+            }
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error creating enhanced metric cards: {e}")
+        # Return fallback cards
+        return [
+            {
+                "icon": "❌",
+                "title": "Error",
+                "value": "Loading Failed",
+                "unit": "Please refresh",
+                "status": "error"
+            } for _ in range(8)
+        ]
+
+def create_enhanced_metric_cards_grid(metrics_data, theme_styles):
+    """Create enhanced metric cards grid with animations"""
+    cards = []
+    theme = theme_styles["theme"]
+    
+    for i, metric in enumerate(metrics_data):
+        try:
+            status_class = f"status-{metric.get('status', 'info')}"
+            icon_animation = metric.get('icon_animation', '')
+            
+            # Create chart if specified
+            chart_element = None
+            if metric.get('chart_data') and metric.get('chart_type') == 'trips_histogram':
+                chart_element = create_trips_per_hour_chart(metric['chart_data'], theme)
+            
+            # Build card content based on card type
+            if i == 0:  # Card 1: Agency, Cluster, Site info (enhanced format)
+                card_content = [
+                    html.Div(
+                        metric["icon"],
+                        className=f"metric-icon {icon_animation}",
+                        style={'marginBottom': '1rem'}
+                    ),
+                    html.Div([
+                        html.Div(metric.get("value", ""), className="agency-line"),
+                        html.Div(metric.get("secondary_value", ""), className="cluster-line"),
+                        html.Div(metric.get("tertiary_value", ""), className="site-line")
+                    ], className="location-info-container"),
+                    html.Div(
+                        html.Span(
+                            className=f"status-indicator {status_class}",
+                            title=f"Status: {metric.get('status', 'info')}"
+                        ) if metric.get('status') else "",
+                        style={'marginTop': '1rem'}
+                    )
+                ]
+            elif i == 1:  # Card 2: Total Waste with Debug info
+                raw_value = metric.get('raw_value', 0)
+                if not isinstance(raw_value, (int, float)) or pd.isna(raw_value):
+                    raw_value = 0
+                    
+                card_content = [
+                    html.Div(
+                        metric["icon"],
+                        className=f"metric-icon {icon_animation}"
+                    ),
+                    html.Div(
+                        [
+                            metric["title"],
+                            html.Span(
+                                className=f"status-indicator {status_class}",
+                                title=f"Status: {metric.get('status', 'info')}"
+                            ) if metric.get('status') else ""
+                        ],
+                        className="metric-title"
+                    ),
+                    html.Div(
+                        create_animated_number_component(raw_value),
+                        className="metric-value animated-value"
+                    ),
+                    html.Div([
+                        html.Span(metric.get("unit", ""), className="unit-main"),
+                        html.Br() if metric.get('sub_text') else "",
+                        html.Span(metric.get('sub_text', ''), className="unit-sub")
+                    ], className="metric-unit"),
+                    # Add debug info display
+                    html.Div(
+                        metric.get('debug_text', ''),
+                        className="debug-info",
+                        style={
+                            'fontSize': '0.7rem',
+                            'color': theme.get('warning', '#ffc107'),
+                            'marginTop': '0.5rem',
+                            'padding': '0.25rem',
+                            'backgroundColor': 'rgba(255, 193, 7, 0.1)',
+                            'borderRadius': '4px',
+                            'wordBreak': 'break-word'
+                        }
+                    ) if metric.get('debug_text') else None
+                ]
+            elif metric.get('animation_type') == 'counter':  # Other animated counter cards
+                raw_value = metric.get('raw_value', 0)
+                if not isinstance(raw_value, (int, float)) or pd.isna(raw_value):
+                    raw_value = 0
+                    
+                card_content = [
+                    html.Div(
+                        metric["icon"],
+                        className=f"metric-icon {icon_animation}"
+                    ),
+                    html.Div(
+                        [
+                            metric["title"],
+                            html.Span(
+                                className=f"status-indicator {status_class}",
+                                title=f"Status: {metric.get('status', 'info')}"
+                            ) if metric.get('status') else ""
+                        ],
+                        className="metric-title"
+                    ),
+                    html.Div(
+                        create_animated_number_component(raw_value),
+                        className="metric-value animated-value"
+                    ),
+                    html.Div([
+                        html.Span(metric.get("unit", ""), className="unit-main"),
+                        html.Br() if metric.get('sub_text') else "",
+                        html.Span(metric.get('sub_text', ''), className="unit-sub")
+                    ], className="metric-unit")
+                ]
+            else:  # Regular cards
+                card_content = [
+                    html.Div(
+                        metric["icon"],
+                        className=f"metric-icon {icon_animation}"
+                    ),
+                    html.Div(
+                        [
+                            metric["title"],
+                            html.Span(
+                                className=f"status-indicator {status_class}",
+                                title=f"Status: {metric.get('status', 'info')}"
+                            ) if metric.get('status') else ""
+                        ],
+                        className="metric-title"
+                    ),
+                    html.Div(
+                        metric.get("value", ""),
+                        className="metric-value"
+                    ),
+                    html.Div(
+                        metric.get("unit", ""),
+                        className="metric-unit"
+                    )
+                ]
+            
+            # Add chart if available and not None
+            if chart_element is not None:
+                card_content.append(chart_element)
+            
+            card = html.Div(
+                className="metric-card card-enhanced",
+                children=[content for content in card_content if content is not None],
+                id=f"metric-card-{i}"
+            )
+            cards.append(card)
+            
+        except Exception as e:
+            logger.error(f"Error creating card {i}: {e}")
+            # Create fallback card
+            card = html.Div(
+                className="metric-card",
+                children=[
+                    html.Div("❌", className="metric-icon"),
+                    html.Div("Card Error", className="metric-title"),
+                    html.Div(f"Card {i+1}", className="metric-value"),
+                    html.Div("Error", className="metric-unit")
+                ],
+                id=f"metric-card-{i}"
+            )
+            cards.append(card)
+    
+    return html.Div(
+        className="cards-grid",
+        children=cards
+    )
+
+def create_responsive_logo(position, alt_text, css_class="responsive-logo"):
+    """Create responsive logo component"""
     return html.Img(
-        src=f"/assets/img/{image_name}.png",
+        src=f"/assets/img/{position}.png",
         alt=alt_text,
-        className=f"logo-{position} responsive-logo",
+        className=css_class,
         style={
-            "display": "block",
-            "visibility": "visible",
-            "opacity": "1"
+            "height": "clamp(40px, 8vh, 60px)",
+            "width": "auto",
+            "objectFit": "contain",
+            "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+            "transition": "all 0.3s ease",
+            "cursor": "pointer"
         }
     )
 
-
-def create_hero_section(theme_styles):
-    """Create compact hero section optimized for one-screen fit"""
+def create_hero_section():
+    """Create the hero section with logos and title"""
     return html.Div(
         className="hero-section",
-        style={
-            "display": "flex",
-            "alignItems": "center",
-            "justifyContent": "center",
-            "height": "clamp(80px, 12vh, 120px)",
-            "width": "100%",
-            "padding": "clamp(0.75rem, 2vh, 1.25rem) clamp(1rem, 3vw, 2rem)"
-        },
         children=[
             html.Div(
                 className="hero-content",
-                style={
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center",
-                    "gap": "clamp(1in, 4vw, 3rem)",  # Controlled gap between elements
-                    "maxWidth": "1200px",  # Limit max width to prevent extreme stretching
-                    "width": "100%",
-                    "height": "100%"
-                },
                 children=[
-                    # Left Logo - Positioned near title
+                    # Left Logo
                     html.Div(
                         style={
                             "display": "flex",
                             "alignItems": "center",
                             "justifyContent": "center",
                             "height": "100%",
-                            "flexShrink": "0"  # Prevent logo from shrinking
+                            "flexShrink": "0"
                         },
                         children=[
-                            create_responsive_logo("left", "Left Organization Logo", "left")
+                            create_responsive_logo("left", "Left Organization Logo", "logo-left logo-animate")
                         ]
                     ),
                     
-                    # Title Section - Centered but not stretched
+                    # Title Section
                     html.Div(
                         className="hero-title-section",
                         style={
+                            "textAlign": "center",
+                            "flex": "1",
+                            "padding": "0 clamp(1rem, 3vw, 2rem)",
                             "display": "flex",
                             "flexDirection": "column",
-                            "alignItems": "center",
                             "justifyContent": "center",
-                            "textAlign": "center",
-                            "height": "100%",
-                            "flexGrow": "0",  # Don't grow to fill space
-                            "flexShrink": "0",  # Don't shrink
-                            "minWidth": "300px",
-                            "maxWidth": "600px"  # Limit title width
+                            "alignItems": "center",
+                            "height": "100%"
                         },
                         children=[
                             html.H1(
                                 "Swaccha Andhra Corporation",
+                                className="hero-title title-animate",
                                 style={
                                     "margin": "0",
                                     "padding": "0",
-                                    "lineHeight": "1",
-                                    "fontSize": "clamp(0.9rem, 3vw, 1.8rem)",
+                                    "fontSize": "clamp(1.5rem, 4vw, 2.5rem)",
                                     "fontWeight": "800",
-                                    "textAlign": "center",
-                                    "whiteSpace": "nowrap"  # Keep title on one line if possible
+                                    "lineHeight": "1.1",
+                                    "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.3)",
+                                    "letterSpacing": "-0.5px"
                                 }
                             ),
                             html.P(
                                 "Real Time Legacy Waste Remediation Progress Tracker",
-                                className="hero-subtitle",
+                                className="hero-subtitle subtitle-animate",
                                 style={
                                     "margin": "0.25rem 0 0 0",
                                     "padding": "0",
-                                    "fontSize": "clamp(1rem, 1.8vw, 0.9rem)",
+                                    "fontSize": "clamp(0.8rem, 1.8vw, 1rem)",
                                     "fontWeight": "500",
-                                    "lineHeight": "25px",
+                                    "lineHeight": "1.3",
                                     "opacity": "0.9",
                                     "textAlign": "center"
                                 }
@@ -109,17 +794,17 @@ def create_hero_section(theme_styles):
                         ]
                     ),
                     
-                    # Right Logo - Positioned near title
+                    # Right Logo  
                     html.Div(
                         style={
                             "display": "flex",
                             "alignItems": "center",
                             "justifyContent": "center",
                             "height": "100%",
-                            "flexShrink": "0"  # Prevent logo from shrinking
+                            "flexShrink": "0"
                         },
                         children=[
-                            create_responsive_logo("right", "Right Organization Logo", "right")
+                            create_responsive_logo("right", "Right Organization Logo", "logo-right logo-animate")
                         ]
                     )
                 ]
@@ -127,132 +812,15 @@ def create_hero_section(theme_styles):
         ]
     )
 
-
-def get_eight_metric_cards():
-    """Get 8 metric cards for the dashboard"""
-    return [
-        {
-            "icon": "🏘️",
-            "title": "Districts Covered",
-            "value": "13",
-            "unit": "Active",
-            "status": "online"
-        },
-        {
-            "icon": "🚮",
-            "title": "Waste Collected",
-            "value": "2.4M",
-            "unit": "Tons",
-            "status": "online"
-        },
-        {
-            "icon": "♻️",
-            "title": "Recycling Rate",
-            "value": "78%",
-            "unit": "Efficiency",
-            "status": "online"
-        },
-        {
-            "icon": "🌱",
-            "title": "Clean Score",
-            "value": "94",
-            "unit": "Rating",
-            "status": "info"
-        },
-        {
-            "icon": "🚛",
-            "title": "Active Vehicles",
-            "value": "156",
-            "unit": "Fleet",
-            "status": "online"
-        },
-        {
-            "icon": "👥",
-            "title": "Workers",
-            "value": "1,247",
-            "unit": "Active",
-            "status": "online"
-        },
-        {
-            "icon": "📊",
-            "title": "Data Points",
-            "value": "5,673",
-            "unit": "Records",
-            "status": "info"
-        },
-        {
-            "icon": "⚡",
-            "title": "System Status",
-            "value": "99.8%",
-            "unit": "Uptime",
-            "status": "online"
-        }
-    ]
-
-
-def create_metric_cards_grid(metrics_data, theme_styles):
-    """Create responsive grid of 8 metric cards with optimized sizing"""
-    cards = []
-    theme = theme_styles["theme"]
-    
-    for metric in metrics_data:
-        status_class = f"status-{metric.get('status', 'info')}"
-        
-        card = html.Div(
-            className="metric-card",
-            children=[
-                html.Div(
-                    metric["icon"],
-                    className="metric-icon"
-                ),
-                html.Div(
-                    [
-                        metric["title"],
-                        html.Span(
-                            className=f"status-indicator {status_class}",
-                            title=f"Status: {metric.get('status', 'info')}"
-                        ) if metric.get('status') else ""
-                    ],
-                    className="metric-title"
-                ),
-                html.Div(
-                    metric["value"],
-                    className="metric-value"
-                ),
-                html.Div(
-                    metric["unit"],
-                    className="metric-unit"
-                )
-            ]
-        )
-        cards.append(card)
-    
-    return html.Div(
-        className="cards-grid",
-        children=cards
-    )
-
-
 def build_public_layout(theme_name="dark", is_authenticated=False, user_data=None):
     """
-    Build the complete public layout - compatible with existing theme system
-    Optimized for one screen fit with proper tile sizing
-    FIXED: Now compatible with public_landing_callbacks.py
-    
-    Args:
-        theme_name (str): Current theme name from THEMES dict
-        is_authenticated (bool): Authentication status
-        user_data (dict): User data if authenticated
-        
-    Returns:
-        html.Div: Complete public layout optimized for one screen
+    Build the enhanced auto-rotating public layout with animations
     """
     # Use existing theme system
     theme_styles = get_theme_styles(theme_name)
-    metrics_data = get_eight_metric_cards()
     
     return html.Div(
-        className="public-layout",
+        className="public-layout enhanced-layout",
         # Apply theme CSS variables for compatibility
         style={
             "--primary-bg": theme_styles["theme"]["primary_bg"],
@@ -269,275 +837,173 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
             "--info": theme_styles["theme"]["info"]
         },
         children=[
-            # Hover overlay banner (admin access) - THEME SWITCHING WORKS!
-            create_hover_overlay_banner(theme_name, is_authenticated, user_data),
-            
-            # Main content area - YOUR EXACT CONTENT
-            html.Div(
-                className="main-content",
-                children=[
-                    # Compact hero section - YOUR EXACT CONTENT
-                    create_hero_section(theme_styles),
-                    
-                    # FIXED: Your 8 metric cards with the ID the callback expects
-                    html.Div(
-                        id='public-summary-metrics',  # This ID is expected by callbacks
-                        children=[create_metric_cards_grid(metrics_data, theme_styles)]
-                    )
-                ]
-            ),
-            
-            # FIXED: Add hidden components that callbacks expect (so no errors)
-            html.Div(style={'display': 'none'}, children=[
-                html.Div(id='public-weekly-histogram'),
-                html.Div(id='public-daily-line-chart'), 
-                html.Div(id='public-hourly-analysis'),
-                html.Div(id='public-cluster-performance'),
-                html.Div(id='public-last-updated'),
-                html.Div(id='public-loading-indicator')
-            ]),
-            
-            # FIXED: Add the interval component that callbacks expect
+            # Auto-rotation interval component (15 seconds)
             dcc.Interval(
-                id='public-data-refresh',
-                interval=5*60*1000,  # 5 minutes
+                id='auto-rotation-interval',
+                interval=15*1000,  # 15 seconds in milliseconds
                 n_intervals=0
             ),
             
-            # Compact footer - YOUR EXACT CONTENT
+            # Store for triggering animations
+            dcc.Store(id='animation-trigger', data=0),
+            
+            # Hover overlay banner (admin access)
+            create_hover_overlay_banner(theme_name),
+            
+            # Main content area
             html.Div(
-                className="app-footer",
+                className="main-content",
                 children=[
-                    html.P([
-                        html.Span("⚡", style={"marginRight": "0.5rem"}),
-                        "Real-time Dashboard • ",
-                        html.Span("🔍", style={"marginLeft": "0.5rem", "marginRight": "0.5rem"}),
-                        "Live Data Integration • ",
-                        html.Span("📊", style={"marginLeft": "0.5rem", "marginRight": "0.5rem"}),
-                        "Swaccha Andhra Corporation"
-                    ], style={"margin": "0"})
+                    # Hero section with logos and title
+                    create_hero_section(),
+                    
+                    # Dynamic metric cards grid (will be updated by callback)
+                    html.Div(
+                        id="dynamic-cards-container",
+                        className="cards-grid"
+                    )
                 ]
             )
         ]
     )
 
-def create_mobile_public_layout(theme_name="dark"):
-    """
-    Create mobile-optimized version of public layout
-    Still fits on one screen without scrolling
-    """
-    return build_public_layout(theme_name)
-
-
-def integrate_with_real_data(metrics_data, csv_data=None):
-    """
-    Integrate with real-time data from file_watcher.py
-    
-    Args:
-        metrics_data (list): Default metrics data
-        csv_data (DataFrame): Real CSV data from file_watcher
-        
-    Returns:
-        list: Updated metrics with real data
-    """
-    if csv_data is None or csv_data.empty:
-        return metrics_data
-    
+# Callback for auto-rotation with enhanced metrics
+@callback(
+    Output('dynamic-cards-container', 'children'),
+    [Input('auto-rotation-interval', 'n_intervals'),
+     Input('current-theme', 'data')],
+    prevent_initial_call=False
+)
+def update_enhanced_rotating_cards(n_intervals, theme_name):
+    """Update cards with enhanced metrics and animations"""
     try:
-        # Update metrics with real data
-        updated_metrics = metrics_data.copy()
+        logger.info(f"🔄 Enhanced rotation update #{n_intervals}")
         
-        # Districts count
-        if 'Agency' in csv_data.columns:
-            unique_districts = len(csv_data['Agency'].unique())
-            updated_metrics[0]['value'] = str(unique_districts)
+        # Load CSV data
+        df = load_csv_visualization_data()
         
-        # Waste collected
-        if 'Net Weight' in csv_data.columns:
-            total_weight = csv_data['Net Weight'].sum() / 1000000  # Convert to millions
-            updated_metrics[1]['value'] = f"{total_weight:.1f}M"
+        # Get current rotation data
+        rotation_data = get_rotation_data(df, n_intervals)
         
-        # Active vehicles
-        if 'Vehicle No' in csv_data.columns:
-            unique_vehicles = len(csv_data['Vehicle No'].unique())
-            updated_metrics[4]['value'] = str(unique_vehicles)
+        logger.info(f"📊 Focus: {rotation_data.get('current_focus', 'Unknown')}")
+        logger.info(f"🏢 Agency: {rotation_data.get('current_agency', 'Unknown')}")
+        logger.info(f"🗺️ Cluster: {rotation_data.get('current_cluster', 'Unknown')}")
+        logger.info(f"📍 Site: {rotation_data.get('current_site', 'Unknown')}")
         
-        # Data points
-        updated_metrics[6]['value'] = f"{len(csv_data):,}"
+        # Debug: Print CSV data info
+        if not df.empty:
+            logger.info(f"📋 CSV Columns: {list(df.columns)}")
+            logger.info(f"📊 CSV Shape: {df.shape}")
+            if 'net_weight_calculated' in df.columns:
+                weight_sample = df['net_weight_calculated'].head().tolist()
+                logger.info(f"⚖️ Weight Sample: {weight_sample}")
+                weight_sum = pd.to_numeric(df['net_weight_calculated'], errors='coerce').sum()
+                logger.info(f"⚖️ Total Weight in CSV: {weight_sum}")
         
-        # Update timestamp info
-        from datetime import datetime
-        current_time = datetime.now()
-        updated_metrics[7]['unit'] = f"Updated: {current_time.strftime('%H:%M')}"
+        # Get theme styles
+        theme_styles = get_theme_styles(theme_name or 'dark')
         
-        return updated_metrics
+        # Get enhanced metric cards for current rotation
+        metrics_data = get_enhanced_metric_cards_for_rotation(df, rotation_data, theme_styles)
+        
+        # Log debug info from Card 2
+        if len(metrics_data) > 1:
+            card2_debug = metrics_data[1].get('debug_text', 'No debug info')
+            logger.info(f"🐛 Card 2 Debug: {card2_debug}")
+        
+        # Create enhanced cards grid
+        cards_grid = create_enhanced_metric_cards_grid(metrics_data, theme_styles)
+        
+        # Return the children of the cards grid
+        return cards_grid.children
         
     except Exception as e:
-        print(f"Error integrating real data: {e}")
-        return metrics_data
-
-
-def create_theme_aware_layout(theme_name="dark", real_time_data=None):
-    """
-    Create layout that automatically adapts to theme changes
-    
-    Args:
-        theme_name (str): Theme name from THEMES dict
-        real_time_data (DataFrame): Optional real-time data
+        logger.error(f"❌ Error updating enhanced rotating cards: {e}")
+        import traceback
+        traceback.print_exc()
         
-    Returns:
-        html.Div: Theme-aware layout
-    """
-    # Get metrics and integrate real data if available
-    metrics_data = get_eight_metric_cards()
-    if real_time_data is not None:
-        metrics_data = integrate_with_real_data(metrics_data, real_time_data)
-    
-    # Build layout with current theme
-    return build_public_layout(theme_name, False, None)
-
-
-# Additional utility functions for integration
-def create_loading_layout(theme_name="dark"):
-    """Create loading state for public layout"""
-    theme_styles = get_theme_styles(theme_name)
-    
-    return html.Div(
-        className="public-layout",
-        style={
-            "--primary-bg": theme_styles["theme"]["primary_bg"],
-            "--secondary-bg": theme_styles["theme"]["secondary_bg"],
-            "--accent-bg": theme_styles["theme"]["accent_bg"],
-            "--card-bg": theme_styles["theme"]["card_bg"],
-            "--text-primary": theme_styles["theme"]["text_primary"],
-            "--text-secondary": theme_styles["theme"]["text_secondary"],
-            "--brand-primary": theme_styles["theme"]["brand_primary"]
-        },
-        children=[
-            html.Div(
-                className="main-content",
-                children=[
-                    html.Div(
-                        className="hero-section",
-                        children=[
-                            html.Div("🔄 Loading Dashboard...", 
-                                   style={"textAlign": "center", "fontSize": "1.2rem"})
-                        ]
-                    ),
-                    html.Div(
-                        className="cards-grid",
-                        children=[
-                            html.Div(
-                                className="card-loading",
-                                children=["Loading..."]
-                            ) for _ in range(8)
-                        ]
-                    )
-                ]
-            )
-        ]
-    )
-
-
-def create_error_layout(error_message="Unable to load dashboard", theme_name="dark"):
-    """Create error state for public layout"""
-    theme_styles = get_theme_styles(theme_name)
-    
-    return html.Div(
-        className="public-layout",
-        style={
-            "--primary-bg": theme_styles["theme"]["primary_bg"],
-            "--secondary-bg": theme_styles["theme"]["secondary_bg"],
-            "--accent-bg": theme_styles["theme"]["accent_bg"],
-            "--card-bg": theme_styles["theme"]["card_bg"],
-            "--text-primary": theme_styles["theme"]["text_primary"],
-            "--text-secondary": theme_styles["theme"]["text_secondary"],
-            "--brand-primary": theme_styles["theme"]["brand_primary"]
-        },
-        children=[
-            html.Div(
-                className="main-content",
-                children=[
-                    html.Div(
-                        className="hero-section",
-                        children=[
-                            html.Div([
-                                html.Div("⚠️", style={"fontSize": "2rem", "marginBottom": "0.5rem"}),
-                                html.Div(error_message, style={"fontSize": "1.1rem"})
-                            ], style={"textAlign": "center"})
-                        ]
-                    )
-                ]
-            )
-        ]
-    )
-
-
-def get_responsive_grid_config():
-    """Get responsive grid configuration for different screen sizes"""
-    return {
-        "mobile_portrait": {
-            "max_width": "480px",
-            "grid_columns": "repeat(2, 1fr)",
-            "grid_rows": "repeat(4, 1fr)",
-            "description": "2x4 grid for mobile portrait"
-        },
-        "mobile_landscape": {
-            "max_width": "767px",
-            "orientation": "landscape",
-            "grid_columns": "repeat(4, 1fr)",
-            "grid_rows": "repeat(2, 1fr)",
-            "description": "4x2 grid for mobile landscape"
-        },
-        "tablet": {
-            "min_width": "768px",
-            "max_width": "1024px",
-            "grid_columns": "repeat(4, 1fr)",
-            "grid_rows": "repeat(2, 1fr)",
-            "description": "4x2 grid for tablets"
-        },
-        "desktop": {
-            "min_width": "1024px",
-            "max_width": "1440px",
-            "grid_columns": "repeat(4, 1fr)",
-            "grid_rows": "repeat(2, 1fr)",
-            "description": "4x2 grid for desktop"
-        },
-        "large_screen": {
-            "min_width": "1440px",
-            "grid_columns": "repeat(4, 1fr)",
-            "grid_rows": "repeat(2, 1fr)",
-            "description": "4x2 grid for large screens and TV"
-        }
-    }
-
-
-def test_theme_compatibility():
-    """Test compatibility with all available themes"""
-    from config.themes import THEMES
-    
-    print("Testing theme compatibility:")
-    
-    for theme_name in THEMES.keys():
+        # Return simple fallback cards
         try:
-            layout = build_public_layout(theme_name)
-            print(f"✅ {theme_name}: Compatible")
-        except Exception as e:
-            print(f"❌ {theme_name}: Error - {e}")
-    
-    print("\nAll themes tested!")
+            fallback_cards = []
+            for i in range(8):
+                fallback_cards.append(
+                    html.Div(
+                        className="metric-card",
+                        children=[
+                            html.Div("⚠️", className="metric-icon"),
+                            html.Div("Loading Error", className="metric-title"),
+                            html.Div(f"Card {i+1}", className="metric-value"),
+                            html.Div("Please refresh", className="metric-unit"),
+                            html.Div(f"Error: {str(e)[:50]}...", className="debug-info") if i == 1 else None
+                        ],
+                        style={
+                            "background": "rgba(255, 193, 7, 0.1)",
+                            "border": "2px solid #ffc107",
+                            "borderRadius": "8px",
+                            "padding": "1rem",
+                            "textAlign": "center"
+                        }
+                    )
+                )
+            return fallback_cards
+            
+        except:
+            # Ultimate fallback
+            return [html.Div("System Error - Please refresh page", 
+                           style={'color': 'red', 'textAlign': 'center', 'padding': '2rem'})]
 
+# Clientside callback for counter animations
+clientside_callback(
+    """
+    function(children) {
+        // Counter animation function
+        function animateCounters() {
+            const counters = document.querySelectorAll('.animated-number');
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target') || counter.textContent.replace(/,/g, ''));
+                if (isNaN(target) || target === 0) {
+                    counter.textContent = '0';
+                    return;
+                }
+                
+                const duration = Math.min(2000, Math.max(1000, target * 2)); // Dynamic duration
+                const increment = target / (duration / 16); // 60fps
+                let current = 0;
+                
+                // Add loading class
+                counter.classList.add('loading-number');
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.textContent = target.toLocaleString('en-IN');
+                        counter.classList.remove('loading-number');
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current).toLocaleString('en-IN');
+                    }
+                }, 16);
+            });
+        }
+        
+        // Trigger animations after DOM is updated
+        if (children && children.length > 0) {
+            setTimeout(animateCounters, 300);
+        }
+        
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('animation-trigger', 'data'),
+    [Input('dynamic-cards-container', 'children')],
+    prevent_initial_call=True
+)
 
 # Export functions
 __all__ = [
     'build_public_layout',
-    'create_mobile_public_layout', 
-    'create_loading_layout',
-    'create_error_layout',
-    'get_eight_metric_cards',
-    'create_metric_cards_grid',
-    'integrate_with_real_data',
-    'create_theme_aware_layout',
-    'get_responsive_grid_config',
-    'test_theme_compatibility'
+    'load_csv_visualization_data',
+    'get_rotation_data',
+    'get_enhanced_metric_cards_for_rotation',
+    'format_indian_number'
 ]
