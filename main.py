@@ -576,7 +576,7 @@ def generate_static_html_content(theme_name):
 @server.route('/analytics')  
 def analytics_dashboard():
     """Full analytics with charts (uses your existing callbacks)"""
-    from layouts.enhanced_public_landing import build_enhanced_public_landing
+    from layouts.enhanced_public_landing_bkp import build_enhanced_public_landing
     
     # Get theme and auth data
     theme_name = session.get('current_theme', 'dark')
