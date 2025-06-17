@@ -453,3 +453,47 @@
     color: var(--text-secondary);
     animation: pulse-slow 2s ease-in-out infinite;
 }
+
+.histogram-card {
+    min-height: 360px !important;  /* INCREASED FROM 320px */
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.histogram-card .metric-icon {
+    font-size: 1.8rem !important;
+    margin-bottom: 0.3rem !important;
+}
+
+.histogram-card .metric-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.3rem !important;
+    flex-shrink: 0;
+}
+
+.histogram-card .metric-value {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.3rem !important;
+    flex-shrink: 0;
+}
+
+.histogram-card .metric-unit {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+    flex-shrink: 0;
+}
+
+/* Ensure histogram takes full available space */
+.histogram-card > div:last-child {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 280px !important;  /* INCREASED HEIGHT */
+}
+
+/* Graph container should fill the space */
+.histogram-card .dash-graph {
+    height: 100% !important;
+    min-height: 280px !important;
+}

@@ -297,108 +297,7 @@ def calculate_site_metrics(df, site_name, last_date):
             'debug_info': f'Error: {str(e)}'
         }
 
-def create_trips_per_hour_chart(trips_by_hour_window, theme):
-    """Create histogram of trips per 3-hour window"""
-    if not trips_by_hour_window or len(trips_by_hour_window) == 0:
-        return html.Div(
-            "No hourly data available",
-            style={
-                'textAlign': 'center',
-                'color': theme.get('text_secondary', '#999'),
-                'fontSize': '0.8rem',
-                'padding': '2rem',
-                'height': '120px',
-                'display': 'flex',
-                'alignItems': 'center',
-                'justifyContent': 'center'
-            }
-        )
-    
-    try:
-        # 3-hour windows
-        window_labels = ['0-3', '3-6', '6-9', '9-12', '12-15', '15-18', '18-21', '21-24']
-        trip_counts = [trips_by_hour_window.get(window, 0) for window in window_labels]
-        
-        # Only show windows that have data for cleaner chart
-        non_zero_data = [(label, count) for label, count in zip(window_labels, trip_counts) if count > 0]
-        
-        if len(non_zero_data) == 0:
-            return html.Div(
-                "No trips recorded",
-                style={
-                    'textAlign': 'center',
-                    'color': theme.get('text_secondary', '#999'),
-                    'fontSize': '0.8rem',
-                    'padding': '2rem',
-                    'height': '120px',
-                    'display': 'flex',
-                    'alignItems': 'center',
-                    'justifyContent': 'center'
-                }
-            )
-        
-        # Use all windows for better visualization, but highlight non-zero ones
-        x_labels, y_values = zip(*[(label, trips_by_hour_window.get(label, 0)) for label in window_labels])
-        
-        # Create colors - highlight non-zero bars
-        colors = [theme.get('brand_primary', '#3182CE') if count > 0 else theme.get('accent_bg', '#4A5568') 
-                 for count in y_values]
-        
-        fig = go.Figure(data=[
-            go.Bar(
-                x=list(x_labels),
-                y=list(y_values),
-                marker_color=colors,
-                hovertemplate='<b>%{x} hours</b><br>Trips: %{y}<extra></extra>',
-                text=list(y_values),
-                textposition='outside',
-                textfont=dict(size=10)
-            )
-        ])
-        
-        fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color=theme.get('text_primary', '#FFF'), size=10),
-            margin=dict(l=20, r=10, t=10, b=30),
-            height=120,
-            showlegend=False,
-            xaxis=dict(
-                title='3-Hour Windows',
-                showgrid=True,
-                gridcolor='rgba(255,255,255,0.1)',
-                tickfont=dict(size=9),
-                tickangle=0
-            ),
-            yaxis=dict(
-                title='Trips',
-                showgrid=True,
-                gridcolor='rgba(255,255,255,0.1)',
-                tickfont=dict(size=9)
-            )
-        )
-        
-        return dcc.Graph(
-            figure=fig,
-            config={'displayModeBar': False},
-            style={'height': '120px', 'marginTop': '0.5rem'}
-        )
-        
-    except Exception as e:
-        logger.error(f"Error creating trips per 3-hour window chart: {e}")
-        return html.Div(
-            "Chart error",
-            style={
-                'textAlign': 'center',
-                'color': theme.get('error', '#dc3545'),
-                'fontSize': '0.8rem',
-                'padding': '2rem',
-                'height': '120px',
-                'display': 'flex',
-                'alignItems': 'center',
-                'justifyContent': 'center'
-            }
-        )
+
 
 def create_animated_number_component(value, prefix="", suffix="", animation_class="counter-animation"):
     """Create an animated number component with counting effect"""
@@ -416,8 +315,150 @@ def create_animated_number_component(value, prefix="", suffix="", animation_clas
         html.Span(suffix, className="number-suffix")
     ], className="animated-number-container")
 
+def create_trips_per_hour_chart(trips_by_hour_window, theme):
+    """Create simple bar chart of trips per 3-hour window"""
+    
+    # Define 3-hour windows
+    windows = ['0-3', '3-6', '6-9', '9-12', '12-15', '15-18', '18-21', '21-24']
+    
+    # Get counts for each window (0 if no data)
+    counts = [trips_by_hour_window.get(window, 0) for window in windows]
+    
+    # If no data at all, show empty state
+    if sum(counts) == 0:
+        return html.Div(
+            "No trips recorded for this site today",
+            style={
+                'textAlign': 'center',
+                'color': '#999',
+                'padding': '2rem',
+                'height': '250px',
+                'display': 'flex',
+                'alignItems': 'center',
+                'justifyContent': 'center',
+                'fontSize': '1rem'
+            }
+        )
+    
+    # Create simple bar chart
+    fig = go.Figure(data=[
+        go.Bar(
+            x=windows,
+            y=counts,
+            marker_color='#3182CE',  # Simple blue color
+            text=counts,  # Show count on top of each bar
+            textposition='outside',
+            hovertemplate='<b>%{x} Hours</b><br>Tickets: %{y}<extra></extra>'
+        )
+    ])
+    
+    # Simple layout
+    fig.update_layout(
+        title='Tickets by 3-Hour Time Window',
+        title_font_size=14,
+        title_x=0.5,  # Center title
+        xaxis_title='Time Window (Hours)',
+        yaxis_title='Number of Tickets',
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot area
+        font=dict(color='white', size=12),
+        margin=dict(l=50, r=50, t=50, b=50),
+        height=250,
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            linecolor='rgba(255,255,255,0.3)',
+            tickfont=dict(size=11)
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(255,255,255,0.1)',
+            linecolor='rgba(255,255,255,0.3)',
+            tickfont=dict(size=11),
+            dtick=1  # Show integer ticks only
+        )
+    )
+    
+    return dcc.Graph(
+        figure=fig,
+        config={'displayModeBar': False},  # Hide toolbar
+        style={'height': '250px'}
+    )
+
+def create_trips_per_hour_chart_markers_only(trips_by_hour_window, theme):
+    """Create simple scatter plot (markers only) of trips per 3-hour window"""
+    
+    windows = ['0-3', '3-6', '6-9', '9-12', '12-15', '15-18', '18-21', '21-24']
+    counts = [trips_by_hour_window.get(window, 0) for window in windows]
+    
+    if sum(counts) == 0:
+        return html.Div(
+            "No trips recorded",
+            style={
+                'textAlign': 'center',
+                'color': '#999',
+                'padding': '2rem',
+                'height': '240px',
+                'display': 'flex',
+                'alignItems': 'center',
+                'justifyContent': 'center'
+            }
+        )
+    
+    fig = go.Figure()
+    
+    # Add markers only (no connecting lines)
+    fig.add_trace(go.Scatter(
+        x=windows,
+        y=counts,
+        mode='markers+text',
+        marker=dict(
+            color='#3182CE',
+            size=15,
+            line=dict(color='white', width=2)
+        ),
+        text=counts,
+        textposition='top center',
+        textfont=dict(size=12, color='white'),
+        hovertemplate='<b>%{x} Hours</b><br>Tickets: %{y}<extra></extra>',
+        name='Tickets'
+    ))
+    
+    fig.update_layout(
+        title='Tickets by Time Window',
+        title_font_size=14,
+        title_x=0.5,
+        xaxis_title='Time Window',
+        yaxis_title='Tickets',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white', size=11),
+        margin=dict(l=40, r=40, t=40, b=40),
+        height=240,
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            linecolor='rgba(255,255,255,0.3)',
+            tickfont=dict(size=10)
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(255,255,255,0.1)',
+            linecolor='rgba(255,255,255,0.3)',
+            tickfont=dict(size=10),
+            dtick=1,
+            range=[0, max(counts) + 1] if max(counts) > 0 else [0, 1]
+        )
+    )
+    
+    return dcc.Graph(
+        figure=fig,
+        config={'displayModeBar': False},
+        style={'height': '240px'}
+    )
+
 def get_enhanced_metric_cards_for_rotation(df, rotation_data, theme_styles):
-    """Get enhanced metric cards with specific requirements"""
+    """Get enhanced metric cards with specific requirements - FIXED DAILY CAPACITY UNIT"""
     theme = theme_styles["theme"]
     
     try:
@@ -469,7 +510,6 @@ def get_enhanced_metric_cards_for_rotation(df, rotation_data, theme_styles):
                 "value": waste_formatted,
                 "unit": "kgs",
                 "sub_text": f"on {last_date.strftime('%d %b %Y')}",
-                "debug_text": f"Debug: {debug_info}",
                 "status": "online",
                 "animation_type": "counter",
                 "raw_value": waste_amount,
@@ -489,8 +529,6 @@ def get_enhanced_metric_cards_for_rotation(df, rotation_data, theme_styles):
             {
                 "icon": "📊",
                 "title": "Trips Per 3-Hour Window",
-                "value": "Distribution",
-                "unit": "Time Windows",
                 "status": "info",
                 "chart_data": site_metrics.get('trips_by_hour', {}),
                 "chart_type": "trips_histogram"
@@ -517,7 +555,7 @@ def get_enhanced_metric_cards_for_rotation(df, rotation_data, theme_styles):
                 "icon": "🏭",
                 "title": "Daily Capacity",
                 "value": str(site_metrics.get('daily_capacity', 0)),
-                "unit": "per day",
+                "unit": "Metric tonnes per day",  # FIXED UNIT AS REQUESTED
                 "status": "info",
                 "animation_type": "counter",
                 "raw_value": site_metrics.get('daily_capacity', 0),
@@ -559,8 +597,8 @@ def create_enhanced_metric_cards_grid(metrics_data, theme_styles):
             # Create chart if specified
             chart_element = None
             if metric.get('chart_data') and metric.get('chart_type') == 'trips_histogram':
-                chart_element = create_trips_per_hour_chart(metric['chart_data'], theme)
-            
+                chart_element = create_trips_per_hour_chart_markers_only(metric['chart_data'], theme)
+                        
             # Build card content based on card type
             if i == 0:  # Card 1: Agency, Cluster, Site info (enhanced format)
                 card_content = [

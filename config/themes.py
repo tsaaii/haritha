@@ -17,11 +17,11 @@ THEMES = {
         "text_secondary": "#A0AEC0",
         "border_light": "#2D3748",
         "border_medium": "#4A5568",
-        "brand_primary": "#3182CE",
+        "brand_primary": "#eb9534",
         "success": "#38A169",
         "warning": "#DD6B20",
         "error": "#E53E3E",
-        "info": "#3182CE"
+        "info": "#eb9534"
     },
     "light": {
         "name": "Light Mode",
@@ -34,11 +34,11 @@ THEMES = {
         "text_secondary": "#4A5568",
         "border_light": "#E2E8F0",
         "border_medium": "#CBD5E0",
-        "brand_primary": "#3182CE",
+        "brand_primary": "#eb9534",
         "success": "#38A169",
         "warning": "#D69E2E",
         "error": "#E53E3E",
-        "info": "#3182CE"
+        "info": "#eb9534"
     },
     "high_contrast": {
         "name": "High Contrast",

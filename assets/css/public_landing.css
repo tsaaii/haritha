@@ -705,3 +705,14 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--brand-primary);
 }
+
+.metric-card:nth-child(4) {
+    min-height: 300px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.metric-card:nth-child(4) > div:last-child {
+    flex: 1 !important;
+    min-height: 240px !important;
+}

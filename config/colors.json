@@ -19,16 +19,16 @@
         "border-medium": "#4A5568",
         "border-dark": "#1A202C",
         
-        "brand-primary": "#3182CE",
+        "brand-primary": "#eb9534",
         "brand-secondary": "#2D7D32",
         "brand-accent": "#E65100",
         
         "success": "#38A169",
         "warning": "#DD6B20",
         "error": "#E53E3E",
-        "info": "#3182CE",
+        "info": "#eb9534",
         
-        "chart-1": "#3182CE",
+        "chart-1": "#eb9534",
         "chart-2": "#38A169",
         "chart-3": "#DD6B20",
         "chart-4": "#9F7AEA",
@@ -58,16 +58,16 @@
         "border-medium": "#CBD5E0",
         "border-dark": "#A0AEC0",
         
-        "brand-primary": "#3182CE",
+        "brand-primary": "#eb9534",
         "brand-secondary": "#2D7D32",
         "brand-accent": "#E65100",
         
         "success": "#38A169",
         "warning": "#D69E2E",
         "error": "#E53E3E",
-        "info": "#3182CE",
+        "info": "#eb9534",
         
-        "chart-1": "#3182CE",
+        "chart-1": "#eb9534",
         "chart-2": "#38A169",
         "chart-3": "#DD6B20",
         "chart-4": "#9F7AEA",
