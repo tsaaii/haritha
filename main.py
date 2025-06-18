@@ -19,7 +19,7 @@ from utils.theme_utils import get_theme_styles
 import json
 from config.themes import THEMES, DEFAULT_THEME
 from utils.theme_utils import get_hover_overlay_css
-from layouts.public_layout import build_public_layout
+#from layouts.public_layout import build_public_layout
 from layouts.login_layout import build_login_layout
 from layouts.admin_dashboard import (
     build_enhanced_dashboard, 
@@ -44,6 +44,7 @@ from endpoints.debug_routes import register_debug_routes
 from callbacks.unified_dashboard_callbacks import register_unified_dashboard_callbacks
 # ✅ ONLY IMPORT: The consolidated callbacks
 #from callbacks.consolidated_filter_callbacks import register_all_callbacks
+from layouts.public_layout_uniform import build_public_layout
 
 from pathlib import Path
 
@@ -104,7 +105,7 @@ app = dash.Dash(
     external_stylesheets=[
         "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
         "/assets/css/style.css",                    # Your existing CSS
-        "/assets/css/public_landing.css",           # NEW: Add this line
+        "/assets/css/public_landing_uniform.css",           # NEW: Add this line
         "/assets/css/dashboard.css",                # Keep existing
         "/assets/css/dashboard_filters.css"         # Keep existing
     ],
@@ -576,7 +577,7 @@ def generate_static_html_content(theme_name):
 @server.route('/analytics')  
 def analytics_dashboard():
     """Full analytics with charts (uses your existing callbacks)"""
-    from layouts.enhanced_public_landing_bkp import build_enhanced_public_landing
+    #from layouts.enhanced_public_landing_bkp import build_enhanced_public_landing
     
     # Get theme and auth data
     theme_name = session.get('current_theme', 'dark')
