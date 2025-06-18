@@ -13,6 +13,8 @@ ALLOWED_USERS = {
     # Email addresses that have access to the admin dashboard
     "administrators": [
         "saaitejaa@gmail.com",
+        "prasadraju.ca@gmail.com",
+        "swachhaandhra2015@gmail.com",
         "director@swacchaandhra.gov.in",
         "admin@swacchaap.gov.in",
         "your.email@gmail.com"  # Add your email here
