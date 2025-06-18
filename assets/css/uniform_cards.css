@@ -1,0 +1,347 @@
+/* Enhanced Uniform Card Layout - Perfect Centering */
+
+/* ============================================
+   GRID LAYOUT
+   ============================================ */
+   .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: clamp(1rem, 2vh, 1.5rem);
+    padding: clamp(1rem, 2vh, 1.5rem);
+    width: 100%;
+    height: 100%;
+    place-items: center; /* Perfect centering for all grid items */
+}
+
+/* ============================================
+   BASE CARD STYLING - PERFECT CENTERING
+   ============================================ */
+.metric-card {
+    /* Background and visual styling */
+    background: linear-gradient(135deg, var(--accent-bg) 0%, var(--card-bg) 100%);
+    border-radius: clamp(8px, 1.5vh, 12px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    
+    /* Layout - Flexbox for perfect centering */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    
+    /* Sizing */
+    aspect-ratio: 4 / 3;
+    min-height: 160px;
+    width: 100%;
+    padding: clamp(1rem, 2.5vh, 1.8rem);
+    box-sizing: border-box;
+    
+    /* Interaction */
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    border-color: var(--brand-primary, rgba(255, 255, 255, 0.3));
+}
+
+/* ============================================
+   CARD CONTENT STRUCTURE - CENTERED LAYOUT
+   ============================================ */
+
+/* Icon - Top element, perfectly centered */
+.metric-icon {
+    font-size: clamp(2rem, 4vh, 2.8rem);
+    margin-bottom: clamp(0.5rem, 1vh, 0.8rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+    color: inherit;
+}
+
+/* Title - Second element, perfectly centered */
+.metric-title {
+    font-size: clamp(0.9rem, 2.2vh, 1.2rem);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: clamp(0.8rem, 1.5vh, 1.2rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+    color: inherit;
+}
+
+/* ============================================
+   DUAL METRICS CONTAINER - SIDE BY SIDE CENTERING
+   ============================================ */
+.dual-metrics-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+    gap: clamp(0.8rem, 1.5vh, 1.2rem);
+    flex: 1;
+    min-height: clamp(70px, 15vh, 100px);
+}
+
+/* Individual metric groups */
+.metric-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex: 1;
+    gap: clamp(0.25rem, 0.6vh, 0.4rem);
+    padding: clamp(0.3rem, 0.8vh, 0.5rem);
+    min-width: 0; /* Allow shrinking */
+}
+
+/* Metric values - Large, bold numbers */
+.metric-group .metric-value {
+    font-size: clamp(2.2rem, 5.5vh, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    word-wrap: break-word;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color: inherit;
+    width: 100%;
+}
+
+/* Metric units - Smaller labels below values */
+.metric-group .metric-unit {
+    font-size: clamp(0.9rem, 2vh, 1.2rem);
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    word-wrap: break-word;
+    color: inherit;
+    width: 100%;
+}
+
+/* ============================================
+   DIVIDER STYLING
+   ============================================ */
+.dual-metrics-container > div[style*="width: 1px"],
+.metric-divider {
+    width: 1px;
+    height: 80%;
+    align-self: center;
+    margin: 0;
+    flex-shrink: 0;
+    background: linear-gradient(
+        to bottom, 
+        transparent 10%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        transparent 90%
+    );
+    border-radius: 1px;
+}
+
+/* ============================================
+   EMPTY/PLACEHOLDER CARDS
+   ============================================ */
+.metric-card[style*="opacity: 0.5"] {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.03) 0%, 
+        rgba(255, 255, 255, 0.01) 100%);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+.metric-card[style*="opacity: 0.5"] .metric-value {
+    font-size: clamp(1rem, 2.5vh, 1.3rem);
+    opacity: 0.7;
+    font-style: italic;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablets and small screens */
+@media (max-width: 768px) {
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: clamp(0.75rem, 1.5vh, 1.25rem);
+    }
+    
+    .metric-card {
+        min-height: 140px;
+        padding: clamp(0.8rem, 2vh, 1.4rem);
+    }
+    
+    .metric-icon {
+        font-size: clamp(1.6rem, 3.5vh, 2.2rem);
+        margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+    }
+    
+    .metric-title {
+        font-size: clamp(0.8rem, 2vh, 1rem);
+        margin-bottom: clamp(0.6rem, 1.2vh, 1rem);
+    }
+    
+    .dual-metrics-container {
+        min-height: clamp(60px, 12vh, 80px);
+        gap: clamp(0.6rem, 1.2vh, 1rem);
+    }
+    
+    .metric-group .metric-value {
+        font-size: clamp(1.8rem, 4.2vh, 2.2rem);
+    }
+    
+    .metric-group .metric-unit {
+        font-size: clamp(0.9rem, 2.2vh, 1.1rem);
+    }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+    .cards-grid {
+        gap: clamp(0.5rem, 1vh, 1rem);
+        padding: clamp(0.5rem, 1.5vh, 1rem);
+    }
+    
+    .metric-card {
+        min-height: 120px;
+        padding: clamp(0.6rem, 1.5vh, 1rem);
+    }
+    
+    .metric-icon {
+        font-size: clamp(1.4rem, 3vh, 1.8rem);
+    }
+    
+    .metric-title {
+        font-size: clamp(0.7rem, 1.8vh, 0.9rem);
+    }
+    
+    .dual-metrics-container {
+        min-height: clamp(50px, 10vh, 70px);
+        gap: clamp(0.4rem, 0.8vh, 0.8rem);
+    }
+    
+    .metric-group {
+        padding: clamp(0.2rem, 0.5vh, 0.3rem);
+    }
+    
+    .metric-group .metric-value {
+        font-size: clamp(1.5rem, 3.8vh, 1.9rem);
+    }
+    
+    .metric-group .metric-unit {
+        font-size: clamp(0.8rem, 1.8vh, 1rem);
+    }
+}
+
+/* Large tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .metric-card {
+        min-height: 180px;
+    }
+    
+    .dual-metrics-container {
+        min-height: clamp(80px, 16vh, 110px);
+    }
+    
+    .metric-group .metric-value {
+        font-size: clamp(2rem, 4.8vh, 2.4rem);
+    }
+    
+    .metric-group .metric-unit {
+        font-size: clamp(0.95rem, 2.2vh, 1.2rem);
+    }
+}
+
+/* Large desktop screens */
+@media (min-width: 1025px) {
+    .metric-card {
+        min-height: 200px;
+    }
+    
+    .dual-metrics-container {
+        min-height: clamp(90px, 18vh, 120px);
+    }
+    
+    .metric-group .metric-value {
+        font-size: clamp(2.4rem, 6vh, 3.2rem);
+    }
+    
+    .metric-group .metric-unit {
+        font-size: clamp(1.1rem, 2.5vh, 1.4rem);
+    }
+}
+
+/* Extra large screens */
+@media (min-width: 1441px) {
+    .metric-card {
+        min-height: 240px;
+    }
+    
+    .dual-metrics-container {
+        min-height: clamp(100px, 20vh, 140px);
+    }
+    
+    .metric-group .metric-value {
+        font-size: clamp(2.8rem, 6.5vh, 3.8rem);
+    }
+    
+    .metric-group .metric-unit {
+        font-size: clamp(1.2rem, 2.8vh, 1.6rem);
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY AND INTERACTION ENHANCEMENTS
+   ============================================ */
+
+/* Focus states for keyboard navigation */
+.metric-card:focus {
+    outline: 2px solid var(--brand-primary, #3182CE);
+    outline-offset: 2px;
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .metric-card {
+        transition: none;
+    }
+    
+    .metric-card:hover {
+        transform: none;
+    }
+}
+
+/* High contrast mode improvements */
+@media (prefers-contrast: high) {
+    .metric-card {
+        border-width: 3px;
+    }
+    
+    .metric-divider {
+        background: rgba(255, 255, 255, 0.8);
+    }
+}

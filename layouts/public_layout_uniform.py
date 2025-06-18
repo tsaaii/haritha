@@ -508,6 +508,11 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
             "--info": theme_styles["theme"]["info"]
         },
         children=[
+            # Add the new CSS file
+            html.Link(
+                rel="stylesheet",
+                href="/assets/css/uniform_cards.css"
+            ),
             dcc.Interval(id='auto-rotation-interval', interval=15*1000, n_intervals=0),
             create_hover_overlay_banner(theme_name),
             html.Div(
