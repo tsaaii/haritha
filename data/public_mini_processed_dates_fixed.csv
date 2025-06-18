@@ -1,6 +1,4 @@
-Agency,Sub-contractor,Cluster,Site,Machine,Daily_Capacity,start_date,planned_end_date,expected_end_date,days_to_sept30,"Quantity 
-to be remediated in MT","Cumulative Quantity remediated till date 
-in MT",Active_site,net_to_be_remediated_mt,days_required
+Agency,Sub-contractor,Cluster,Site,Machine,Daily_Capacity,start_date,planned_end_date,expected_end_date,days_to_sept30,"Quantity to be remediated in MT","Cumulative Quantity remediated till date in MT",Active_site,net_to_be_remediated_mt,days_required
 Saurashtra,Saurashtra,Kurnool,Kurnool,M1 ,1800.0,29/04/2025,30/06/2025,27/06/2025,,67308,49401,Yes,17907,10.0
 Saurashtra,Saurashtra,Kurnool,Dhone,M2,1200.0,18/06/2025,30/07/2025,20/06/2025,,2666,0,No,2666,3.0
 Saurashtra,Saurashtra,Kurnool,Yemmiganur,M3,600.0,02/06/2025,30/07/2025,09/09/2025,,50000,0,No,50000,84.0
