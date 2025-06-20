@@ -454,7 +454,7 @@ def create_specific_metric_cards_updated(current_agency_display, metrics, theme_
     # Card 3: Sites Not on Track and Critical Sites
     card3 = create_dual_metric_card(
         icon="⚠️",
-        title="Issues",
+        title="Under capacity",
         metric1_label="Off Track",
         metric1_value=metrics['sites_not_on_track'],
         metric1_color="var(--warning, #DD6B20)",
@@ -465,17 +465,17 @@ def create_specific_metric_cards_updated(current_agency_display, metrics, theme_
     cards.append(card3)
     
     # Card 4: Planned Machines and Deployed Machines
-    card4 = create_dual_metric_card(
-        icon="🚛",
-        title="Machines",
-        metric1_label="Planned",
-        metric1_value=metrics['planned_machines'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Deployed",
-        metric2_value=metrics['deployed_machines'],
-        metric2_color="var(--success, #38A169)"
-    )
-    cards.append(card4)
+    # card4 = create_dual_metric_card(
+    #     icon="🚛",
+    #     title="Machines",
+    #     metric1_label="Planned",
+    #     metric1_value=metrics['planned_machines'],
+    #     metric1_color="var(--warning, #DD6B20)",
+    #     metric2_label="Deployed",
+    #     metric2_value=metrics['deployed_machines'],
+    #     metric2_color="var(--success, #38A169)"
+    # )
+    # cards.append(card4)
     
     # Card 5: Cluster Progress (NEW LIST STYLE)
     card5 = create_cluster_progress_card(current_agency_display, agency_data)
@@ -947,7 +947,7 @@ def create_specific_metric_cards(current_agency_display, metrics, theme_styles, 
     # Card 3: Sites Not on Track and Critical Sites
     card3 = create_dual_metric_card(
         icon="⚠️",
-        title="Issues",
+        title="Under capacity",
         metric1_label="Off Track",
         metric1_value=metrics['sites_not_on_track'],
         metric1_color="var(--warning, #DD6B20)",
@@ -959,7 +959,7 @@ def create_specific_metric_cards(current_agency_display, metrics, theme_styles, 
     
     # Card 4: Planned Machines and Deployed Machines
     card4 = create_dual_metric_card(
-        icon="🚛",
+        icon="⚙️",
         title="Machines",
         metric1_label="Planned",
         metric1_value=metrics['planned_machines'],
