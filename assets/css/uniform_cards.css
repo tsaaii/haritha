@@ -6,7 +6,7 @@
    .cards-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     gap: clamp(1rem, 2vh, 1.5rem);
     padding: clamp(1rem, 2vh, 1.5rem);
     width: 100%;
@@ -26,7 +26,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 2;
     min-height: 200px;
     width: 100%;
     padding: 0;
@@ -52,7 +52,7 @@
     display: flex;
     align-items: center;
     gap: clamp(0.5rem, 1vh, 0.75rem);
-    padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vh, 1.5rem) clamp(0.5rem, 1vh, 1rem);
+    padding: clamp(0.5rem, 1vh, 1rem) clamp(0.5rem, 1vh, 1rem) clamp(0.25rem, 0.5vh, 0.5rem);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.02);
 }
@@ -73,6 +73,7 @@
     font-size: clamp(0.9rem, 2vh, 1.1rem);
     font-weight: 700;
     text-transform: uppercase;
+    align-items: center;
     letter-spacing: 0.5px;
     margin: 0;
     color: var(--text-primary);
@@ -102,13 +103,9 @@
     gap: clamp(0.3rem, 0.5vh, 0.5rem);
 }
 
-.metric-display.primary,
-.metric-display.secondary {
-    /* Both primary and secondary have same styling for consistency */
-}
 
 .metric-number {
-    font-size: clamp(2.5rem, 6vh, 4rem);
+    font-size: clamp(2rem, 4vh, 4rem);
     font-weight: 900;
     line-height: 0.9;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -121,7 +118,7 @@
 }
 
 .metric-label {
-    font-size: clamp(0.8rem, 1.5vh, 1rem);
+    font-size: clamp(1rem, 2vh, 4rem);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -258,10 +255,10 @@
         gap: clamp(0.75rem, 1.5vh, 1.25rem);
     }
     
-    .enhanced-metric-card {
+    /* .enhanced-metric-card {
         min-height: 180px;
     }
-    
+     */
     .card-icon {
         font-size: clamp(1.3rem, 2.5vh, 1.8rem);
         width: clamp(1.8rem, 3.5vh, 2.2rem);
@@ -318,10 +315,10 @@
         font-size: clamp(0.7rem, 1.2vh, 0.85rem);
     }
     
-    .metrics-container {
+    /* .metrics-container {
         padding: clamp(0.6rem, 1.2vh, 1rem);
         gap: clamp(0.3rem, 0.6vh, 0.6rem);
-    }
+    } */
     
     .placeholder-text {
         font-size: clamp(1rem, 2vh, 1.3rem);
@@ -333,9 +330,9 @@
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
-    .enhanced-metric-card {
+    /* .enhanced-metric-card {
         min-height: 220px;
-    }
+    } */
     
     .metric-number {
         font-size: clamp(2.8rem, 6.5vh, 4.2rem);
@@ -347,9 +344,9 @@
 }
 
 @media (min-width: 1025px) {
-    .enhanced-metric-card {
-        min-height: 260px;
-    }
+    /* .enhanced-metric-card {
+        min-height: 260px; 
+    }*/
     
     .metric-number {
         font-size: clamp(3.2rem, 7vh, 4.8rem);
@@ -361,17 +358,17 @@
 }
 
 @media (min-width: 1441px) {
-    .enhanced-metric-card {
+    /* .enhanced-metric-card {
         min-height: 300px;
-    }
+    } */
     
     .card-header {
         padding: clamp(1.5rem, 3vh, 2rem) clamp(1.5rem, 3vh, 2rem) clamp(1rem, 2vh, 1.5rem);
     }
     
-    .metrics-container {
+    /* .metrics-container {
         padding: clamp(1.5rem, 3vh, 2rem);
-    }
+    } */
     
     .metric-number {
         font-size: clamp(3.8rem, 8vh, 5.5rem);

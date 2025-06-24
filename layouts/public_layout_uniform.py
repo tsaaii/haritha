@@ -253,6 +253,10 @@ def create_cluster_progress_card(current_agency_display, agency_data):
         ]
     )
 
+
+
+
+
 def calculate_site_completion_rates(agency_data):
     """Calculate completion rate for each site in the agency"""
     site_rates = []
