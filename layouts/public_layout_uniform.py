@@ -1,6 +1,7 @@
 # layouts/public_layout_uniform.py
 """
-Updated layout with specific card content and uniform sizing - ENHANCED VERSION WITH NEW METRICS
+Updated layout with specific card content and uniform sizing - ENHANCED VERSION WITH NEW METRICS AND HEADER CARDS
+Project Overview title added, followed by 1x4 header cards, agency header, then 2x4 main cards grid
 """
 
 from dash import html, dcc, callback, Input, Output
@@ -117,7 +118,6 @@ def create_sample_agency_data():
     df = pd.DataFrame(data)
     logger.info(f"📊 Created sample data with agencies: {list(df['Agency'].unique())}")
     return df
-
 
 def calculate_cluster_completion_rates(agency_data):
     """Calculate completion rate for each cluster in the agency"""
@@ -240,10 +240,6 @@ def create_cluster_progress_card(current_agency_display, agency_data):
             html.Div(
                 className="cluster-progress-content",
                 children=[
-                    # html.Div(
-                    #     className="agency-label",
-                    #     children=f"Agency: {current_agency_display.split(',')[0]}"  # Show short name
-                    # ),
                     html.Div(
                         className="cluster-list",
                         children=cluster_items
@@ -252,10 +248,6 @@ def create_cluster_progress_card(current_agency_display, agency_data):
             )
         ]
     )
-
-
-
-
 
 def calculate_site_completion_rates(agency_data):
     """Calculate completion rate for each site in the agency"""
@@ -411,10 +403,6 @@ def create_site_progress_card(current_agency_display, agency_data):
             html.Div(
                 className="site-progress-content",
                 children=[
-                    # html.Div(
-                    #     className="agency-label",
-                    #     children=f"Agency: {current_agency_display.split(',')[0]}"  # Show short name
-                    # ),
                     html.Div(
                         className="site-list",
                         children=site_items
@@ -423,659 +411,6 @@ def create_site_progress_card(current_agency_display, agency_data):
             )
         ]
     )
-
-# Update the create_specific_metric_cards function to use the new Card 5
-def create_specific_metric_cards_updated(current_agency_display, metrics, theme_styles, agency_data):
-    """Create all 8 cards with the updated Card 5"""
-    cards = []
-    
-    # Card 1: Clusters and Total Sites
-    card1 = create_dual_metric_card(
-        icon="🗺️",
-        title="Clusters & Sites",
-        metric1_label="Clusters",
-        metric1_value=metrics['clusters_count'],
-        metric1_color="var(--info, #3182CE)",
-        metric2_label="Total Sites",
-        metric2_value=metrics['sites_count'],
-        metric2_color="var(--brand-primary, #3182CE)"
-    )
-    cards.append(card1)
-    
-    # Card 2: Active Sites (green) and Inactive Sites (red)
-    card2 = create_dual_metric_card(
-        icon="🏭",
-        title="Site Status",
-        metric1_label="Active Sites",
-        metric1_value=metrics['active_sites'],
-        metric1_color="var(--success, #38A169)",
-        metric2_label="Inactive Sites",
-        metric2_value=metrics['inactive_sites'],
-        metric2_color="var(--error, #E53E3E)"
-    )
-    cards.append(card2)
-    
-    # Card 3: Sites Not on Track and Critical Sites
-    card3 = create_dual_metric_card(
-        icon="⚠️",
-        title="Issues",
-        metric1_label="Off Track",
-        metric1_value=metrics['sites_not_on_track'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Critical",
-        metric2_value=metrics['critically_lagging'],
-        metric2_color="var(--error, #E53E3E)"
-    )
-    cards.append(card3)
-    
-    # Card 4: Planned Machines and Deployed Machines
-    card4 = create_dual_metric_card(
-        icon="🚛",
-        title="Machines",
-        metric1_label="Planned",
-        metric1_value=metrics['planned_machines'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Deployed",
-        metric2_value=metrics['deployed_machines'],
-        metric2_color="var(--success, #38A169)"
-    )
-    cards.append(card4)
-    
-    # Card 5: Cluster Progress (NEW LIST STYLE)
-    card5 = create_cluster_progress_card(current_agency_display, agency_data)
-    cards.append(card5)
-    
-    # Cards 6-8: Placeholders for now
-    for i in range(6, 9):
-        cards.append(create_empty_card(i))
-    
-    return cards
-
-
-def get_agency_rotation_data(df, rotation_index=0):
-    """Get agency rotation data with display name mapping"""
-    if df.empty:
-        return {
-            'agencies': [],
-            'current_agency_key': 'No Data Available',
-            'current_agency_display': 'No Data Available',
-            'agency_data': pd.DataFrame()
-        }
-    
-    try:
-        # Get unique agency keys from data
-        agency_keys = []
-        if 'Agency' in df.columns:
-            agency_keys = df['Agency'].dropna().unique().tolist()
-        
-        if not agency_keys:
-            return {
-                'agencies': [],
-                'current_agency_key': 'No Agencies Found',
-                'current_agency_display': 'No Agencies Found',
-                'agency_data': pd.DataFrame()
-            }
-        
-        # Get current agency for rotation
-        current_agency_index = rotation_index % len(agency_keys)
-        current_agency_key = agency_keys[current_agency_index]
-        current_agency_display = get_display_agency_name(current_agency_key)
-        
-        # Filter data for current agency
-        agency_data = df[df['Agency'] == current_agency_key].copy()
-        
-        # Log rotation with mapping status
-        if "(Unmapped)" in current_agency_display:
-            mapping_status = "⚠️"
-        else:
-            mapping_status = "✅"
-        logger.info(f"🔄 Rotation #{rotation_index}: {mapping_status} '{current_agency_key}' → '{current_agency_display}'")
-        
-        return {
-            'agencies': agency_keys,
-            'current_agency_key': current_agency_key,
-            'current_agency_display': current_agency_display,
-            'agency_data': agency_data
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ Error in agency rotation: {e}")
-        return {
-            'agencies': [],
-            'current_agency_key': 'Error Loading',
-            'current_agency_display': 'Error Loading Data',
-            'agency_data': pd.DataFrame()
-        }
-
-def calculate_agency_metrics(agency_data):
-    """Calculate metrics for current agency including new cluster completion rate"""
-    if agency_data.empty:
-        return {
-            'clusters_count': 0,
-            'sites_count': 0,
-            'active_sites': 0,
-            'inactive_sites': 0,
-            'planned_machines': 0,
-            'deployed_machines': 0,
-            'sites_not_on_track': 0,
-            'critically_lagging': 0,
-            'avg_cluster_completion': 0,
-            'best_cluster_completion': 0,
-            'total_capacity': 0,
-            'avg_daily_capacity': 0,
-            'total_planned_quantity': 0,
-            'total_remediated_quantity': 0,
-            'overall_completion_rate': 0,
-            'remaining_quantity': 0
-        }
-    
-    try:
-        today = datetime.now().date()
-        sept_30 = datetime(2024, 9, 30).date()
-        
-        # Original metrics
-        clusters_count = agency_data['Cluster'].nunique() if 'Cluster' in agency_data.columns else 0
-        sites_count = agency_data['Site'].nunique() if 'Site' in agency_data.columns else 0
-        
-        active_sites = 0
-        inactive_sites = 0
-        if 'Active_site' in agency_data.columns:
-            active_sites = len(agency_data[agency_data['Active_site'].str.lower() == 'yes'])
-            inactive_sites = len(agency_data[agency_data['Active_site'].str.lower() == 'no'])
-        
-        planned_machines = agency_data['Machine'].nunique() if 'Machine' in agency_data.columns else 0
-        deployed_machines = 0
-        if 'Machine' in agency_data.columns and 'Active_site' in agency_data.columns:
-            active_data = agency_data[agency_data['Active_site'].str.lower() == 'yes']
-            deployed_machines = active_data['Machine'].nunique() if not active_data.empty else 0
-        
-        sites_not_on_track = 0
-        if 'Active_site' in agency_data.columns and 'expected_end_date' in agency_data.columns:
-            active_sites_data = agency_data[agency_data['Active_site'].str.lower() == 'yes']
-            if not active_sites_data.empty:
-                not_on_track_mask = active_sites_data['expected_end_date'].dt.date > sept_30
-                sites_not_on_track = len(active_sites_data[not_on_track_mask])
-        
-        critically_lagging = 0
-        if all(col in agency_data.columns for col in ['Active_site', 'days_required', 'days_to_sept30']):
-            active_data = agency_data[agency_data['Active_site'].str.lower() == 'yes']
-            if not active_data.empty:
-                days_to_sept30_numeric = pd.to_numeric(active_data['days_to_sept30'], errors='coerce')
-                critically_lagging_mask = active_data['days_required'] > days_to_sept30_numeric
-                critically_lagging = len(active_data[critically_lagging_mask.fillna(False)])
-        
-        # NEW METRICS - Card 5: Cluster Completion Rate
-        avg_cluster_completion = 0
-        best_cluster_completion = 0
-        
-        if all(col in agency_data.columns for col in ['Cluster', 'Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
-            cluster_metrics = agency_data.groupby('Cluster').agg({
-                'Quantity to be remediated in MT': 'sum',
-                'Cumulative Quantity remediated till date in MT': 'sum'
-            }).reset_index()
-            
-            # Calculate completion rate for each cluster
-            cluster_metrics['completion_rate'] = (
-                cluster_metrics['Cumulative Quantity remediated till date in MT'] / 
-                cluster_metrics['Quantity to be remediated in MT'] * 100
-            ).fillna(0)
-            
-            # Round to 1 decimal place for display
-            cluster_metrics['completion_rate'] = cluster_metrics['completion_rate'].round(1)
-            
-            avg_cluster_completion = cluster_metrics['completion_rate'].mean()
-            best_cluster_completion = cluster_metrics['completion_rate'].max()
-            
-            # Round final values
-            avg_cluster_completion = round(avg_cluster_completion, 1) if not pd.isna(avg_cluster_completion) else 0
-            best_cluster_completion = round(best_cluster_completion, 1) if not pd.isna(best_cluster_completion) else 0
-        
-        # NEW METRICS - Card 6: Daily Capacity
-        total_capacity = 0
-        avg_daily_capacity = 0
-        
-        if 'Daily_Capacity' in agency_data.columns:
-            total_capacity = agency_data['Daily_Capacity'].sum()
-            avg_daily_capacity = agency_data['Daily_Capacity'].mean()
-            
-            total_capacity = round(total_capacity, 0)
-            avg_daily_capacity = round(avg_daily_capacity, 1) if not pd.isna(avg_daily_capacity) else 0
-        
-        # NEW METRICS - Card 7: Overall Progress
-        total_planned_quantity = 0
-        total_remediated_quantity = 0
-        overall_completion_rate = 0
-        
-        if all(col in agency_data.columns for col in ['Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
-            total_planned_quantity = agency_data['Quantity to be remediated in MT'].sum()
-            total_remediated_quantity = agency_data['Cumulative Quantity remediated till date in MT'].sum()
-            
-            if total_planned_quantity > 0:
-                overall_completion_rate = (total_remediated_quantity / total_planned_quantity * 100)
-                overall_completion_rate = round(overall_completion_rate, 1)
-        
-        # NEW METRICS - Card 8: Remaining Work
-        remaining_quantity = total_planned_quantity - total_remediated_quantity
-        remaining_quantity = max(0, remaining_quantity)  # Ensure non-negative
-        
-        return {
-            'clusters_count': clusters_count,
-            'sites_count': sites_count,
-            'active_sites': active_sites,
-            'inactive_sites': inactive_sites,
-            'planned_machines': planned_machines,
-            'deployed_machines': deployed_machines,
-            'sites_not_on_track': sites_not_on_track,
-            'critically_lagging': critically_lagging,
-            'avg_cluster_completion': avg_cluster_completion,
-            'best_cluster_completion': best_cluster_completion,
-            'total_capacity': int(total_capacity),
-            'avg_daily_capacity': avg_daily_capacity,
-            'total_planned_quantity': int(total_planned_quantity),
-            'total_remediated_quantity': int(total_remediated_quantity),
-            'overall_completion_rate': overall_completion_rate,
-            'remaining_quantity': int(remaining_quantity)
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ Error calculating metrics: {e}")
-        return {
-            'clusters_count': 0,
-            'sites_count': 0,
-            'active_sites': 0,
-            'inactive_sites': 0,
-            'planned_machines': 0,
-            'deployed_machines': 0,
-            'sites_not_on_track': 0,
-            'critically_lagging': 0,
-            'avg_cluster_completion': 0,
-            'best_cluster_completion': 0,
-            'total_capacity': 0,
-            'avg_daily_capacity': 0,
-            'total_planned_quantity': 0,
-            'total_remediated_quantity': 0,
-            'overall_completion_rate': 0,
-            'remaining_quantity': 0
-        }
-
-def create_dual_metric_card(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color):
-    """Create a card with two metrics side by side with enhanced design and clean structure"""
-    return html.Div(
-        className="enhanced-metric-card",
-        children=[
-            # Card Header
-            html.Div(
-                className="card-header",
-                children=[
-                    html.Div(icon, className="card-icon"),
-                    html.H3(title, className="card-title")
-                ]
-            ),
-            
-            # Metrics Container
-            html.Div(
-                className="metrics-container",
-                children=[
-                    # First metric
-                    html.Div(
-                        className="metric-display primary",
-                        children=[
-                            html.Div(
-                                str(metric1_value),
-                                className="metric-number",
-                                style={"color": metric1_color}
-                            ),
-                            html.Div(
-                                metric1_label,
-                                className="metric-label"
-                            )
-                        ]
-                    ),
-                    
-                    # Visual Separator
-                    html.Div(className="metrics-separator"),
-                    
-                    # Second metric
-                    html.Div(
-                        className="metric-display secondary",
-                        children=[
-                            html.Div(
-                                str(metric2_value),
-                                className="metric-number",
-                                style={"color": metric2_color}
-                            ),
-                            html.Div(
-                                metric2_label,
-                                className="metric-label"
-                            )
-                        ]
-                    )
-                ]
-            )
-        ]
-    )
-
-def create_empty_card(card_number):
-    """Create an empty placeholder card with consistent structure"""
-    return html.Div(
-        className="enhanced-metric-card placeholder-card",
-        children=[
-            html.Div(
-                className="card-header",
-                children=[
-                    html.Div("📊", className="card-icon placeholder-icon"),
-                    html.H3(f"Card {card_number}", className="card-title placeholder-title")
-                ]
-            ),
-            html.Div(
-                className="placeholder-content",
-                children=[
-                    html.Div("Coming Soon", className="placeholder-text"),
-                    html.Div("More metrics will be added here", className="placeholder-subtext")
-                ]
-            )
-        ]
-    )
-
-
-
-# And update your callback function to pass agency_data:
-
-def create_agency_header(current_agency_display):
-    """Create agency header with full display name"""
-    today = datetime.now().strftime("%d %B %Y")
-    
-    return html.Div(
-        className="agency-header",
-        children=[
-            html.H1(current_agency_display, className="agency-title"),
-            html.P(f"Real-time Dashboard - {today}", className="agency-date")
-        ]
-    )
-
-def create_hero_section():
-    """Create hero section with main system title"""
-    return html.Div(
-        className="hero-section",
-        children=[
-            html.Div(
-                className="hero-content",
-                children=[
-                    # Left Logo
-                    html.Div(
-                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "height": "100%", "flexShrink": "0"},
-                        children=[
-                            html.Img(
-                                src="/assets/img/left.png",
-                                alt="Left Organization Logo",
-                                className="responsive-logo",
-                                style={
-                                    "height": "clamp(40px, 8vh, 60px)",
-                                    "width": "auto",
-                                    "objectFit": "contain",
-                                    "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
-                                    "transition": "all 0.3s ease"
-                                }
-                            )
-                        ]
-                    ),
-                    
-                    # Title Section
-                    html.Div(
-                        className="hero-title-section",
-                        style={
-                            "textAlign": "center", "flex": "1", "padding": "0 clamp(1rem, 3vw, 2rem)",
-                            "display": "flex", "flexDirection": "column", "justifyContent": "center", "alignItems": "center", "height": "100%"
-                        },
-                        children=[
-                            html.H1(
-                                "Swaccha Andhra Corporation",
-                                className="hero-title",
-                                style={
-                                    "margin": "0", "padding": "0", "fontSize": "clamp(1.5rem, 4vw, 2.5rem)",
-                                    "fontWeight": "800", "lineHeight": "1.1", "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.3)", "letterSpacing": "-0.5px"
-                                }
-                            ),
-                            html.P(
-                                "Real Time Legacy Waste Remediation Progress Tracker",
-                                className="hero-subtitle",
-                                style={
-                                    "margin": "0.25rem 0 0 0", "padding": "0", "fontSize": "clamp(0.8rem, 1.8vw, 1rem)",
-                                    "fontWeight": "500", "lineHeight": "1.3", "opacity": "0.9", "textAlign": "center"
-                                }
-                            )
-                        ]
-                    ),
-                    
-                    # Right Logo
-                    html.Div(
-                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "height": "100%", "flexShrink": "0"},
-                        children=[
-                            html.Img(
-                                src="/assets/img/right.png",
-                                alt="Right Organization Logo",
-                                className="responsive-logo",
-                                style={
-                                    "height": "clamp(40px, 8vh, 60px)",
-                                    "width": "auto",
-                                    "objectFit": "contain",
-                                    "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
-                                    "transition": "all 0.3s ease"
-                                }
-                            )
-                        ]
-                    )
-                ]
-            )
-        ]
-    )
-
-def build_public_layout(theme_name="dark", is_authenticated=False, user_data=None):
-    """Build the public layout with enhanced card structure"""
-    theme_styles = get_theme_styles(theme_name)
-    
-    # DEBUG: Check if assets folder exists
-    assets_path = "assets/css/uniform_cards.css"
-    css_exists = os.path.exists(assets_path)
-    logger.info(f"🔍 CSS Debug: uniform_cards.css exists at {assets_path}: {css_exists}")
-    
-    return html.Div(
-        className="public-layout",
-        style={
-            "--primary-bg": theme_styles["theme"]["primary_bg"],
-            "--secondary-bg": theme_styles["theme"]["secondary_bg"],
-            "--accent-bg": theme_styles["theme"]["accent_bg"],
-            "--card-bg": theme_styles["theme"]["card_bg"],
-            "--text-primary": theme_styles["theme"]["text_primary"],
-            "--text-secondary": theme_styles["theme"]["text_secondary"],
-            "--brand-primary": theme_styles["theme"]["brand_primary"],
-            "--border-light": theme_styles["theme"].get("border_light", theme_styles["theme"]["accent_bg"]),
-            "--success": theme_styles["theme"]["success"],
-            "--warning": theme_styles["theme"]["warning"],
-            "--error": theme_styles["theme"]["error"],
-            "--info": theme_styles["theme"]["info"]
-        },
-        children=[
-            # Enhanced CSS Loading with timestamp to force refresh
-            html.Link(
-                rel="stylesheet",
-                href=f"/assets/css/uniform_cards.css?v={int(datetime.now().timestamp())}"
-            ),
-            
-            dcc.Interval(id='auto-rotation-interval', interval=15*1000, n_intervals=0),
-            dcc.Store(id='current-theme', data=theme_name),
-            create_hover_overlay_banner(theme_name),
-            html.Div(
-                className="main-content",
-                children=[
-                    create_hero_section(),
-                    html.Div(id="agency-header-container"),
-                    html.Div(id="dynamic-cards-container", className="cards-grid")
-                ]
-            )
-        ]
-    )
-
-# Replace your existing create_specific_metric_cards function with this:
-
-def create_specific_metric_cards(current_agency_display, metrics, theme_styles, agency_data=None):
-    """Create all 8 cards including Cluster Progress (Card 5), Site Progress (Card 6), and Lagging Sites (Card 7)"""
-    cards = []
-    
-    # Card 1: Clusters and Total Sites
-    card1 = create_dual_metric_card(
-        icon="🗺️",
-        title="Clusters & Sites",
-        metric1_label="Clusters",
-        metric1_value=metrics['clusters_count'],
-        metric1_color="var(--info, #3182CE)",
-        metric2_label="Total Sites",
-        metric2_value=metrics['sites_count'],
-        metric2_color="var(--brand-primary, #3182CE)"
-    )
-    cards.append(card1)
-    
-    # Card 2: Active Sites (green) and Inactive Sites (red)
-    card2 = create_dual_metric_card(
-        icon="🏭",
-        title="Site Status",
-        metric1_label="Active Sites",
-        metric1_value=metrics['active_sites'],
-        metric1_color="var(--success, #38A169)",
-        metric2_label="Inactive Sites",
-        metric2_value=metrics['inactive_sites'],
-        metric2_color="var(--error, #E53E3E)"
-    )
-    cards.append(card2)
-    
-    # Card 3: Sites Not on Track and Critical Sites
-    card3 = create_dual_metric_card(
-        icon="⚠️",
-        title="Issues",
-        metric1_label="Off Track",
-        metric1_value=metrics['sites_not_on_track'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Critical",
-        metric2_value=metrics['critically_lagging'],
-        metric2_color="var(--error, #E53E3E)"
-    )
-    cards.append(card3)
-    
-    # Card 4: Planned Machines and Deployed Machines
-    card4 = create_dual_metric_card(
-        icon="🚛",
-        title="Machines",
-        metric1_label="Planned",
-        metric1_value=metrics['planned_machines'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Deployed",
-        metric2_value=metrics['deployed_machines'],
-        metric2_color="var(--success, #38A169)"
-    )
-    cards.append(card4)
-    
-    # Card 5: Cluster Progress (LIST STYLE)
-    if agency_data is not None and not agency_data.empty:
-        card5 = create_cluster_progress_card(current_agency_display, agency_data)
-    else:
-        card5 = create_empty_card(5)
-    cards.append(card5)
-    
-    # Card 6: Site Progress (LIST STYLE)
-    if agency_data is not None and not agency_data.empty:
-        card6 = create_site_progress_card(current_agency_display, agency_data)
-    else:
-        card6 = create_empty_card(6)
-    cards.append(card6)
-    
-    # Card 7: Lagging Sites (LIST STYLE) - NEW
-    if agency_data is not None and not agency_data.empty:
-        card7 = create_lagging_sites_card(current_agency_display, agency_data)
-    else:
-        card7 = create_empty_card(7)
-    cards.append(card7)
-    
-    # Card 8: Placeholder for now
-    if agency_data is not None and not agency_data.empty:
-        card8 = create_performance_rankings_card(current_agency_display, agency_data)
-    else:
-        card8 = create_empty_card(8)
-    cards.append(card8)
-    
-    return cards
-
-
-@callback(
-    [Output('agency-header-container', 'children'), Output('dynamic-cards-container', 'children')],
-    [Input('auto-rotation-interval', 'n_intervals'), Input('current-theme', 'data')],
-    prevent_initial_call=False
-)
-def update_agency_dashboard(n_intervals, theme_name):
-    """Update dashboard with enhanced card layout including lagging sites analysis"""
-    try:
-        logger.info(f"🔄 Agency rotation update #{n_intervals}")
-        
-        df = load_agency_data()
-        rotation_data = get_agency_rotation_data(df, n_intervals)
-        current_agency_key = rotation_data['current_agency_key']
-        current_agency_display = rotation_data['current_agency_display']
-        agency_data = rotation_data['agency_data']
-        
-        logger.info(f"🏢 Displaying: {current_agency_display} (Records: {len(agency_data)})")
-        
-        # Calculate metrics and log lagging sites summary
-        metrics = calculate_agency_metrics(agency_data)
-        
-        if not agency_data.empty:
-            try:
-                lagging_sites = calculate_lagging_sites(agency_data)
-                logger.info(f"🚨 Lagging Sites Summary: {len(lagging_sites)} sites cannot complete before Sept 30, 2025")
-            except Exception as lagging_error:
-                logger.warning(f"⚠️ Could not calculate lagging sites: {lagging_error}")
-        
-        theme_styles = get_theme_styles(theme_name or 'dark')
-        
-        header = create_agency_header(current_agency_display)
-        
-        # Pass agency_data to create all progress cards
-        cards = create_specific_metric_cards(current_agency_display, metrics, theme_styles, agency_data)
-        
-        logger.info(f"✅ Created {len(cards)} cards including performance rankings for {current_agency_display}")
-        
-        # Return exactly 2 values as expected by the callback outputs
-        return header, cards
-        
-    except Exception as e:
-        logger.error(f"❌ Error in dashboard update: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        # Create fallback content - ALWAYS return exactly 2 values
-        try:
-            fallback_header = html.Div(
-                "Error Loading Agency Data",
-                className="agency-header",
-                style={'color': 'red', 'textAlign': 'center', 'padding': '1rem'}
-            )
-            
-            fallback_cards = []
-            for i in range(8):
-                fallback_cards.append(create_empty_card(i + 1))
-            
-            # Return exactly 2 values
-            return fallback_header, fallback_cards
-            
-        except Exception as fallback_error:
-            logger.error(f"❌ Error creating fallback content: {fallback_error}")
-            
-            # Ultimate fallback - simple HTML elements, exactly 2 values
-            simple_header = html.Div("System Error", style={'color': 'red', 'padding': '1rem'})
-            simple_cards = [html.Div("Loading...", style={'padding': '1rem'}) for _ in range(8)]
-            
-            # Return exactly 2 values
-            return simple_header, simple_cards
-
-
 
 def calculate_lagging_sites(agency_data):
     """Calculate sites that cannot be completed before September 30, 2025 based on days_required"""
@@ -1274,9 +609,6 @@ def create_lagging_sites_card(current_agency_display, agency_data):
                     }
                 )
             )
-    
-    # Calculate summary stats
-    total_lagging = len(lagging_sites)
     
     return html.Div(
         className="enhanced-metric-card lagging-sites-card",
@@ -1535,10 +867,6 @@ def create_performance_rankings_card(current_agency_display, agency_data):
                 )
             )
     
-    # Calculate summary stats
-    total_ranked = len(performance_sites)
-    avg_score = sum(site['composite_score'] for site in performance_sites) / len(performance_sites) if performance_sites else 0
-    
     return html.Div(
         className="enhanced-metric-card performance-rankings-card",
         children=[
@@ -1564,6 +892,1186 @@ def create_performance_rankings_card(current_agency_display, agency_data):
         ]
     )
 
+def get_agency_rotation_data(df, rotation_index=0):
+    """Get agency rotation data with display name mapping"""
+    if df.empty:
+        return {
+            'agencies': [],
+            'current_agency_key': 'No Data Available',
+            'current_agency_display': 'No Data Available',
+            'agency_data': pd.DataFrame()
+        }
+    
+    try:
+        # Get unique agency keys from data
+        agency_keys = []
+        if 'Agency' in df.columns:
+            agency_keys = df['Agency'].dropna().unique().tolist()
+        
+        if not agency_keys:
+            return {
+                'agencies': [],
+                'current_agency_key': 'No Agencies Found',
+                'current_agency_display': 'No Agencies Found',
+                'agency_data': pd.DataFrame()
+            }
+        
+        # Get current agency for rotation
+        current_agency_index = rotation_index % len(agency_keys)
+        current_agency_key = agency_keys[current_agency_index]
+        current_agency_display = get_display_agency_name(current_agency_key)
+        
+        # Filter data for current agency
+        agency_data = df[df['Agency'] == current_agency_key].copy()
+        
+        # Log rotation with mapping status
+        if "(Unmapped)" in current_agency_display:
+            mapping_status = "⚠️"
+        else:
+            mapping_status = "✅"
+        logger.info(f"🔄 Rotation #{rotation_index}: {mapping_status} '{current_agency_key}' → '{current_agency_display}'")
+        
+        return {
+            'agencies': agency_keys,
+            'current_agency_key': current_agency_key,
+            'current_agency_display': current_agency_display,
+            'agency_data': agency_data
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error in agency rotation: {e}")
+        return {
+            'agencies': [],
+            'current_agency_key': 'Error Loading',
+            'current_agency_display': 'Error Loading Data',
+            'agency_data': pd.DataFrame()
+        }
+
+def calculate_agency_metrics(agency_data):
+    """Calculate metrics for current agency including new cluster completion rate"""
+    if agency_data.empty:
+        return {
+            'clusters_count': 0,
+            'sites_count': 0,
+            'active_sites': 0,
+            'inactive_sites': 0,
+            'planned_machines': 0,
+            'deployed_machines': 0,
+            'sites_not_on_track': 0,
+            'critically_lagging': 0,
+            'avg_cluster_completion': 0,
+            'best_cluster_completion': 0,
+            'total_capacity': 0,
+            'avg_daily_capacity': 0,
+            'total_planned_quantity': 0,
+            'total_remediated_quantity': 0,
+            'overall_completion_rate': 0,
+            'remaining_quantity': 0
+        }
+    
+    try:
+        today = datetime.now().date()
+        # FIX: Use pd.Timestamp instead of datetime.date for comparison
+        sept_30 = pd.Timestamp(2025, 9, 30).date()  # Note: Changed year to 2025 to match your logs
+        
+        # Original metrics
+        clusters_count = agency_data['Cluster'].nunique() if 'Cluster' in agency_data.columns else 0
+        sites_count = agency_data['Site'].nunique() if 'Site' in agency_data.columns else 0
+        
+        active_sites = 0
+        inactive_sites = 0
+        if 'Active_site' in agency_data.columns:
+            active_sites = len(agency_data[agency_data['Active_site'].str.lower() == 'yes'])
+            inactive_sites = len(agency_data[agency_data['Active_site'].str.lower() == 'no'])
+        
+        planned_machines = agency_data['Machine'].nunique() if 'Machine' in agency_data.columns else 0
+        deployed_machines = 0
+        if 'Machine' in agency_data.columns and 'Active_site' in agency_data.columns:
+            active_data = agency_data[agency_data['Active_site'].str.lower() == 'yes']
+            deployed_machines = active_data['Machine'].nunique() if not active_data.empty else 0
+        
+        sites_not_on_track = 0
+        if 'Active_site' in agency_data.columns and 'expected_end_date' in agency_data.columns:
+            active_sites_data = agency_data[agency_data['Active_site'].str.lower() == 'yes']
+            if not active_sites_data.empty:
+                # FIX: Ensure both sides of comparison are the same type
+                # Convert expected_end_date to date if it's datetime
+                try:
+                    if pd.api.types.is_datetime64_any_dtype(active_sites_data['expected_end_date']):
+                        # Convert pandas datetime to date for comparison
+                        expected_dates = pd.to_datetime(active_sites_data['expected_end_date']).dt.date
+                        not_on_track_mask = expected_dates > sept_30
+                    else:
+                        # If it's already date, compare directly
+                        not_on_track_mask = active_sites_data['expected_end_date'] > sept_30
+                    
+                    sites_not_on_track = len(active_sites_data[not_on_track_mask])
+                except Exception as date_error:
+                    print(f"⚠️ Warning: Could not calculate sites_not_on_track: {date_error}")
+                    sites_not_on_track = 0
+        
+        critically_lagging = 0
+        if all(col in agency_data.columns for col in ['Active_site', 'days_required', 'days_to_sept30']):
+            active_data = agency_data[agency_data['Active_site'].str.lower() == 'yes']
+            if not active_data.empty:
+                try:
+                    days_to_sept30_numeric = pd.to_numeric(active_data['days_to_sept30'], errors='coerce')
+                    days_required_numeric = pd.to_numeric(active_data['days_required'], errors='coerce')
+                    critically_lagging_mask = days_required_numeric > days_to_sept30_numeric
+                    critically_lagging = len(active_data[critically_lagging_mask.fillna(False)])
+                except Exception as lag_error:
+                    print(f"⚠️ Warning: Could not calculate critically_lagging: {lag_error}")
+                    critically_lagging = 0
+        
+        # NEW METRICS - Card 5: Cluster Completion Rate
+        avg_cluster_completion = 0
+        best_cluster_completion = 0
+        
+        if all(col in agency_data.columns for col in ['Cluster', 'Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
+            try:
+                cluster_metrics = agency_data.groupby('Cluster').agg({
+                    'Quantity to be remediated in MT': 'sum',
+                    'Cumulative Quantity remediated till date in MT': 'sum'
+                }).reset_index()
+                
+                # Calculate completion rate for each cluster
+                cluster_metrics['completion_rate'] = (
+                    cluster_metrics['Cumulative Quantity remediated till date in MT'] / 
+                    cluster_metrics['Quantity to be remediated in MT'] * 100
+                ).fillna(0)
+                
+                # Round to 1 decimal place for display
+                cluster_metrics['completion_rate'] = cluster_metrics['completion_rate'].round(1)
+                
+                avg_cluster_completion = cluster_metrics['completion_rate'].mean()
+                best_cluster_completion = cluster_metrics['completion_rate'].max()
+                
+                # Round final values
+                avg_cluster_completion = round(avg_cluster_completion, 1) if not pd.isna(avg_cluster_completion) else 0
+                best_cluster_completion = round(best_cluster_completion, 1) if not pd.isna(best_cluster_completion) else 0
+            except Exception as cluster_error:
+                print(f"⚠️ Warning: Could not calculate cluster completion rates: {cluster_error}")
+                avg_cluster_completion = 0
+                best_cluster_completion = 0
+        
+        # NEW METRICS - Card 6: Daily Capacity
+        total_capacity = 0
+        avg_daily_capacity = 0
+        
+        if 'Daily_Capacity' in agency_data.columns:
+            try:
+                total_capacity = agency_data['Daily_Capacity'].sum()
+                avg_daily_capacity = agency_data['Daily_Capacity'].mean()
+                
+                total_capacity = round(total_capacity, 0)
+                avg_daily_capacity = round(avg_daily_capacity, 1) if not pd.isna(avg_daily_capacity) else 0
+            except Exception as capacity_error:
+                print(f"⚠️ Warning: Could not calculate capacity metrics: {capacity_error}")
+                total_capacity = 0
+                avg_daily_capacity = 0
+        
+        # NEW METRICS - Card 7: Overall Progress
+        total_planned_quantity = 0
+        total_remediated_quantity = 0
+        overall_completion_rate = 0
+        
+        if all(col in agency_data.columns for col in ['Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
+            try:
+                total_planned_quantity = agency_data['Quantity to be remediated in MT'].sum()
+                total_remediated_quantity = agency_data['Cumulative Quantity remediated till date in MT'].sum()
+                
+                if total_planned_quantity > 0:
+                    overall_completion_rate = (total_remediated_quantity / total_planned_quantity * 100)
+                    overall_completion_rate = round(overall_completion_rate, 1)
+            except Exception as progress_error:
+                print(f"⚠️ Warning: Could not calculate progress metrics: {progress_error}")
+                total_planned_quantity = 0
+                total_remediated_quantity = 0
+                overall_completion_rate = 0
+        
+        # NEW METRICS - Card 8: Remaining Work
+        remaining_quantity = total_planned_quantity - total_remediated_quantity
+        remaining_quantity = max(0, remaining_quantity)  # Ensure non-negative
+        
+        return {
+            'clusters_count': clusters_count,
+            'sites_count': sites_count,
+            'active_sites': active_sites,
+            'inactive_sites': inactive_sites,
+            'planned_machines': planned_machines,
+            'deployed_machines': deployed_machines,
+            'sites_not_on_track': sites_not_on_track,
+            'critically_lagging': critically_lagging,
+            'avg_cluster_completion': avg_cluster_completion,
+            'best_cluster_completion': best_cluster_completion,
+            'total_capacity': int(total_capacity),
+            'avg_daily_capacity': avg_daily_capacity,
+            'total_planned_quantity': int(total_planned_quantity),
+            'total_remediated_quantity': int(total_remediated_quantity),
+            'overall_completion_rate': overall_completion_rate,
+            'remaining_quantity': int(remaining_quantity)
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error calculating metrics: {e}")
+        import traceback
+        traceback.print_exc()  # Print full traceback for debugging
+        return {
+            'clusters_count': 0,
+            'sites_count': 0,
+            'active_sites': 0,
+            'inactive_sites': 0,
+            'planned_machines': 0,
+            'deployed_machines': 0,
+            'sites_not_on_track': 0,
+            'critically_lagging': 0,
+            'avg_cluster_completion': 0,
+            'best_cluster_completion': 0,
+            'total_capacity': 0,
+            'avg_daily_capacity': 0,
+            'total_planned_quantity': 0,
+            'total_remediated_quantity': 0,
+            'overall_completion_rate': 0,
+            'remaining_quantity': 0
+        }
+def create_dual_metric_card_horizontal_ultra_compact(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color):
+    """Create a card with two metrics stacked vertically with MINIMAL spacing and horizontal separator using CSS class"""
+    return html.Div(
+        className="enhanced-metric-card",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div(icon, className="card-icon"),
+                    html.H3(title, className="card-title")
+                ]
+            ),
+            
+            # Metrics Container - Ultra Compact Layout
+            html.Div(
+                className="metrics-container-horizontal-ultra-compact",
+                children=[
+                    # First metric (top) - ultra compact
+                    html.Div(
+                        className="metric-display horizontal ultra-compact",
+                        children=[
+                            html.Div(
+                                str(metric1_value),
+                                className="metric-number",
+                                style={"color": metric1_color}
+                            ),
+                            html.Div(
+                                metric1_label,
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # NEW: Use CSS class instead of inline styles
+                    html.Div(className="metrics-separator-horizontal-ultra-compact"),
+                    
+                    # Second metric (bottom) - ultra compact
+                    html.Div(
+                        className="metric-display horizontal ultra-compact",
+                        children=[
+                            html.Div(
+                                str(metric2_value),
+                                className="metric-number",
+                                style={"color": metric2_color}
+                            ),
+                            html.Div(
+                                metric2_label,
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def create_dual_metric_card_horizontal(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color):
+    """Create a card with two metrics stacked vertically with horizontal separation"""
+    return html.Div(
+        className="enhanced-metric-card",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div(icon, className="card-icon"),
+                    html.H3(title, className="card-title")
+                ]
+            ),
+            
+            # Metrics Container - Horizontal Layout (stacked vertically)
+            html.Div(
+                className="metrics-container-horizontal",
+                style={
+                    "display": "flex",
+                    "flexDirection": "column",
+                    "alignItems": "stretch",
+                    "justifyContent": "space-between", 
+                    "padding": "clamp(1rem, 2vh, 1.5rem)",
+                    "gap": "clamp(0.5rem, 1vh, 1rem)",
+                    "flex": "1"
+                },
+                children=[
+                    # First metric (top)
+                    html.Div(
+                        className="metric-display primary horizontal",
+                        style={
+                            "flex": "1",
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "textAlign": "center",
+                            "gap": "clamp(0.3rem, 0.5vh, 0.5rem)",
+                            "padding": "clamp(0.75rem, 1.5vh, 1.25rem)"
+                        },
+                        children=[
+                            html.Div(
+                                str(metric1_value),
+                                className="metric-number",
+                                style={"color": metric1_color}
+                            ),
+                            html.Div(
+                                metric1_label,
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Horizontal Visual Separator
+                    html.Div(
+                        className="metrics-separator-horizontal",
+                        style={
+                            "height": "2px",
+                            "width": "100%",
+                            "background": "linear-gradient(to right, transparent 20%, rgba(255, 255, 255, 0.3) 50%, transparent 80%)",
+                            "borderRadius": "1px",
+                            "flexShrink": "0",
+                            "margin": "clamp(0.5rem, 1vh, 1rem) 0"
+                        }
+                    ),
+                    
+                    # Second metric (bottom)
+                    html.Div(
+                        className="metric-display secondary horizontal",
+                        style={
+                            "flex": "1",
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "textAlign": "center",
+                            "gap": "clamp(0.3rem, 0.5vh, 0.5rem)",
+                            "padding": "clamp(0.75rem, 1.5vh, 1.25rem)"
+                        },
+                        children=[
+                            html.Div(
+                                str(metric2_value),
+                                className="metric-number",
+                                style={"color": metric2_color}
+                            ),
+                            html.Div(
+                                metric2_label,
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def create_dual_metric_card_horizontal_compact(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color):
+    """Create a more compact card with two metrics stacked vertically with horizontal separation"""
+    return html.Div(
+        className="enhanced-metric-card",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div(icon, className="card-icon"),
+                    html.H3(title, className="card-title")
+                ]
+            ),
+            
+            # Metrics Container - Compact Horizontal Layout
+            html.Div(
+                className="metrics-container-horizontal-compact",
+                style={
+                    "display": "flex",
+                    "flexDirection": "column",
+                    "alignItems": "center",
+                    "justifyContent": "center", 
+                    "padding": "clamp(1rem, 2vh, 1.5rem)",
+                    "gap": "clamp(0.75rem, 1.5vh, 1rem)",
+                    "flex": "1"
+                },
+                children=[
+                    # First metric (top) - more compact
+                    html.Div(
+                        className="metric-display primary horizontal compact",
+                        style={
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "textAlign": "center",
+                            "gap": "clamp(0.2rem, 0.4vh, 0.3rem)",
+                            "width": "100%"
+                        },
+                        children=[
+                            html.Div(
+                                str(metric1_value),
+                                className="metric-number",
+                                style={
+                                    "color": metric1_color,
+                                    "fontSize": "clamp(1.8rem, 3.5vh, 2.5rem)"  # Slightly smaller
+                                }
+                            ),
+                            html.Div(
+                                metric1_label,
+                                className="metric-label",
+                                style={
+                                    "fontSize": "clamp(0.8rem, 1.5vh, 1rem)"  # Slightly smaller
+                                }
+                            )
+                        ]
+                    ),
+                    
+                    # Horizontal Separator - thinner for compact version
+                    html.Div(
+                        className="metrics-separator-horizontal-compact",
+                        style={
+                            "height": "1px",
+                            "width": "80%",
+                            "background": "linear-gradient(to right, transparent 10%, rgba(255, 255, 255, 0.25) 50%, transparent 90%)",
+                            "borderRadius": "0.5px",
+                            "flexShrink": "0"
+                        }
+                    ),
+                    
+                    # Second metric (bottom) - more compact
+                    html.Div(
+                        className="metric-display secondary horizontal compact",
+                        style={
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "textAlign": "center",
+                            "gap": "clamp(0.2rem, 0.4vh, 0.3rem)",
+                            "width": "100%"
+                        },
+                        children=[
+                            html.Div(
+                                str(metric2_value),
+                                className="metric-number",
+                                style={
+                                    "color": metric2_color,
+                                    "fontSize": "clamp(1.8rem, 3.5vh, 2.5rem)"  # Slightly smaller
+                                }
+                            ),
+                            html.Div(
+                                metric2_label,
+                                className="metric-label",
+                                style={
+                                    "fontSize": "clamp(0.8rem, 1.5vh, 1rem)"  # Slightly smaller
+                                }
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+def create_dual_metric_card(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color):
+    """Create a card with two metrics side by side with enhanced design and clean structure"""
+    return html.Div(
+        className="enhanced-metric-card",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div(icon, className="card-icon"),
+                    html.H3(title, className="card-title")
+                ]
+            ),
+            
+            # Metrics Container
+            html.Div(
+                className="metrics-container",
+                children=[
+                    # First metric
+                    html.Div(
+                        className="metric-display primary",
+                        children=[
+                            html.Div(
+                                str(metric1_value),
+                                className="metric-number",
+                                style={"color": metric1_color}
+                            ),
+                            html.Div(
+                                metric1_label,
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Visual Separator
+                    html.Div(className="metrics-separator"),
+                    
+                    # Second metric
+                    html.Div(
+                        className="metric-display secondary",
+                        children=[
+                            html.Div(
+                                str(metric2_value),
+                                className="metric-number",
+                                style={"color": metric2_color}
+                            ),
+                            html.Div(
+                                metric2_label,
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+def create_empty_card(card_number):
+    """Create an empty placeholder card with consistent structure"""
+    return html.Div(
+        className="enhanced-metric-card placeholder-card",
+        children=[
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("📊", className="card-icon placeholder-icon"),
+                    html.H3(f"Card {card_number}", className="card-title placeholder-title")
+                ]
+            ),
+            html.Div(
+                className="placeholder-content",
+                children=[
+                    html.Div("Coming Soon", className="placeholder-text"),
+                    html.Div("More metrics will be added here", className="placeholder-subtext")
+                ]
+            )
+        ]
+    )
+
+
+def create_header_card_1(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create Header Card 1: Project Overview using ULTRA COMPACT HORIZONTAL layout"""
+    
+    # Calculate project-wide metrics here
+    total_sites = 0
+    total_agencies = 0
+    
+    # You can add calculations here based on all_agencies_data
+    if all_agencies_data is not None and not all_agencies_data.empty:
+        # Calculate total sites across all agencies
+        total_sites = all_agencies_data['Site'].nunique() if 'Site' in all_agencies_data.columns else 0
+        total_agencies = all_agencies_data['Agency'].nunique() if 'Agency' in all_agencies_data.columns else 0
+    
+    # Use the ULTRA COMPACT horizontal layout method
+    return create_dual_metric_card_horizontal_ultra_compact(
+        icon="📋",
+        title="Project Overview",
+        metric1_label="Sites",          # Shortened for ultra compact
+        metric1_value=total_sites,
+        metric1_color="var(--info, #3182CE)",
+        metric2_label="Agencies",       # Shortened for ultra compact
+        metric2_value=total_agencies,
+        metric2_color="var(--brand-primary, #3182CE)"
+    )
+
+
+def create_header_card_2(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create Header Card 2: Overall Completion Status"""
+    
+    # Calculate overall completion metrics here
+    completion_rate = 0
+    status_text = "Calculating..."
+    
+    # You can add calculations here based on all_agencies_data
+    if all_agencies_data is not None and not all_agencies_data.empty:
+        # Example: Calculate overall completion rate across all agencies
+        if all(col in all_agencies_data.columns for col in ['Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
+            total_planned = all_agencies_data['Quantity to be remediated in MT'].sum()
+            total_completed = all_agencies_data['Cumulative Quantity remediated till date in MT'].sum()
+            
+            if total_planned > 0:
+                completion_rate = round((total_completed / total_planned) * 100, 1)
+                status_text = f"{completion_rate}%"
+            else:
+                status_text = "No Data"
+    
+    return html.Div(
+        className="enhanced-metric-card header-card-2",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("🎯", className="card-icon"),
+                    html.H3("Overall Progress", className="card-title")
+                ]
+            ),
+            
+            # Single metric display
+            html.Div(
+                className="metrics-container",
+                style={"justifyContent": "center"},
+                children=[
+                    html.Div(
+                        className="metric-display primary",
+                        style={"textAlign": "center"},
+                        children=[
+                            html.Div(
+                                status_text,
+                                className="metric-number",
+                                style={
+                                    "color": "var(--success, #38A169)" if completion_rate >= 50 else "var(--warning, #DD6B20)",
+                                    "fontSize": "clamp(2.5rem, 5vh, 4rem)"
+                                }
+                            ),
+                            html.Div(
+                                "Complete",
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+def create_header_card_3(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create Header Card 3: Critical Alerts & Issues"""
+    
+    # Calculate critical issues across all agencies
+    critical_sites = 0
+    lagging_sites = 0
+    
+    # You can add calculations here based on all_agencies_data
+    if all_agencies_data is not None and not all_agencies_data.empty:
+        # Example: Calculate critical and lagging sites
+        if 'Active_site' in all_agencies_data.columns:
+            # Critical sites (you can define your own criteria)
+            critical_sites = len(all_agencies_data[all_agencies_data['Active_site'].str.lower() == 'no'])
+        
+        # Calculate lagging sites (sites that can't complete on time)
+        if 'days_required' in all_agencies_data.columns:
+            today = datetime.now().date()
+            sept_30 = datetime(2025, 9, 30).date()
+            days_until_sept30 = (sept_30 - today).days
+            
+            lagging_mask = all_agencies_data['days_required'] > days_until_sept30
+            lagging_sites = len(all_agencies_data[lagging_mask.fillna(False)])
+    
+    return html.Div(
+        className="enhanced-metric-card header-card-3",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("⚡", className="card-icon"),
+                    html.H3("Critical Issues", className="card-title")
+                ]
+            ),
+            
+            # Metrics Container
+            html.Div(
+                className="metrics-container",
+                children=[
+                    # First metric
+                    html.Div(
+                        className="metric-display primary",
+                        children=[
+                            html.Div(
+                                str(critical_sites),
+                                className="metric-number",
+                                style={"color": "var(--error, #E53E3E)"}
+                            ),
+                            html.Div(
+                                "Inactive",
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Visual Separator
+                    html.Div(className="metrics-separator"),
+                    
+                    # Second metric
+                    html.Div(
+                        className="metric-display secondary",
+                        children=[
+                            html.Div(
+                                str(lagging_sites),
+                                className="metric-number",
+                                style={"color": "var(--warning, #DD6B20)"}
+                            ),
+                            html.Div(
+                                "Lagging",
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+def create_header_card_4(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create Header Card 4: Timeline & Notifications"""
+    
+    # Calculate timeline and notification metrics
+    days_remaining = 0
+    urgent_notifications = 0
+    
+    # Calculate days until deadline
+    today = datetime.now().date()
+    sept_30 = datetime(2025, 9, 30).date()
+    days_remaining = (sept_30 - today).days
+    
+    # You can add calculations here based on all_agencies_data
+    if all_agencies_data is not None and not all_agencies_data.empty:
+        # Example: Calculate urgent notifications (sites with less than 30 days buffer)
+        if 'days_required' in all_agencies_data.columns:
+            urgent_mask = (all_agencies_data['days_required'] > (days_remaining - 30)) & (all_agencies_data['days_required'] <= days_remaining)
+            urgent_notifications = len(all_agencies_data[urgent_mask.fillna(False)])
+    
+    return html.Div(
+        className="enhanced-metric-card header-card-4",
+        children=[
+            # Card Header
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("📆", className="card-icon"),
+                    html.H3("Timeline Alert", className="card-title")
+                ]
+            ),
+            
+            # Metrics Container
+            html.Div(
+                className="metrics-container",
+                children=[
+                    # First metric
+                    html.Div(
+                        className="metric-display primary",
+                        children=[
+                            html.Div(
+                                str(days_remaining),
+                                className="metric-number",
+                                style={
+                                    "color": "var(--info, #3182CE)" if days_remaining > 90 else 
+                                           "var(--warning, #DD6B20)" if days_remaining > 30 else 
+                                           "var(--error, #E53E3E)"
+                                }
+                            ),
+                            html.Div(
+                                "Days Left",
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Visual Separator
+                    html.Div(className="metrics-separator"),
+                    
+                    # Second metric
+                    html.Div(
+                        className="metric-display secondary",
+                        children=[
+                            html.Div(
+                                str(urgent_notifications),
+                                className="metric-number",
+                                style={"color": "var(--warning, #DD6B20)"}
+                            ),
+                            html.Div(
+                                "Urgent",
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+def create_header_cards_grid(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create the 1x4 header cards grid with individual card functions"""
+    
+    header_cards = [
+        create_header_card_1(current_agency_display, agency_data, all_agencies_data),
+        create_header_card_2(current_agency_display, agency_data, all_agencies_data),
+        create_header_card_3(current_agency_display, agency_data, all_agencies_data),
+        create_header_card_4(current_agency_display, agency_data, all_agencies_data)
+    ]
+    
+    return html.Div(
+        className="header-cards-grid",
+        children=header_cards
+    )
+
+# Legacy function for backwards compatibility (you can remove this later)
+def create_header_card(card_number, icon="📊", title=None, content="Coming Soon"):
+    """Legacy function - use individual card functions instead"""
+    logger.warning("create_header_card() is deprecated. Use individual card functions instead.")
+    
+    card_title = title if title else f"Card {card_number}"
+    
+    return html.Div(
+        className="enhanced-metric-card header-placeholder-card",
+        children=[
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div(icon, className="card-icon placeholder-icon"),
+                    html.H3(card_title, className="card-title placeholder-title")
+                ]
+            ),
+            html.Div(
+                className="placeholder-content",
+                children=[
+                    html.Div(content, className="placeholder-text"),
+                    html.Div("Header metrics will be added here", className="placeholder-subtext")
+                ]
+            )
+        ]
+    )
+
+def create_specific_metric_cards(current_agency_display, metrics, theme_styles, agency_data=None):
+    """Create all 8 cards in 2x4 grid including Cluster Progress (Card 5), Site Progress (Card 6), and Lagging Sites (Card 7)"""
+    cards = []
+    
+    # Card 1: Clusters and Total Sites
+    card1 = create_dual_metric_card(
+        icon="🗺️",
+        title="Clusters & Sites",
+        metric1_label="Clusters",
+        metric1_value=metrics['clusters_count'],
+        metric1_color="var(--info, #3182CE)",
+        metric2_label="Total Sites",
+        metric2_value=metrics['sites_count'],
+        metric2_color="var(--brand-primary, #3182CE)"
+    )
+    cards.append(card1)
+    
+    # Card 2: Active Sites (green) and Inactive Sites (red)
+    card2 = create_dual_metric_card(
+        icon="🏭",
+        title="Site Status",
+        metric1_label="Active Sites",
+        metric1_value=metrics['active_sites'],
+        metric1_color="var(--success, #38A169)",
+        metric2_label="Inactive Sites",
+        metric2_value=metrics['inactive_sites'],
+        metric2_color="var(--error, #E53E3E)"
+    )
+    cards.append(card2)
+    
+    # Card 3: Sites Not on Track and Critical Sites
+    card3 = create_dual_metric_card(
+        icon="⚠️",
+        title="Issues",
+        metric1_label="Off Track",
+        metric1_value=metrics['sites_not_on_track'],
+        metric1_color="var(--warning, #DD6B20)",
+        metric2_label="Critical",
+        metric2_value=metrics['critically_lagging'],
+        metric2_color="var(--error, #E53E3E)"
+    )
+    cards.append(card3)
+    
+    # Card 4: Planned Machines and Deployed Machines
+    card4 = create_dual_metric_card(
+        icon="🚛",
+        title="Machines",
+        metric1_label="Planned",
+        metric1_value=metrics['planned_machines'],
+        metric1_color="var(--warning, #DD6B20)",
+        metric2_label="Deployed",
+        metric2_value=metrics['deployed_machines'],
+        metric2_color="var(--success, #38A169)"
+    )
+    cards.append(card4)
+    
+    # Card 5: Cluster Progress (LIST STYLE)
+    if agency_data is not None and not agency_data.empty:
+        card5 = create_cluster_progress_card(current_agency_display, agency_data)
+    else:
+        card5 = create_empty_card(5)
+    cards.append(card5)
+    
+    # Card 6: Site Progress (LIST STYLE)
+    if agency_data is not None and not agency_data.empty:
+        card6 = create_site_progress_card(current_agency_display, agency_data)
+    else:
+        card6 = create_empty_card(6)
+    cards.append(card6)
+    
+    # Card 7: Lagging Sites (LIST STYLE)
+    if agency_data is not None and not agency_data.empty:
+        card7 = create_lagging_sites_card(current_agency_display, agency_data)
+    else:
+        card7 = create_empty_card(7)
+    cards.append(card7)
+    
+    # Card 8: Performance Rankings
+    if agency_data is not None and not agency_data.empty:
+        card8 = create_performance_rankings_card(current_agency_display, agency_data)
+    else:
+        card8 = create_empty_card(8)
+    cards.append(card8)
+    
+    return cards
+
+def create_project_overview_header():
+    """Create project overview header with today's date using agency header styling"""
+    today = datetime.now().strftime("%B %d, %Y")
+    
+    return html.Div(
+        className="agency-header",  # Using same CSS class as agency header
+        children=[
+            html.H1(f"Overall Project Overview in Real Time as of {today}", className="agency-title")
+        ]
+    )
+
+def create_agency_header(current_agency_display):
+    """Create agency header with full display name - positioned after header cards"""
+    
+    return html.Div(
+        className="agency-header",
+        children=[
+            html.H1(current_agency_display, className="agency-title")
+        ]
+    )
+
+def create_hero_section():
+    """Create hero section with main system title"""
+    return html.Div(
+        className="hero-section",
+        children=[
+            html.Div(
+                className="hero-content",
+                children=[
+                    # Left Logo
+                    html.Div(
+                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "height": "100%", "flexShrink": "0"},
+                        children=[
+                            html.Img(
+                                src="/assets/img/left.png",
+                                alt="Left Organization Logo",
+                                className="responsive-logo",
+                                style={
+                                    "height": "clamp(40px, 8vh, 60px)",
+                                    "width": "auto",
+                                    "objectFit": "contain",
+                                    "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+                                    "transition": "all 0.3s ease"
+                                }
+                            )
+                        ]
+                    ),
+                    
+                    # Title Section
+                    html.Div(
+                        className="hero-title-section",
+                        style={
+                            "textAlign": "center", "flex": "1", "padding": "0 clamp(1rem, 3vw, 2rem)",
+                            "display": "flex", "flexDirection": "column", "justifyContent": "center", "alignItems": "center", "height": "100%"
+                        },
+                        children=[
+                            html.H1(
+                                "Swaccha Andhra Corporation",
+                                className="hero-title",
+                                style={
+                                    "margin": "0", "padding": "0", "fontSize": "clamp(1.5rem, 4vw, 2.5rem)",
+                                    "fontWeight": "800", "lineHeight": "1.1", "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.3)", "letterSpacing": "-0.5px"
+                                }
+                            ),
+                            html.P(
+                                "Real Time Legacy Waste Remediation Progress Tracker",
+                                className="hero-subtitle",
+                                style={
+                                    "margin": "0.25rem 0 0 0", "padding": "0", "fontSize": "clamp(0.8rem, 1.8vw, 1rem)",
+                                    "fontWeight": "500", "lineHeight": "1.3", "opacity": "0.9", "textAlign": "center"
+                                }
+                            )
+                        ]
+                    ),
+                    
+                    # Right Logo
+                    html.Div(
+                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "height": "100%", "flexShrink": "0"},
+                        children=[
+                            html.Img(
+                                src="/assets/img/right.png",
+                                alt="Right Organization Logo",
+                                className="responsive-logo",
+                                style={
+                                    "height": "clamp(40px, 8vh, 60px)",
+                                    "width": "auto",
+                                    "objectFit": "contain",
+                                    "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+                                    "transition": "all 0.3s ease"
+                                }
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+def build_public_layout(theme_name="dark", is_authenticated=False, user_data=None):
+    """Build the public layout with enhanced card structure - project overview, 1x4 header cards, agency header, then 2x4 main cards"""
+    theme_styles = get_theme_styles(theme_name)
+    
+    # DEBUG: Check if assets folder exists
+    assets_path = "assets/css/uniform_cards.css"
+    css_exists = os.path.exists(assets_path)
+    logger.info(f"🔍 CSS Debug: uniform_cards.css exists at {assets_path}: {css_exists}")
+    
+    return html.Div(
+        className="public-layout",
+        style={
+            "--primary-bg": theme_styles["theme"]["primary_bg"],
+            "--secondary-bg": theme_styles["theme"]["secondary_bg"],
+            "--accent-bg": theme_styles["theme"]["accent_bg"],
+            "--card-bg": theme_styles["theme"]["card_bg"],
+            "--text-primary": theme_styles["theme"]["text_primary"],
+            "--text-secondary": theme_styles["theme"]["text_secondary"],
+            "--brand-primary": theme_styles["theme"]["brand_primary"],
+            "--border-light": theme_styles["theme"].get("border_light", theme_styles["theme"]["accent_bg"]),
+            "--success": theme_styles["theme"]["success"],
+            "--warning": theme_styles["theme"]["warning"],
+            "--error": theme_styles["theme"]["error"],
+            "--info": theme_styles["theme"]["info"]
+        },
+        children=[
+            # Enhanced CSS Loading with timestamp to force refresh
+            html.Link(
+                rel="stylesheet",
+                href=f"/assets/css/uniform_cards.css?v={int(datetime.now().timestamp())}"
+            ),
+            
+            dcc.Interval(id='auto-rotation-interval', interval=15*1000, n_intervals=0),
+            dcc.Store(id='current-theme', data=theme_name),
+            create_hover_overlay_banner(theme_name),
+            html.Div(
+                className="main-content",
+                children=[
+                    create_hero_section(),
+                    html.Div(id="project-overview-container"),  # NEW: Project overview title first
+                    html.Div(id="header-cards-container"),      # Header cards second  
+                    html.Div(id="agency-header-container"),     # Agency header third
+                    html.Div(id="dynamic-cards-container", className="cards-grid")  # Main cards grid (2x4) fourth
+                ]
+            )
+        ]
+    )
+
+@callback(
+    [Output('project-overview-container', 'children'),  # NEW: Project overview first
+     Output('header-cards-container', 'children'),      # Header cards second
+     Output('agency-header-container', 'children'),     # Agency header third  
+     Output('dynamic-cards-container', 'children')],    # Main cards fourth
+    [Input('auto-rotation-interval', 'n_intervals'), Input('current-theme', 'data')],
+    prevent_initial_call=False
+)
+def update_agency_dashboard(n_intervals, theme_name):
+    """Update dashboard with enhanced card layout - project overview, 1x4 header cards, agency header, then 2x4 main cards"""
+    try:
+        logger.info(f"🔄 Agency rotation update #{n_intervals}")
+        
+        df = load_agency_data()
+        rotation_data = get_agency_rotation_data(df, n_intervals)
+        current_agency_key = rotation_data['current_agency_key']
+        current_agency_display = rotation_data['current_agency_display']
+        agency_data = rotation_data['agency_data']
+        
+        logger.info(f"🏢 Displaying: {current_agency_display} (Records: {len(agency_data)})")
+        
+        # Calculate metrics
+        metrics = calculate_agency_metrics(agency_data)
+        
+        if not agency_data.empty:
+            try:
+                lagging_sites = calculate_lagging_sites(agency_data)
+                logger.info(f"🚨 Lagging Sites Summary: {len(lagging_sites)} sites cannot complete before Sept 30, 2025")
+            except Exception as lagging_error:
+                logger.warning(f"⚠️ Could not calculate lagging sites: {lagging_error}")
+        
+        theme_styles = get_theme_styles(theme_name or 'dark')
+        
+        # Create components in new order
+        project_overview = create_project_overview_header()  # NEW: Project overview first
+        header_cards = create_header_cards_grid(           # Header cards second - WITH DATA
+        current_agency_display=current_agency_display,
+        agency_data=agency_data,
+        all_agencies_data=df  # Pass ALL agencies data for project-wide metrics
+        )        # Header cards second
+        agency_header = create_agency_header(current_agency_display)  # Agency header third
+        main_cards = create_specific_metric_cards(current_agency_display, metrics, theme_styles, agency_data)  # Main cards fourth (2x4 grid)
+        
+        logger.info(f"✅ Created project overview, header cards, agency header, and {len(main_cards)} main cards for {current_agency_display}")
+        
+        # Return exactly 4 values in new order: project_overview, header_cards, agency_header, main_cards
+        return project_overview, header_cards, agency_header, main_cards
+        
+    except Exception as e:
+        logger.error(f"❌ Error in dashboard update: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Create fallback content - ALWAYS return exactly 4 values
+        try:
+            fallback_project_overview = create_project_overview_header()  # Use default project overview
+            fallback_header_cards = create_header_cards_grid()  # Use default header cards
+            
+            fallback_agency_header = html.Div(
+                "Error Loading Agency Data",
+                className="agency-header",
+                style={'color': 'red', 'textAlign': 'center', 'padding': '1rem'}
+            )
+            
+            fallback_main_cards = []
+            for i in range(8):
+                fallback_main_cards.append(create_empty_card(i + 1))
+            
+            # Return exactly 4 values in new order
+            return fallback_project_overview, fallback_header_cards, fallback_agency_header, fallback_main_cards
+            
+        except Exception as fallback_error:
+            logger.error(f"❌ Error creating fallback content: {fallback_error}")
+            
+            # Ultimate fallback - simple HTML elements, exactly 4 values
+            simple_project_overview = html.Div("Loading project overview...", style={'padding': '1rem'})
+            simple_header_cards = html.Div("Loading header cards...", style={'padding': '1rem'})
+            simple_agency_header = html.Div("System Error", style={'color': 'red', 'padding': '1rem'})
+            simple_main_cards = [html.Div("Loading...", style={'padding': '1rem'}) for _ in range(8)]
+            
+            # Return exactly 4 values in new order
+            return simple_project_overview, simple_header_cards, simple_agency_header, simple_main_cards
 
 # Export functions
 __all__ = [
@@ -1572,6 +2080,12 @@ __all__ = [
     'get_agency_rotation_data',
     'calculate_agency_metrics',
     'create_specific_metric_cards',
+    'create_header_cards_grid',
+    'create_header_card_1',        # NEW: Individual header card functions
+    'create_header_card_2',        # NEW
+    'create_header_card_3',        # NEW
+    'create_header_card_4',        # NEW
+    'create_project_overview_header',
     'get_display_agency_name',
     'AGENCY_NAMES'
 ]
