@@ -105,16 +105,17 @@ html, body {
     text-align: center;
 }
 
-/* === CARDS GRID === */
 .cards-grid {
-    flex: 1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(2, 1fr);
-    gap: clamp(0.75rem, 1.5vh, 1.25rem);
-    padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 2vh, 1.5rem);
+    gap: clamp(1rem, 2vh, 1.5rem);
+    padding: clamp(1rem, 2vh, 1.5rem);
     width: 100%;
-    height: 100%;
+    /* REMOVED: height: 100% */
+    place-items: center;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* === METRIC CARDS === */
@@ -453,7 +454,7 @@ html, body {
     text-align: center;
     
     /* Sets a maximum width for the box */
-    max-width: 600px;
+    max-width: stretch;
     
     /* Centers the box itself horizontally within its parent */
     margin: clamp(1rem, 2vh, 1.5rem) auto;
@@ -480,14 +481,22 @@ html, body {
 /* Mobile */
 @media (max-width: 768px) {
     .cards-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(8, auto);
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, 1fr); /* ← CHANGE from repeat(4, auto) */
         gap: clamp(0.75rem, 1.5vh, 1rem);
         padding: clamp(0.5rem, 1vh, 1rem);
     }
     
+    .header-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr); /* ← ADD this line */
+        gap: clamp(0.75rem, 1.5vh, 1rem);
+        padding: clamp(0.5rem, 1vh, 1rem);
+    }
+
+    
     .metric-card, .enhanced-metric-card {
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 4 / 2;
         min-height: 120px;
         padding: clamp(0.75rem, 2vh, 1.25rem);
     }
@@ -592,7 +601,7 @@ html, body {
    .agency-header {
     text-align: center;
     padding: 1rem 1rem;
-    /* margin-bottom: 1rem; */
+        /* margin-bottom: 1rem; */
     background: linear-gradient(135deg, 
         rgba(255, 255, 255, 0.05) 0%, 
         rgba(255, 255, 255, 0.02) 100%);
@@ -654,10 +663,11 @@ html, body {
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: 1fr;
     gap: clamp(1rem, 2vh, 1.5rem);
-    padding: clamp(0.5rem, 1vh, 1rem) clamp(1rem, 2vh, 1.5rem);
+    padding: clamp(1rem, 2vh, 1.5rem);
     width: 100%;
-    /* margin-bottom: clamp(0.5rem, 1vh, 1rem); */
     place-items: center;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Header cards use same styling as main cards */
@@ -689,3 +699,38 @@ html, body {
     border-color: var(--brand-primary, rgba(255, 255, 255, 0.3));
 }
 
+/* ============================================
+   BROWSER ZOOM CONSISTENCY FIXES
+   ============================================ */
+
+/* Fix for browser zoom levels 75% - 90% */
+@media screen and (min-resolution: 0.75dppx) and (max-resolution: 0.9dppx) {
+    .cards-grid,
+    .header-cards-grid {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        grid-auto-flow: row;
+        grid-auto-rows: minmax(200px, 1fr);
+    }
+    
+    .enhanced-metric-card {
+        min-height: 200px !important;
+        max-height: 300px !important;
+        width: 100% !important;
+        flex: 1 1 auto;
+        flex-shrink: 0;
+    }
+}
+
+/* Ensure all cards are identical regardless of grid */
+.header-cards-grid .enhanced-metric-card,
+.cards-grid .enhanced-metric-card {
+    min-height: 200px;
+    max-height: 300px;
+    aspect-ratio: 4 / 2;
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    flex-shrink: 0;
+}

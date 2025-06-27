@@ -1134,17 +1134,49 @@ def calculate_agency_metrics(agency_data):
             'overall_completion_rate': 0,
             'remaining_quantity': 0
         }
-def create_dual_metric_card_horizontal_ultra_compact(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color):
+    
+
+def create_dual_metric_card_horizontal_ultra_compact(icon, title, metric1_label, metric1_value, metric1_color, metric2_label, metric2_value, metric2_color, completion_percentage=None):
     """Create a card with two metrics stacked vertically with MINIMAL spacing and horizontal separator using CSS class"""
+    
+    # Create title section with optional percentage
+    title_children = [html.H3(title, className="card-title")]
+    
+    # Add styled percentage if provided
+    if completion_percentage is not None:
+        title_children.append(
+            html.Span(
+                f"({completion_percentage}%)",
+                style={
+                    "color": get_progress_color(completion_percentage),
+                    "fontSize": "clamp(1rem, 2vh, 1.3rem)",
+                    "fontWeight": "700",
+                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.3)",
+                    "background": "rgba(255, 255, 255, 0.7)",
+                    "padding": "0.2rem 0.5rem",
+                    "borderRadius": "12px",
+                    "border": f"1px solid {get_progress_color(completion_percentage)}",
+                    "marginLeft": "0.5rem"
+                }
+            )
+        )
+    
     return html.Div(
         className="enhanced-metric-card",
         children=[
-            # Card Header
+            # Card Header with styled title
             html.Div(
                 className="card-header",
                 children=[
                     html.Div(icon, className="card-icon"),
-                    html.H3(title, className="card-title")
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "flex": "1"
+                        },
+                        children=title_children
+                    )
                 ]
             ),
             
@@ -1475,113 +1507,99 @@ def create_empty_card(card_number):
 
 
 def create_header_card_1(current_agency_display=None, agency_data=None, all_agencies_data=None):
-    """Create Header Card 1: Project Overview using ULTRA COMPACT HORIZONTAL layout"""
+    """Create Header Card 1: Project Overview with quantity metrics including MT units and completion percentage"""
     
-    # Calculate project-wide metrics here
-    total_sites = 0
-    total_agencies = 0
+    # Calculate project-wide quantity metrics
+    total_remediated = 0
+    total_to_remediate = 0
     
-    # You can add calculations here based on all_agencies_data
+    # Calculate based on all_agencies_data
     if all_agencies_data is not None and not all_agencies_data.empty:
-        # Calculate total sites across all agencies
-        total_sites = all_agencies_data['Site'].nunique() if 'Site' in all_agencies_data.columns else 0
-        total_agencies = all_agencies_data['Agency'].nunique() if 'Agency' in all_agencies_data.columns else 0
+        # Calculate total remediated quantity across all agencies
+        if 'Cumulative Quantity remediated till date in MT' in all_agencies_data.columns:
+            total_remediated = all_agencies_data['Cumulative Quantity remediated till date in MT'].sum()
+            total_remediated = int(round(total_remediated, 0))
+        
+        # Calculate total quantity to be remediated across all agencies
+        if 'Quantity to be remediated in MT' in all_agencies_data.columns:
+            total_to_remediate = all_agencies_data['Quantity to be remediated in MT'].sum()
+            total_to_remediate = int(round(total_to_remediate, 0))
     
-    # Use the ULTRA COMPACT horizontal layout method
+    # Calculate completion percentage
+    completion_rate = 0
+    if total_to_remediate > 0:
+        completion_rate = round((total_remediated / total_to_remediate) * 100, 1)
+    
+    # Format numbers in Indian format (XX,XX,XXX)
+    def format_indian_number(num):
+        """Format number in Indian style: XX,XX,XXX"""
+        if num == 0:
+            return "0"
+        
+        # Convert to string
+        num_str = str(abs(num))
+        
+        # If number has 3 or fewer digits, no formatting needed
+        if len(num_str) <= 3:
+            return num_str
+        
+        # For Indian format: rightmost 3 digits, then groups of 2
+        result = ""
+        
+        # Take the rightmost 3 digits
+        if len(num_str) >= 3:
+            result = num_str[-3:]
+            remaining = num_str[:-3]
+        else:
+            result = num_str
+            remaining = ""
+        
+        # Process remaining digits in groups of 2 from right to left
+        while remaining:
+            if len(remaining) >= 2:
+                result = remaining[-2:] + "," + result
+                remaining = remaining[:-2]
+            else:
+                result = remaining + "," + result
+                remaining = ""
+        
+        # Add negative sign if needed
+        if num < 0:
+            result = "-" + result
+            
+        return result
+    
+    # Use the ULTRA COMPACT horizontal layout method WITH completion percentage
     return create_dual_metric_card_horizontal_ultra_compact(
         icon="📋",
         title="Project Overview",
-        metric1_label="Sites",          # Shortened for ultra compact
-        metric1_value=total_sites,
-        metric1_color="var(--info, #3182CE)",
-        metric2_label="Agencies",       # Shortened for ultra compact
-        metric2_value=total_agencies,
-        metric2_color="var(--brand-primary, #3182CE)"
+        metric1_label="Remediated (MT)",        # Updated label with units
+        metric1_value=format_indian_number(total_remediated),  # Indian formatted
+        metric1_color="var(--success, #38A169)",  # Green for completed work
+        metric2_label="Total Required (MT)",     # Updated label with units
+        metric2_value=format_indian_number(total_to_remediate),  # Indian formatted
+        metric2_color="var(--info, #3182CE)",    # Blue for total work
+        completion_percentage=completion_rate    # ADD completion percentage
     )
+
+
 
 
 def create_header_card_2(current_agency_display=None, agency_data=None, all_agencies_data=None):
-    """Create Header Card 2: Overall Completion Status"""
+    """Create Header Card 3: Active & Inactive Sites Count"""
     
-    # Calculate overall completion metrics here
-    completion_rate = 0
-    status_text = "Calculating..."
+    # Calculate active and inactive sites across all agencies
+    active_sites = 0
+    inactive_sites = 0
     
-    # You can add calculations here based on all_agencies_data
+    # Calculate based on all_agencies_data
     if all_agencies_data is not None and not all_agencies_data.empty:
-        # Example: Calculate overall completion rate across all agencies
-        if all(col in all_agencies_data.columns for col in ['Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
-            total_planned = all_agencies_data['Quantity to be remediated in MT'].sum()
-            total_completed = all_agencies_data['Cumulative Quantity remediated till date in MT'].sum()
-            
-            if total_planned > 0:
-                completion_rate = round((total_completed / total_planned) * 100, 1)
-                status_text = f"{completion_rate}%"
-            else:
-                status_text = "No Data"
-    
-    return html.Div(
-        className="enhanced-metric-card header-card-2",
-        children=[
-            # Card Header
-            html.Div(
-                className="card-header",
-                children=[
-                    html.Div("🎯", className="card-icon"),
-                    html.H3("Overall Progress", className="card-title")
-                ]
-            ),
-            
-            # Single metric display
-            html.Div(
-                className="metrics-container",
-                style={"justifyContent": "center"},
-                children=[
-                    html.Div(
-                        className="metric-display primary",
-                        style={"textAlign": "center"},
-                        children=[
-                            html.Div(
-                                status_text,
-                                className="metric-number",
-                                style={
-                                    "color": "var(--success, #38A169)" if completion_rate >= 50 else "var(--warning, #DD6B20)",
-                                    "fontSize": "clamp(2.5rem, 5vh, 4rem)"
-                                }
-                            ),
-                            html.Div(
-                                "Complete",
-                                className="metric-label"
-                            )
-                        ]
-                    )
-                ]
-            )
-        ]
-    )
-
-def create_header_card_3(current_agency_display=None, agency_data=None, all_agencies_data=None):
-    """Create Header Card 3: Critical Alerts & Issues"""
-    
-    # Calculate critical issues across all agencies
-    critical_sites = 0
-    lagging_sites = 0
-    
-    # You can add calculations here based on all_agencies_data
-    if all_agencies_data is not None and not all_agencies_data.empty:
-        # Example: Calculate critical and lagging sites
         if 'Active_site' in all_agencies_data.columns:
-            # Critical sites (you can define your own criteria)
-            critical_sites = len(all_agencies_data[all_agencies_data['Active_site'].str.lower() == 'no'])
-        
-        # Calculate lagging sites (sites that can't complete on time)
-        if 'days_required' in all_agencies_data.columns:
-            today = datetime.now().date()
-            sept_30 = datetime(2025, 9, 30).date()
-            days_until_sept30 = (sept_30 - today).days
+            # Count active sites (Active_site == 'yes')
+            active_sites = len(all_agencies_data[all_agencies_data['Active_site'].str.lower() == 'yes'])
             
-            lagging_mask = all_agencies_data['days_required'] > days_until_sept30
-            lagging_sites = len(all_agencies_data[lagging_mask.fillna(False)])
+            # Count inactive sites (Active_site == 'no')
+            inactive_sites = len(all_agencies_data[all_agencies_data['Active_site'].str.lower() == 'no'])
     
     return html.Div(
         className="enhanced-metric-card header-card-3",
@@ -1590,8 +1608,8 @@ def create_header_card_3(current_agency_display=None, agency_data=None, all_agen
             html.Div(
                 className="card-header",
                 children=[
-                    html.Div("⚡", className="card-icon"),
-                    html.H3("Critical Issues", className="card-title")
+                    html.Div("📊", className="card-icon"),  # Changed icon to reflect site status
+                    html.H3("Site Status", className="card-title")  # Updated title
                 ]
             ),
             
@@ -1599,17 +1617,17 @@ def create_header_card_3(current_agency_display=None, agency_data=None, all_agen
             html.Div(
                 className="metrics-container",
                 children=[
-                    # First metric
+                    # First metric - Active Sites
                     html.Div(
                         className="metric-display primary",
                         children=[
                             html.Div(
-                                str(critical_sites),
+                                str(active_sites),
                                 className="metric-number",
-                                style={"color": "var(--error, #E53E3E)"}
+                                style={"color": "var(--success, #38A169)"}  # Green for active
                             ),
                             html.Div(
-                                "Inactive",
+                                "Active sites",
                                 className="metric-label"
                             )
                         ]
@@ -1618,17 +1636,17 @@ def create_header_card_3(current_agency_display=None, agency_data=None, all_agen
                     # Visual Separator
                     html.Div(className="metrics-separator"),
                     
-                    # Second metric
+                    # Second metric - Inactive Sites
                     html.Div(
                         className="metric-display secondary",
                         children=[
                             html.Div(
-                                str(lagging_sites),
+                                str(inactive_sites),
                                 className="metric-number",
-                                style={"color": "var(--warning, #DD6B20)"}
+                                style={"color": "var(--error, #E53E3E)"}  # Red for inactive
                             ),
                             html.Div(
-                                "Lagging",
+                                "Inactive sites",
                                 className="metric-label"
                             )
                         ]
@@ -1638,82 +1656,166 @@ def create_header_card_3(current_agency_display=None, agency_data=None, all_agen
         ]
     )
 
-def create_header_card_4(current_agency_display=None, agency_data=None, all_agencies_data=None):
-    """Create Header Card 4: Timeline & Notifications"""
+
+
+def create_header_card_3(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create Header Card 3: Daily Performance Comparison - Actual vs Required"""
     
-    # Calculate timeline and notification metrics
-    days_remaining = 0
-    urgent_notifications = 0
+    # Calculate daily performance metrics
+    current_daily_rate = 0
+    required_daily_rate = 0
     
-    # Calculate days until deadline
     today = datetime.now().date()
     sept_30 = datetime(2025, 9, 30).date()
     days_remaining = (sept_30 - today).days
     
-    # You can add calculations here based on all_agencies_data
     if all_agencies_data is not None and not all_agencies_data.empty:
-        # Example: Calculate urgent notifications (sites with less than 30 days buffer)
-        if 'days_required' in all_agencies_data.columns:
-            urgent_mask = (all_agencies_data['days_required'] > (days_remaining - 30)) & (all_agencies_data['days_required'] <= days_remaining)
-            urgent_notifications = len(all_agencies_data[urgent_mask.fillna(False)])
-    
-    return html.Div(
-        className="enhanced-metric-card header-card-4",
-        children=[
-            # Card Header
-            html.Div(
-                className="card-header",
-                children=[
-                    html.Div("📆", className="card-icon"),
-                    html.H3("Timeline Alert", className="card-title")
-                ]
-            ),
+        try:
+            # Calculate CURRENT daily rate using "Quantity remediated today"
+            if 'Quantity remediated today' in all_agencies_data.columns:
+                # Sum today's actual processing across all agencies
+                current_daily_rate = all_agencies_data['Quantity remediated today'].fillna(0).sum()
+                logger.info(f"📊 Today's actual processing: {current_daily_rate} MT across all agencies")
+            else:
+                logger.warning("⚠️ 'Quantity remediated today' column not found, using fallback calculation")
+                # Fallback: use Daily_Capacity if available
+                if 'Daily_Capacity' in all_agencies_data.columns:
+                    current_daily_rate = all_agencies_data['Daily_Capacity'].fillna(0).sum()
+                else:
+                    # Last resort: estimate from cumulative data
+                    if 'Cumulative Quantity remediated till date in MT' in all_agencies_data.columns:
+                        total_remediated = all_agencies_data['Cumulative Quantity remediated till date in MT'].fillna(0).sum()
+                        current_daily_rate = total_remediated / 90 if total_remediated > 0 else 0
+                    else:
+                        current_daily_rate = 0
             
-            # Metrics Container
-            html.Div(
-                className="metrics-container",
-                children=[
-                    # First metric
-                    html.Div(
-                        className="metric-display primary",
-                        children=[
-                            html.Div(
-                                str(days_remaining),
-                                className="metric-number",
-                                style={
-                                    "color": "var(--info, #3182CE)" if days_remaining > 90 else 
-                                           "var(--warning, #DD6B20)" if days_remaining > 30 else 
-                                           "var(--error, #E53E3E)"
-                                }
-                            ),
-                            html.Div(
-                                "Days Left",
-                                className="metric-label"
-                            )
-                        ]
-                    ),
-                    
-                    # Visual Separator
-                    html.Div(className="metrics-separator"),
-                    
-                    # Second metric
-                    html.Div(
-                        className="metric-display secondary",
-                        children=[
-                            html.Div(
-                                str(urgent_notifications),
-                                className="metric-number",
-                                style={"color": "var(--warning, #DD6B20)"}
-                            ),
-                            html.Div(
-                                "Urgent",
-                                className="metric-label"
-                            )
-                        ]
-                    )
-                ]
-            )
-        ]
+            # Calculate REQUIRED daily rate (unchanged logic)
+            if all(col in all_agencies_data.columns for col in ['Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
+                total_to_remediate = all_agencies_data['Quantity to be remediated in MT'].fillna(0).sum()
+                total_remediated = all_agencies_data['Cumulative Quantity remediated till date in MT'].fillna(0).sum()
+                remaining_quantity = total_to_remediate - total_remediated
+                
+                if days_remaining > 0:
+                    required_daily_rate = remaining_quantity / days_remaining
+                    logger.info(f"📈 Required daily rate: {required_daily_rate} MT/day ({remaining_quantity} MT remaining ÷ {days_remaining} days)")
+                else:
+                    required_daily_rate = remaining_quantity
+                    logger.warning(f"⚠️ Deadline passed! Remaining quantity: {remaining_quantity} MT")
+            else:
+                logger.warning("⚠️ Missing columns for required rate calculation")
+                required_daily_rate = 0
+                
+            # Round values for display
+            current_daily_rate = round(current_daily_rate, 1)
+            required_daily_rate = round(required_daily_rate, 1)
+            
+            # Log performance comparison
+            if required_daily_rate > 0:
+                performance_ratio = (current_daily_rate / required_daily_rate) * 100
+                if performance_ratio >= 100:
+                    status = f"✅ AHEAD - {performance_ratio:.1f}% of target"
+                elif performance_ratio >= 80:
+                    status = f"⚡ ON TRACK - {performance_ratio:.1f}% of target"
+                elif performance_ratio >= 50:
+                    status = f"⚠️ BEHIND - {performance_ratio:.1f}% of target"
+                else:
+                    status = f"🚨 CRITICAL - {performance_ratio:.1f}% of target"
+                logger.info(f"🎯 Daily Performance: {status}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error calculating daily rates: {e}")
+            current_daily_rate = 0
+            required_daily_rate = 0
+    else:
+        logger.warning("⚠️ No data available for daily rate calculation")
+    
+    def format_indian_number(num):
+        """Format number in Indian style: XX,XX,XXX"""
+        if num == 0:
+            return "0"
+        
+        # Handle decimal numbers
+        if isinstance(num, float) and num % 1 != 0:
+            # For decimal numbers, format the integer part and add decimal
+            integer_part = int(num)
+            decimal_part = num - integer_part
+            
+            if integer_part == 0:
+                return f"{num:.1f}"  # Just show decimal for small numbers
+            
+            formatted_integer = format_indian_number(integer_part)
+            return f"{formatted_integer}.{int(decimal_part * 10)}"
+        
+        # Convert to string for integer formatting
+        num_str = str(abs(int(num)))
+        
+        # If number has 3 or fewer digits, no formatting needed
+        if len(num_str) <= 3:
+            return num_str
+        
+        # For Indian format: rightmost 3 digits, then groups of 2
+        result = ""
+        
+        # Take the rightmost 3 digits
+        if len(num_str) >= 3:
+            result = num_str[-3:]
+            remaining = num_str[:-3]
+        else:
+            result = num_str
+            remaining = ""
+        
+        # Process remaining digits in groups of 2 from right to left
+        while remaining:
+            if len(remaining) >= 2:
+                result = remaining[-2:] + "," + result
+                remaining = remaining[:-2]
+            else:
+                result = remaining + "," + result
+                remaining = ""
+        
+        # Add negative sign if needed
+        if num < 0:
+            result = "-" + result
+            
+        return result
+    
+    # Enhanced color logic based on performance
+    def get_performance_colors(current, required):
+        if required <= 0:
+            return "var(--info, #3182CE)", "var(--info, #3182CE)"
+        
+        performance_ratio = current / required
+        
+        if performance_ratio >= 1.0:
+            current_color = "var(--success, #38A169)"  # Green - Meeting or exceeding target
+        elif performance_ratio >= 0.8:
+            current_color = "var(--info, #3182CE)"     # Blue - Close to target
+        elif performance_ratio >= 0.5:
+            current_color = "var(--warning, #DD6B20)"  # Orange - Behind target
+        else:
+            current_color = "var(--error, #E53E3E)"    # Red - Critical performance
+        
+        # Required rate color based on urgency
+        if days_remaining <= 30:
+            required_color = "var(--error, #E53E3E)"   # Red - Very urgent
+        elif days_remaining <= 60:
+            required_color = "var(--warning, #DD6B20)" # Orange - Urgent
+        else:
+            required_color = "var(--info, #3182CE)"    # Blue - Normal
+        
+        return current_color, required_color
+    
+    current_color, required_color = get_performance_colors(current_daily_rate, required_daily_rate)
+    
+    return create_dual_metric_card_horizontal_ultra_compact(
+        icon="⚡",
+        title="Reqiured Performance",  # Updated title to be more descriptive
+        metric1_label="Today (MT)",     # Updated label to clarify it's today's actual
+        metric1_value=format_indian_number(current_daily_rate),
+        metric1_color=current_color,
+        metric2_label="Required (MT)",  # Updated label to clarify it's the required rate
+        metric2_value=format_indian_number(required_daily_rate),
+        metric2_color=required_color
     )
 
 def create_header_cards_grid(current_agency_display=None, agency_data=None, all_agencies_data=None):
@@ -1758,20 +1860,211 @@ def create_header_card(card_number, icon="📊", title=None, content="Coming Soo
         ]
     )
 
+def get_progress_color(percentage):
+    """Return color based on completion percentage"""
+    if percentage >= 80:
+        return "#38A169"  # Green
+    elif percentage >= 60:
+        return "#F6AD55"  # Orange
+    elif percentage >= 40:
+        return "#ECC94B"  # Yellow
+    else:
+        return "#F56565"  # Red
+
+
+def count_machines_from_data(data, only_active=False):
+    """
+    Count machines from the Machine column, handling comma-separated values
+    
+    Args:
+        data: DataFrame with Machine column
+        only_active: If True, only count machines from active sites
+    
+    Returns:
+        int: Total count of machines
+    """
+    if data is None or data.empty or 'Machine' not in data.columns:
+        return 0
+    
+    # Filter for active sites if requested
+    working_data = data.copy()
+    if only_active and 'Active_site' in data.columns:
+        working_data = data[data['Active_site'].str.lower() == 'yes']
+    
+    if working_data.empty:
+        return 0
+    
+    total_machines = 0
+    
+    try:
+        for _, row in working_data.iterrows():
+            machine_value = row['Machine']
+            
+            # Skip if machine value is null or empty
+            if pd.isna(machine_value) or str(machine_value).strip() == '':
+                continue
+            
+            # Convert to string and split by comma
+            machine_str = str(machine_value).strip()
+            
+            # Split by comma and count each machine
+            machines = [m.strip() for m in machine_str.split(',') if m.strip()]
+            total_machines += len(machines)
+            
+    except Exception as e:
+        print(f"⚠️ Error counting machines: {e}")
+        return 0
+    
+    return total_machines
+
+
+def create_header_card_4(current_agency_display=None, agency_data=None, all_agencies_data=None):
+    """Create Header Card 4: Overall Machine Status - Deployed vs Planned"""
+
+    # Calculate overall machine deployment metrics
+    planned_machines = 0
+    deployed_machines = 0
+
+    # Calculate based on all_agencies_data
+    if all_agencies_data is not None and not all_agencies_data.empty:
+        try:
+            # Count total planned machines across all agencies (all records)
+            planned_machines = count_machines_from_data(all_agencies_data, only_active=False)
+            
+            # Count deployed machines across all agencies (only active sites)
+            deployed_machines = count_machines_from_data(all_agencies_data, only_active=True)
+                
+            print(f"🚀 Overall Machine Status: {deployed_machines} deployed out of {planned_machines} planned")
+                
+        except Exception as e:
+            print(f"⚠️ Error calculating overall machine status: {e}")
+            planned_machines = 0
+            deployed_machines = 0
+
+    # Use the ULTRA COMPACT horizontal layout method
+    return create_dual_metric_card(
+        icon="🚀",
+        title="Machine Status",
+        metric1_label="Deployed",
+        metric1_value=deployed_machines,
+        metric1_color="var(--success, #38A169)",  # Green for deployed machines
+        metric2_label="Planned",
+        metric2_value=planned_machines,
+        metric2_color="var(--info, #3182CE)"     # Blue for planned machines
+    )
+
+
+def create_agency_completion_card(agency_data=None):
+    """Create Card 4: Agency Machine Status - Deployed vs Planned (agency-specific)"""
+
+    # Calculate agency machine deployment metrics
+    agency_planned_machines = 0
+    agency_deployed_machines = 0
+
+    # Calculate based on agency_data (current agency only)
+    if agency_data is not None and not agency_data.empty:
+        try:
+            # Count total planned machines for current agency (all records)
+            agency_planned_machines = count_machines_from_data(agency_data, only_active=False)
+            
+            # Count deployed machines for current agency (only active sites)
+            agency_deployed_machines = count_machines_from_data(agency_data, only_active=True)
+                
+            print(f"🏢 Agency Machine Status: {agency_deployed_machines} deployed out of {agency_planned_machines} planned")
+                
+        except Exception as e:
+            print(f"⚠️ Error calculating agency machine status: {e}")
+            agency_planned_machines = 0
+            agency_deployed_machines = 0
+
+    # Use dual metric card format like site status
+    return create_dual_metric_card(
+        icon="🏗️",
+        title="Machine Status",
+        metric1_label="Deployed",
+        metric1_value=agency_deployed_machines,
+        metric1_color="var(--success, #38A169)",  # Green for deployed machines
+        metric2_label="Planned",
+        metric2_value=agency_planned_machines,
+        metric2_color="var(--info, #3182CE)"     # Blue for planned machines
+    )
+
+
 def create_specific_metric_cards(current_agency_display, metrics, theme_styles, agency_data=None):
-    """Create all 8 cards in 2x4 grid including Cluster Progress (Card 5), Site Progress (Card 6), and Lagging Sites (Card 7)"""
+    """Create all 8 cards in 2x4 grid with enhanced Card 1 showing agency completion percentage"""
     cards = []
     
-    # Card 1: Clusters and Total Sites
-    card1 = create_dual_metric_card(
-        icon="🗺️",
-        title="Clusters & Sites",
-        metric1_label="Clusters",
-        metric1_value=metrics['clusters_count'],
-        metric1_color="var(--info, #3182CE)",
-        metric2_label="Total Sites",
-        metric2_value=metrics['sites_count'],
-        metric2_color="var(--brand-primary, #3182CE)"
+    # Card 1: Agency Quantity Metrics (Remediated vs Required) WITH COMPLETION PERCENTAGE
+    # Calculate agency-specific quantity metrics
+    agency_total_remediated = 0
+    agency_total_to_remediate = 0
+    
+    if agency_data is not None and not agency_data.empty:
+        # Calculate total remediated quantity for current agency
+        if 'Cumulative Quantity remediated till date in MT' in agency_data.columns:
+            agency_total_remediated = agency_data['Cumulative Quantity remediated till date in MT'].sum()
+            agency_total_remediated = int(round(agency_total_remediated, 0))
+        
+        # Calculate total quantity to be remediated for current agency
+        if 'Quantity to be remediated in MT' in agency_data.columns:
+            agency_total_to_remediate = agency_data['Quantity to be remediated in MT'].sum()
+            agency_total_to_remediate = int(round(agency_total_to_remediate, 0))
+    
+    # Calculate agency completion percentage
+    agency_completion_rate = 0
+    if agency_total_to_remediate > 0:
+        agency_completion_rate = round((agency_total_remediated / agency_total_to_remediate) * 100, 1)
+    
+    # Format numbers in Indian format (XX,XX,XXX) - same as header card 1
+    def format_indian_number(num):
+        """Format number in Indian style: XX,XX,XXX"""
+        if num == 0:
+            return "0"
+        
+        # Convert to string
+        num_str = str(abs(num))
+        
+        # If number has 3 or fewer digits, no formatting needed
+        if len(num_str) <= 3:
+            return num_str
+        
+        # For Indian format: rightmost 3 digits, then groups of 2
+        result = ""
+        
+        # Take the rightmost 3 digits
+        if len(num_str) >= 3:
+            result = num_str[-3:]
+            remaining = num_str[:-3]
+        else:
+            result = num_str
+            remaining = ""
+        
+        # Process remaining digits in groups of 2 from right to left
+        while remaining:
+            if len(remaining) >= 2:
+                result = remaining[-2:] + "," + result
+                remaining = remaining[:-2]
+            else:
+                result = remaining + "," + result
+                remaining = ""
+        
+        # Add negative sign if needed
+        if num < 0:
+            result = "-" + result
+            
+        return result
+    
+    # Card 1: Use the ULTRA COMPACT horizontal layout method WITH completion percentage
+    card1 = create_dual_metric_card_horizontal_ultra_compact(
+        icon="🏢",  # Changed icon to represent agency-specific data
+        title="Agency Overview",  # Changed title to reflect agency scope
+        metric1_label="Remediated (MT)",        # Same label with units
+        metric1_value=format_indian_number(agency_total_remediated),  # Indian formatted
+        metric1_color="var(--success, #38A169)",  # Green for completed work
+        metric2_label="Total Required (MT)",     # Same label with units
+        metric2_value=format_indian_number(agency_total_to_remediate),  # Indian formatted
+        metric2_color="var(--info, #3182CE)",    # Blue for total work
+        completion_percentage=agency_completion_rate  # ADD agency completion percentage
     )
     cards.append(card1)
     
@@ -1788,30 +2081,12 @@ def create_specific_metric_cards(current_agency_display, metrics, theme_styles, 
     )
     cards.append(card2)
     
-    # Card 3: Sites Not on Track and Critical Sites
-    card3 = create_dual_metric_card(
-        icon="⚠️",
-        title="Issues",
-        metric1_label="Off Track",
-        metric1_value=metrics['sites_not_on_track'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Critical",
-        metric2_value=metrics['critically_lagging'],
-        metric2_color="var(--error, #E53E3E)"
-    )
+    # Card 3: ENHANCED - Agency Daily Performance (same logic as header card 3 but agency-specific)
+    card3 = create_agency_daily_performance_card(current_agency_display, agency_data)
     cards.append(card3)
     
-    # Card 4: Planned Machines and Deployed Machines
-    card4 = create_dual_metric_card(
-        icon="🚛",
-        title="Machines",
-        metric1_label="Planned",
-        metric1_value=metrics['planned_machines'],
-        metric1_color="var(--warning, #DD6B20)",
-        metric2_label="Deployed",
-        metric2_value=metrics['deployed_machines'],
-        metric2_color="var(--success, #38A169)"
-    )
+    # Card 4: ENHANCED - Agency Completion Percentage (similar to header card 4)
+    card4 = create_agency_completion_card(agency_data)
     cards.append(card4)
     
     # Card 5: Cluster Progress (LIST STYLE)
@@ -1843,6 +2118,168 @@ def create_specific_metric_cards(current_agency_display, metrics, theme_styles, 
     cards.append(card8)
     
     return cards
+
+def create_agency_daily_performance_card(current_agency_display, agency_data):
+    """Create Card 3: Agency Daily Performance - Today's Actual vs Required Daily Rate"""
+    
+    # Calculate agency-specific daily performance metrics
+    agency_current_daily_rate = 0
+    agency_required_daily_rate = 0
+    
+    today = datetime.now().date()
+    sept_30 = datetime(2025, 9, 30).date()
+    days_remaining = (sept_30 - today).days
+    
+    if agency_data is not None and not agency_data.empty:
+        try:
+            # Calculate CURRENT daily rate using "Quantity remediated today" for this agency
+            if 'Quantity remediated today' in agency_data.columns:
+                # Sum today's actual processing for current agency only
+                agency_current_daily_rate = agency_data['Quantity remediated today'].fillna(0).sum()
+                logger.info(f"📊 {current_agency_display} today's processing: {agency_current_daily_rate} MT")
+            else:
+                logger.warning(f"⚠️ 'Quantity remediated today' column not found for {current_agency_display}, using fallback")
+                # Fallback: use Daily_Capacity if available
+                if 'Daily_Capacity' in agency_data.columns:
+                    agency_current_daily_rate = agency_data['Daily_Capacity'].fillna(0).sum()
+                else:
+                    # Last resort: estimate from cumulative data for this agency
+                    if 'Cumulative Quantity remediated till date in MT' in agency_data.columns:
+                        agency_total_remediated = agency_data['Cumulative Quantity remediated till date in MT'].fillna(0).sum()
+                        agency_current_daily_rate = agency_total_remediated / 90 if agency_total_remediated > 0 else 0
+                    else:
+                        agency_current_daily_rate = 0
+            
+            # Calculate REQUIRED daily rate for this agency
+            if all(col in agency_data.columns for col in ['Quantity to be remediated in MT', 'Cumulative Quantity remediated till date in MT']):
+                agency_total_to_remediate = agency_data['Quantity to be remediated in MT'].fillna(0).sum()
+                agency_total_remediated = agency_data['Cumulative Quantity remediated till date in MT'].fillna(0).sum()
+                agency_remaining_quantity = agency_total_to_remediate - agency_total_remediated
+                
+                if days_remaining > 0:
+                    agency_required_daily_rate = agency_remaining_quantity / days_remaining
+                    logger.info(f"📈 {current_agency_display} required rate: {agency_required_daily_rate} MT/day ({agency_remaining_quantity} MT remaining ÷ {days_remaining} days)")
+                else:
+                    agency_required_daily_rate = agency_remaining_quantity
+                    logger.warning(f"⚠️ {current_agency_display} deadline passed! Remaining: {agency_remaining_quantity} MT")
+            else:
+                logger.warning(f"⚠️ Missing columns for {current_agency_display} required rate calculation")
+                agency_required_daily_rate = 0
+                
+            # Round values for display
+            agency_current_daily_rate = round(agency_current_daily_rate, 1)
+            agency_required_daily_rate = round(agency_required_daily_rate, 1)
+            
+            # Log agency performance comparison
+            if agency_required_daily_rate > 0:
+                performance_ratio = (agency_current_daily_rate / agency_required_daily_rate) * 100
+                if performance_ratio >= 100:
+                    status = f"✅ AHEAD - {performance_ratio:.1f}% of target"
+                elif performance_ratio >= 80:
+                    status = f"⚡ ON TRACK - {performance_ratio:.1f}% of target"
+                elif performance_ratio >= 50:
+                    status = f"⚠️ BEHIND - {performance_ratio:.1f}% of target"
+                else:
+                    status = f"🚨 CRITICAL - {performance_ratio:.1f}% of target"
+                logger.info(f"🎯 {current_agency_display} Performance: {status}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error calculating {current_agency_display} daily rates: {e}")
+            agency_current_daily_rate = 0
+            agency_required_daily_rate = 0
+    else:
+        logger.warning(f"⚠️ No data available for {current_agency_display} daily rate calculation")
+    
+    def format_indian_number(num):
+        """Format number in Indian style: XX,XX,XXX (same as header card)"""
+        if num == 0:
+            return "0"
+        
+        # Handle decimal numbers
+        if isinstance(num, float) and num % 1 != 0:
+            # For decimal numbers, format the integer part and add decimal
+            integer_part = int(num)
+            decimal_part = num - integer_part
+            
+            if integer_part == 0:
+                return f"{num:.1f}"  # Just show decimal for small numbers
+            
+            formatted_integer = format_indian_number(integer_part)
+            return f"{formatted_integer}.{int(decimal_part * 10)}"
+        
+        # Convert to string for integer formatting
+        num_str = str(abs(int(num)))
+        
+        # If number has 3 or fewer digits, no formatting needed
+        if len(num_str) <= 3:
+            return num_str
+        
+        # For Indian format: rightmost 3 digits, then groups of 2
+        result = ""
+        
+        # Take the rightmost 3 digits
+        if len(num_str) >= 3:
+            result = num_str[-3:]
+            remaining = num_str[:-3]
+        else:
+            result = num_str
+            remaining = ""
+        
+        # Process remaining digits in groups of 2 from right to left
+        while remaining:
+            if len(remaining) >= 2:
+                result = remaining[-2:] + "," + result
+                remaining = remaining[:-2]
+            else:
+                result = remaining + "," + result
+                remaining = ""
+        
+        # Add negative sign if needed
+        if num < 0:
+            result = "-" + result
+            
+        return result
+    
+    # Enhanced color logic based on agency performance (same as header card)
+    def get_agency_performance_colors(current, required):
+        if required <= 0:
+            return "var(--info, #3182CE)", "var(--info, #3182CE)"
+        
+        performance_ratio = current / required
+        
+        if performance_ratio >= 1.0:
+            current_color = "var(--success, #38A169)"  # Green - Meeting or exceeding target
+        elif performance_ratio >= 0.8:
+            current_color = "var(--info, #3182CE)"     # Blue - Close to target
+        elif performance_ratio >= 0.5:
+            current_color = "var(--warning, #DD6B20)"  # Orange - Behind target
+        else:
+            current_color = "var(--error, #E53E3E)"    # Red - Critical performance
+        
+        # Required rate color based on urgency
+        if days_remaining <= 30:
+            required_color = "var(--error, #E53E3E)"   # Red - Very urgent
+        elif days_remaining <= 60:
+            required_color = "var(--warning, #DD6B20)" # Orange - Urgent
+        else:
+            required_color = "var(--info, #3182CE)"    # Blue - Normal
+        
+        return current_color, required_color
+    
+    current_color, required_color = get_agency_performance_colors(agency_current_daily_rate, agency_required_daily_rate)
+    
+    # Use ultra compact horizontal layout for consistency with header cards
+    return create_dual_metric_card_horizontal_ultra_compact(
+        icon="📊",  # Changed icon to represent agency-specific data analysis
+        title="Agency Performance ",  # Updated title to reflect agency scope
+        metric1_label="Today (MT)",     # Same as header card - today's actual
+        metric1_value=format_indian_number(agency_current_daily_rate),
+        metric1_color=current_color,
+        metric2_label="Required (MT)",  # Same as header card - required rate
+        metric2_value=format_indian_number(agency_required_daily_rate),
+        metric2_color=required_color
+    )
+
 
 def create_project_overview_header():
     """Create project overview header with today's date using agency header styling"""
