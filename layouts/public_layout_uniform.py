@@ -2408,7 +2408,7 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
             # Enhanced CSS Loading with timestamp to force refresh
             html.Link(
                 rel="stylesheet",
-                href=f"/assets/css/uniform_cards.css?v={int(datetime.now().timestamp())}"
+                href=f"/assets/css/container_zoom_fix.css?v={int(datetime.now().timestamp())}"
             ),
             
             dcc.Interval(id='auto-rotation-interval', interval=15*1000, n_intervals=0),
