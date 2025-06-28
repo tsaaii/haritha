@@ -101,7 +101,7 @@ app = dash.Dash(
     __name__, 
     server=server,
     suppress_callback_exceptions=True, 
-    title="Swaccha Andhra Dashboard",
+    title="Swachha Andhra  Dashboard",
     external_stylesheets=[
         "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap",
         "/assets/css/style.css",                    # Your existing CSS
@@ -563,7 +563,7 @@ def generate_static_html_content(theme_name):
                 <img src="/assets/img/left.png" alt="Left Logo" style="height: 60px;">
             </div>
             <div class="hero-title-section">
-                <h1>Swaccha Andhra Corporation</h1>
+                <h1>Swachha Andhra Corporation</h1>
                 <p>Real Time Legacy Waste Remediation Progress Tracker</p>
             </div>
             <div style="display: flex; align-items: center;">
@@ -1439,7 +1439,7 @@ register_dashboard_flask_routes(server)
 # This handles the /dashboard route without conflicts
 register_enhanced_csv_routes(server)
 # Create upload directories
-upload_dir = Path('uploads')
+upload_dir = Path('/tmp/uploads')
 upload_dir.mkdir(exist_ok=True)
 user_upload_dir = upload_dir / 'dash_uploads'
 user_upload_dir.mkdir(exist_ok=True)

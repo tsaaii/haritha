@@ -487,119 +487,130 @@ def calculate_lagging_sites(agency_data):
     return lagging_sites
 
 def create_lagging_sites_card(current_agency_display, agency_data):
-    """Create Card 7: Lagging Sites with list of sites that can't complete before Sept 30, 2025"""
+    """Create Card 7: Lagging Performers with list of worst performing sites"""
     
-    lagging_sites = calculate_lagging_sites(agency_data)
+    # Use the same performance calculation as Top Performers but in reverse order
+    performance_sites = calculate_performance_rankings(agency_data)
     
-    # Create lagging sites list items
-    site_items = []
+    # Get lagging performers (worst performers) by reversing the list
+    lagging_performers = list(reversed(performance_sites)) if performance_sites else []
     
-    if not lagging_sites:
-        # No lagging sites - good news!
-        site_items.append(
+    # Create lagging performers list items
+    performer_items = []
+    
+    if not lagging_performers:
+        # No performance data available
+        performer_items.append(
             html.Div(
-                children=[
-                    html.Div(
-                        "🎉 All sites on track!",
-                        style={
-                            "textAlign": "center",
-                            "color": "var(--success, #38A169)",
-                            "fontWeight": "600",
-                            "fontSize": "clamp(1rem, 2vh, 1.2rem)",
-                            "padding": "1rem"
-                        }
-                    ),
-                    html.Div(
-                        "No sites are lagging behind schedule for October 2nd, 2025",
-                        style={
-                            "textAlign": "center",
-                            "color": "var(--text-secondary)",
-                            "fontStyle": "italic",
-                            "fontSize": "clamp(0.8rem, 1.5vh, 0.95rem)"
-                        }
-                    )
-                ]
+                "No performance data available",
+                style={
+                    "textAlign": "center",
+                    "color": "var(--text-secondary)",
+                    "fontStyle": "italic",
+                    "padding": "1rem"
+                }
             )
         )
     else:
-        # Limit to top 8 lagging sites to fit in the card
-        display_sites = lagging_sites[:8] if len(lagging_sites) > 8 else lagging_sites
+        # Limit to bottom 8 performers to fit in the card
+        display_performers = lagging_performers[:8] if len(lagging_performers) > 8 else lagging_performers
         
-        for site_info in display_sites:
+        for i, site_info in enumerate(display_performers):
+            rank_from_bottom = i + 1  # Rank from worst (1st worst, 2nd worst, etc.)
             site_name = site_info['site']
             cluster_name = site_info['cluster']
-            days_overdue = site_info['days_overdue']
-            days_required = site_info['days_required']
+            completion_rate = site_info['completion_rate']
+            days_ahead_behind = site_info['days_ahead_behind']
+            composite_score = site_info['composite_score']
             active_status = site_info['active_status']
             
-            # Color coding based on severity (days overdue)
-            if days_overdue >= 60:
-                color = "var(--error, #E53E3E)"  # Critical - Red
-                urgency_icon = "🔴"
-            elif days_overdue >= 30:
-                color = "var(--warning, #DD6B20)"  # High - Orange
-                urgency_icon = "🟠"
-            elif days_overdue >= 15:
-                color = "#FFA500"  # Medium - Yellow/Orange
-                urgency_icon = "🟡"
+            # Warning icons for poor performers
+            if composite_score < 20:
+                rank_icon = "🔴"  # Critical
+                rank_color = "var(--error, #E53E3E)"
+            elif composite_score < 40:
+                rank_icon = "🟠"  # Poor
+                rank_color = "var(--warning, #DD6B20)"
+            elif composite_score < 60:
+                rank_icon = "🟡"  # Below average
+                rank_color = "#FFA500"
             else:
-                color = "var(--info, #3182CE)"  # Low - Blue
-                urgency_icon = "🔵"
+                rank_icon = "🔵"  # Needs improvement
+                rank_color = "var(--info, #3182CE)"
             
-            # Status indicator
-            status_indicator = ""
-            if active_status == 'yes':
-                status_indicator = "🟢"  # Active
-            elif active_status == 'no':
-                status_indicator = "⚫"  # Inactive
+            # Timeline indicator (same logic but for poor performers)
+            if days_ahead_behind > 0:
+                timeline_text = f"{abs(days_ahead_behind)}d ahead"
+                timeline_color = "var(--success, #38A169)"
+                timeline_icon = "⚡"
+            elif days_ahead_behind < 0:
+                timeline_text = f"{abs(days_ahead_behind)}d behind"
+                timeline_color = "var(--warning, #DD6B20)"
+                timeline_icon = "⏰"
             else:
-                status_indicator = "❓"  # Unknown
+                timeline_text = "on schedule"
+                timeline_color = "var(--info, #3182CE)"
+                timeline_icon = "🎯"
             
-            # Truncate long site names for display
-            display_site_name = site_name if len(site_name) <= 18 else f"{site_name[:15]}..."
+            # Active status indicator
+            status_indicator = "" if str(active_status).lower() == 'yes' else "⚫"
             
-            site_items.append(
+            # Truncate long site names
+            display_site_name = site_name if len(site_name) <= 16 else f"{site_name[:13]}..."
+            
+            performer_items.append(
                 html.Div(
-                    className="lagging-site-item",
+                    className="performance-ranking-item",  # ← FIXED: Use existing CSS class
                     children=[
                         html.Div(
-                            className="lagging-site-info",
+                            className="ranking-info",  # ← FIXED: Use existing CSS class
                             children=[
                                 html.Div(
-                                    className="lagging-site-header",
+                                    className="ranking-header",  # ← FIXED: Use existing CSS class
                                     children=[
-                                        html.Span(urgency_icon, className="urgency-icon"),
+                                        html.Span(rank_icon, className="rank-icon", style={"color": rank_color}),
                                         html.Span(status_indicator, className="status-icon"),
                                         html.Div(
                                             f"{display_site_name}",
-                                            className="lagging-site-name",
-                                            title=f"{site_name} - needs {days_required} days"
+                                            className="ranking-site-name",  # ← FIXED: Use existing CSS class
+                                            title=f"#{rank_from_bottom} worst: {site_name} - Score: {composite_score}"
                                         )
                                     ]
                                 ),
                                 html.Div(
                                     f"({cluster_name})",
-                                    className="lagging-site-cluster"
+                                    className="ranking-site-cluster"  # ← FIXED: Use existing CSS class
                                 )
                             ]
                         ),
                         html.Div(
-                            f"+{days_overdue}d",
-                            className="lagging-days-overdue",
-                            style={"color": color},
-                            title=f"{days_overdue} days overdue"
+                            className="performance-metrics",
+                            children=[
+                                html.Div(
+                                    f"{completion_rate}%",
+                                    className="completion-metric",
+                                    style={"color": "var(--error, #E53E3E)" if completion_rate < 25 else "var(--warning, #DD6B20)"},
+                                    title=f"{completion_rate}% complete"
+                                ),
+                                html.Div(
+                                    f"{timeline_icon}{abs(days_ahead_behind)}d" if days_ahead_behind != 0 else "🎯",
+                                    className="timeline-metric",
+                                    style={"color": timeline_color},
+                                    title=timeline_text
+                                )
+                            ]
                         )
                     ]
                 )
             )
         
-        # Add "and X more" if there are more lagging sites
-        if len(lagging_sites) > 8:
-            remaining_count = len(lagging_sites) - 8
-            site_items.append(
+        # Add summary if there are more poor performers
+        if len(lagging_performers) > 8:
+            remaining_count = len(lagging_performers) - 8
+            performer_items.append(
                 html.Div(
-                    f"... and {remaining_count} more lagging sites",
-                    className="more-lagging-sites-indicator",
+                    f"... and {remaining_count} more underperforming sites",
+                    className="more-rankings-indicator",  # ← FIXED: Use existing CSS class
                     style={
                         "textAlign": "center",
                         "color": "var(--error, #E53E3E)",
@@ -611,28 +622,24 @@ def create_lagging_sites_card(current_agency_display, agency_data):
             )
     
     return html.Div(
-        className="enhanced-metric-card lagging-sites-card",
+        className="enhanced-metric-card performance-rankings-card",  # ← FIXED: Use existing CSS class
         children=[
             # Card Header
             html.Div(
                 className="card-header",
                 children=[
-                    html.Div("🚨", className="card-icon"),
-                    html.H3("Lagging Sites", className="card-title")
+                    html.Div("📉", className="card-icon"),
+                    html.H3("Lagging Performers", className="card-title")
                 ]
             ),
             
-            # Lagging Sites List Container
+            # Lagging Performers List Container
             html.Div(
-                className="lagging-sites-content",
+                className="performance-rankings-content",  # ← FIXED: Use existing CSS class
                 children=[
                     html.Div(
-                        className="agency-label",
-                        children="Sites at risk"
-                    ),
-                    html.Div(
-                        className="lagging-sites-list",
-                        children=site_items
+                        className="performance-rankings-list",  # ← FIXED: Use existing CSS class
+                        children=performer_items
                     )
                 ]
             )
@@ -1144,18 +1151,28 @@ def create_dual_metric_card_horizontal_ultra_compact(icon, title, metric1_label,
     
     # Add styled percentage if provided
     if completion_percentage is not None:
+        # Determine badge color based on performance percentage ← ADD THIS LOGIC
+        if completion_percentage >= 100:
+            badge_color = "var(--success, #38A169)"  # Green for meeting/exceeding target
+        elif completion_percentage >= 80:
+            badge_color = "var(--info, #3182CE)"     # Blue for close to target
+        elif completion_percentage >= 50:
+            badge_color = "var(--warning, #DD6B20)"  # Orange for behind target
+        else:
+            badge_color = "var(--error, #E53E3E)"    # Red for critical performance
+            
         title_children.append(
             html.Span(
-                f"({completion_percentage}%)",
+                f"{completion_percentage}%",
                 style={
-                    "color": get_progress_color(completion_percentage),
+                    "color": "white",
                     "fontSize": "clamp(1rem, 2vh, 1.3rem)",
                     "fontWeight": "700",
-                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.3)",
-                    "background": "rgba(255, 255, 255, 0.7)",
+                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.5)",
+                    "background": badge_color,  # ← USE the calculated badge_color
                     "padding": "0.2rem 0.5rem",
                     "borderRadius": "12px",
-                    "border": f"1px solid {get_progress_color(completion_percentage)}",
+                    "border": f"1px solid {badge_color}",  # ← Border matches background
                     "marginLeft": "0.5rem"
                 }
             )
@@ -1164,7 +1181,7 @@ def create_dual_metric_card_horizontal_ultra_compact(icon, title, metric1_label,
     return html.Div(
         className="enhanced-metric-card",
         children=[
-            # Card Header with styled title
+            # Card Header
             html.Div(
                 className="card-header",
                 children=[
@@ -1175,7 +1192,7 @@ def create_dual_metric_card_horizontal_ultra_compact(icon, title, metric1_label,
                             "alignItems": "center",
                             "flex": "1"
                         },
-                        children=title_children
+                        children=title_children  # ← Uses the title_children with conditional badge
                     )
                 ]
             ),
@@ -1582,15 +1599,13 @@ def create_header_card_1(current_agency_display=None, agency_data=None, all_agen
         completion_percentage=completion_rate    # ADD completion percentage
     )
 
-
-
-
 def create_header_card_2(current_agency_display=None, agency_data=None, all_agencies_data=None):
-    """Create Header Card 3: Active & Inactive Sites Count"""
+    """Create Header Card 2: Active & Inactive Sites Count"""
     
     # Calculate active and inactive sites across all agencies
     active_sites = 0
     inactive_sites = 0
+    total_sites = 0  # ← ADD THIS
     
     # Calculate based on all_agencies_data
     if all_agencies_data is not None and not all_agencies_data.empty:
@@ -1600,20 +1615,51 @@ def create_header_card_2(current_agency_display=None, agency_data=None, all_agen
             
             # Count inactive sites (Active_site == 'no')
             inactive_sites = len(all_agencies_data[all_agencies_data['Active_site'].str.lower() == 'no'])
+            
+            # Calculate total sites ← ADD THIS
+            total_sites = active_sites + inactive_sites
+    
+    # Create title with count badge ← ADD THIS SECTION
+    title_children = [html.H3("Site Status", className="card-title")]
+    
+    if total_sites > 0:
+        title_children.append(
+            html.Span(
+                f"{total_sites} Sites",
+                style={
+                    "color": "white",
+                    "fontSize": "clamp(0.9rem, 1.8vh, 1.2rem)",
+                    "fontWeight": "700",
+                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.5)",
+                    "background": "#38A169",  # Blue background
+                    "padding": "0.15rem 0.4rem",
+                    "borderRadius": "10px",
+                    "border": "1px solid #38A169",
+                    "marginLeft": "0.5rem"
+                }
+            )
+        )
     
     return html.Div(
-        className="enhanced-metric-card header-card-3",
+        className="enhanced-metric-card header-card-2",
         children=[
-            # Card Header
+            # Card Header with count badge
             html.Div(
                 className="card-header",
                 children=[
-                    html.Div("📊", className="card-icon"),  # Changed icon to reflect site status
-                    html.H3("Site Status", className="card-title")  # Updated title
+                    html.Div("📊", className="card-icon"),
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "flex": "1"
+                        },
+                        children=title_children  # ← UPDATED: Use title_children instead of single H3
+                    )
                 ]
             ),
             
-            # Metrics Container
+            # Rest of your existing metrics container code...
             html.Div(
                 className="metrics-container",
                 children=[
@@ -1624,7 +1670,7 @@ def create_header_card_2(current_agency_display=None, agency_data=None, all_agen
                             html.Div(
                                 str(active_sites),
                                 className="metric-number",
-                                style={"color": "var(--success, #38A169)"}  # Green for active
+                                style={"color": "var(--success, #38A169)"}
                             ),
                             html.Div(
                                 "Active sites",
@@ -1643,7 +1689,7 @@ def create_header_card_2(current_agency_display=None, agency_data=None, all_agen
                             html.Div(
                                 str(inactive_sites),
                                 className="metric-number",
-                                style={"color": "var(--error, #E53E3E)"}  # Red for inactive
+                                style={"color": "var(--error, #E53E3E)"}
                             ),
                             html.Div(
                                 "Inactive sites",
@@ -1729,6 +1775,11 @@ def create_header_card_3(current_agency_display=None, agency_data=None, all_agen
     else:
         logger.warning("⚠️ No data available for daily rate calculation")
     
+    # Calculate performance percentage ← ADD THIS SECTION
+    performance_percentage = 0
+    if required_daily_rate > 0:
+        performance_percentage = round((current_daily_rate / required_daily_rate) * 100, 1)
+    
     def format_indian_number(num):
         """Format number in Indian style: XX,XX,XXX"""
         if num == 0:
@@ -1809,14 +1860,16 @@ def create_header_card_3(current_agency_display=None, agency_data=None, all_agen
     
     return create_dual_metric_card_horizontal_ultra_compact(
         icon="⚡",
-        title="Reqiured Performance",  # Updated title to be more descriptive
+        title="Required Performance",  # Updated title to be more descriptive
         metric1_label="Today (MT)",     # Updated label to clarify it's today's actual
         metric1_value=format_indian_number(current_daily_rate),
         metric1_color=current_color,
         metric2_label="Required (MT)",  # Updated label to clarify it's the required rate
         metric2_value=format_indian_number(required_daily_rate),
-        metric2_color=required_color
+        metric2_color=required_color,
+        completion_percentage=performance_percentage  # ← ADD THIS LINE
     )
+
 
 def create_header_cards_grid(current_agency_display=None, agency_data=None, all_agencies_data=None):
     """Create the 1x4 header cards grid with individual card functions"""
@@ -1929,10 +1982,12 @@ def create_header_card_4(current_agency_display=None, agency_data=None, all_agen
     if all_agencies_data is not None and not all_agencies_data.empty:
         try:
             # Count total planned machines across all agencies (all records)
-            planned_machines = count_machines_from_data(all_agencies_data, only_active=False)
+            planned_machines = count_machines_from_data(all_agencies_data)
             
             # Count deployed machines across all agencies (only active sites)
             deployed_machines = count_machines_from_data(all_agencies_data, only_active=True)
+            
+            not_deployed_machines = abs(planned_machines - deployed_machines)
                 
             print(f"🚀 Overall Machine Status: {deployed_machines} deployed out of {planned_machines} planned")
                 
@@ -1941,16 +1996,88 @@ def create_header_card_4(current_agency_display=None, agency_data=None, all_agen
             planned_machines = 0
             deployed_machines = 0
 
-    # Use the ULTRA COMPACT horizontal layout method
-    return create_dual_metric_card(
-        icon="🚀",
-        title="Machine Status",
-        metric1_label="Deployed",
-        metric1_value=deployed_machines,
-        metric1_color="var(--success, #38A169)",  # Green for deployed machines
-        metric2_label="Planned",
-        metric2_value=planned_machines,
-        metric2_color="var(--info, #3182CE)"     # Blue for planned machines
+    # Calculate deployment percentage ← ADD THIS
+    deployment_percentage = 0
+    if planned_machines > 0:
+        deployment_percentage = round((deployed_machines / planned_machines) * 100, 1)
+
+    # Use the dual metric card format but with machine count badge ← MODIFY THIS
+    return html.Div(
+        className="enhanced-metric-card header-card-4",
+        children=[
+            # Card Header with machine count badge ← ADD THIS SECTION
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("🚀", className="card-icon"),
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "flex": "1"
+                        },
+                        children=[
+                            html.H3("Machine Status", className="card-title"),
+                            html.Span(
+                                f"{planned_machines} Machines",
+                                style={
+                                    "color": "white",
+                                    "fontSize": "clamp(0.9rem, 1.8vh, 1.2rem)",
+                                    "fontWeight": "700",
+                                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.5)",
+                                    "background": "var(--info, #3182CE)",  # Blue for total count
+                                    "padding": "0.15rem 0.4rem",
+                                    "borderRadius": "10px",
+                                    "border": "1px solid var(--info, #3182CE)",
+                                    "marginLeft": "0.5rem"
+                                }
+                            ) if planned_machines > 0 else ""
+                        ]
+                    )
+                ]
+            ),
+            
+            # Metrics Container ← KEEP EXISTING
+            html.Div(
+                className="metrics-container",
+                children=[
+                    # First metric
+                    html.Div(
+                        className="metric-display primary",
+                        children=[
+                            html.Div(
+                                str(deployed_machines),
+                                className="metric-number",
+                                style={"color": "var(--success, #38A169)"}  # Green for deployed machines
+                            ),
+                            html.Div(
+                                "Deployed",
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Visual Separator
+                    html.Div(className="metrics-separator"),
+                    
+                    # Second metric
+                    html.Div(
+                        className="metric-display secondary",
+                        children=[
+                            html.Div(
+                                str(not_deployed_machines),
+                                className="metric-number",
+                                style={"color": "var(--info, #3182CE)"}     # Blue for planned machines
+                            ),
+                            html.Div(
+                                "Not deployed",
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
     )
 
 
@@ -1966,9 +2093,9 @@ def create_agency_completion_card(agency_data=None):
         try:
             # Count total planned machines for current agency (all records)
             agency_planned_machines = count_machines_from_data(agency_data, only_active=False)
-            
             # Count deployed machines for current agency (only active sites)
             agency_deployed_machines = count_machines_from_data(agency_data, only_active=True)
+            agency_not_deployed_machines = abs(agency_planned_machines - agency_deployed_machines)
                 
             print(f"🏢 Agency Machine Status: {agency_deployed_machines} deployed out of {agency_planned_machines} planned")
                 
@@ -1977,16 +2104,84 @@ def create_agency_completion_card(agency_data=None):
             agency_planned_machines = 0
             agency_deployed_machines = 0
 
-    # Use dual metric card format like site status
-    return create_dual_metric_card(
-        icon="🏗️",
-        title="Machine Status",
-        metric1_label="Deployed",
-        metric1_value=agency_deployed_machines,
-        metric1_color="var(--success, #38A169)",  # Green for deployed machines
-        metric2_label="Planned",
-        metric2_value=agency_planned_machines,
-        metric2_color="var(--info, #3182CE)"     # Blue for planned machines
+
+    # Use dual metric card format with machine count badge ← MODIFY THIS
+    return html.Div(
+        className="enhanced-metric-card agency-machine-card",
+        children=[
+            # Card Header with machine count badge ← ADD THIS SECTION
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("🏗️", className="card-icon"),
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "flex": "1"
+                        },
+                        children=[
+                            html.H3("Machine Status", className="card-title"),
+                            html.Span(
+                                f"{agency_planned_machines} Machines",
+                                style={
+                                    "color": "white",
+                                    "fontSize": "clamp(0.9rem, 1.8vh, 1.2rem)",
+                                    "fontWeight": "700",
+                                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.5)",
+                                    "background": "var(--info, #3182CE)",  # Blue for total count
+                                    "padding": "0.15rem 0.4rem",
+                                    "borderRadius": "10px",
+                                    "border": "1px solid var(--info, #3182CE)",
+                                    "marginLeft": "0.5rem"
+                                }
+                            ) if agency_not_deployed_machines > 0 else ""
+                        ]
+                    )
+                ]
+            ),
+            
+            # Metrics Container ← KEEP EXISTING
+            html.Div(
+                className="metrics-container",
+                children=[
+                    # First metric
+                    html.Div(
+                        className="metric-display primary",
+                        children=[
+                            html.Div(
+                                str(agency_deployed_machines),
+                                className="metric-number",
+                                style={"color": "var(--success, #38A169)"}  # Green for deployed machines
+                            ),
+                            html.Div(
+                                "Deployed",
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Visual Separator
+                    html.Div(className="metrics-separator"),
+                    
+                    # Second metric
+                    html.Div(
+                        className="metric-display secondary",
+                        children=[
+                            html.Div(
+                                str(agency_not_deployed_machines),
+                                className="metric-number",
+                                style={"color": "var(--info, #3182CE)"}     # Blue for planned machines
+                            ),
+                            html.Div(
+                                "Not deployed",
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
     )
 
 
@@ -2069,15 +2264,83 @@ def create_specific_metric_cards(current_agency_display, metrics, theme_styles, 
     cards.append(card1)
     
     # Card 2: Active Sites (green) and Inactive Sites (red)
-    card2 = create_dual_metric_card(
-        icon="🏭",
-        title="Site Status",
-        metric1_label="Active Sites",
-        metric1_value=metrics['active_sites'],
-        metric1_color="var(--success, #38A169)",
-        metric2_label="Inactive Sites",
-        metric2_value=metrics['inactive_sites'],
-        metric2_color="var(--error, #E53E3E)"
+    agency_total_sites = metrics['active_sites'] + metrics['inactive_sites'] 
+    card2 = html.Div(
+        className="enhanced-metric-card",
+        children=[
+            # Card Header with count badge ← MODIFY THIS SECTION
+            html.Div(
+                className="card-header",
+                children=[
+                    html.Div("🏭", className="card-icon"),
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "flex": "1"
+                        },
+                        children=[
+                            html.H3("Site Status", className="card-title"),
+                            html.Span(
+                                f"{agency_total_sites} Sites",
+                                style={
+                                    "color": "white",
+                                    "fontSize": "clamp(0.9rem, 1.8vh, 1.2rem)",
+                                    "fontWeight": "700",
+                                    "textShadow": "0 1px 2px rgba(0, 0, 0, 0.5)",
+                                    "background": "#38A169",
+                                    "padding": "0.15rem 0.4rem",
+                                    "borderRadius": "10px",
+                                    "border": "1px solid #38A169",
+                                    "marginLeft": "0.5rem"
+                                }
+                            ) if agency_total_sites > 0 else ""
+                        ]
+                    )
+                ]
+            ),
+            
+            # Rest of your existing metrics container...
+            html.Div(
+                className="metrics-container",
+                children=[
+                    # First metric
+                    html.Div(
+                        className="metric-display primary",
+                        children=[
+                            html.Div(
+                                str(metrics['active_sites']),
+                                className="metric-number",
+                                style={"color": "var(--success, #38A169)"}
+                            ),
+                            html.Div(
+                                "Active Sites",
+                                className="metric-label"
+                            )
+                        ]
+                    ),
+                    
+                    # Visual Separator
+                    html.Div(className="metrics-separator"),
+                    
+                    # Second metric
+                    html.Div(
+                        className="metric-display secondary",
+                        children=[
+                            html.Div(
+                                str(metrics['inactive_sites']),
+                                className="metric-number",
+                                style={"color": "var(--error, #E53E3E)"}
+                            ),
+                            html.Div(
+                                "Inactive Sites",
+                                className="metric-label"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
     )
     cards.append(card2)
     
@@ -2105,11 +2368,11 @@ def create_specific_metric_cards(current_agency_display, metrics, theme_styles, 
     
     # Card 7: Lagging Sites (LIST STYLE)
     if agency_data is not None and not agency_data.empty:
-        card7 = create_lagging_sites_card(current_agency_display, agency_data)
+        card7 = create_lagging_sites_card(current_agency_display, agency_data)  # ← Keep this function name
     else:
         card7 = create_empty_card(7)
     cards.append(card7)
-    
+        
     # Card 8: Performance Rankings
     if agency_data is not None and not agency_data.empty:
         card8 = create_performance_rankings_card(current_agency_display, agency_data)
@@ -2189,6 +2452,11 @@ def create_agency_daily_performance_card(current_agency_display, agency_data):
             agency_required_daily_rate = 0
     else:
         logger.warning(f"⚠️ No data available for {current_agency_display} daily rate calculation")
+    
+    # Calculate agency performance percentage ← ADD THIS SECTION
+    agency_performance_percentage = 0
+    if agency_required_daily_rate > 0:
+        agency_performance_percentage = round((agency_current_daily_rate / agency_required_daily_rate) * 100, 1)
     
     def format_indian_number(num):
         """Format number in Indian style: XX,XX,XXX (same as header card)"""
@@ -2271,15 +2539,15 @@ def create_agency_daily_performance_card(current_agency_display, agency_data):
     # Use ultra compact horizontal layout for consistency with header cards
     return create_dual_metric_card_horizontal_ultra_compact(
         icon="📊",  # Changed icon to represent agency-specific data analysis
-        title="Agency Performance ",  # Updated title to reflect agency scope
+        title="Agency Performance",  # Updated title to reflect agency scope
         metric1_label="Today (MT)",     # Same as header card - today's actual
         metric1_value=format_indian_number(agency_current_daily_rate),
         metric1_color=current_color,
         metric2_label="Required (MT)",  # Same as header card - required rate
         metric2_value=format_indian_number(agency_required_daily_rate),
-        metric2_color=required_color
+        metric2_color=required_color,
+        completion_percentage=agency_performance_percentage  # ← ADD THIS LINE
     )
-
 
 def create_project_overview_header():
     """Create project overview header with today's date using agency header styling"""
@@ -2319,7 +2587,7 @@ def create_hero_section():
                                 alt="Left Organization Logo",
                                 className="responsive-logo",
                                 style={
-                                    "height": "clamp(40px, 8vh, 60px)",
+                                    "height": "clamp(90px, 18vh, 180px)",
                                     "width": "auto",
                                     "objectFit": "contain",
                                     "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
@@ -2338,7 +2606,7 @@ def create_hero_section():
                         },
                         children=[
                             html.H1(
-                                "Swaccha Andhra Corporation",
+                                "Swachha Andhra Corporation",
                                 className="hero-title",
                                 style={
                                     "margin": "0", "padding": "0", "fontSize": "clamp(1.5rem, 4vw, 2.5rem)",
@@ -2365,7 +2633,7 @@ def create_hero_section():
                                 alt="Right Organization Logo",
                                 className="responsive-logo",
                                 style={
-                                    "height": "clamp(40px, 8vh, 60px)",
+                                    "height": "clamp(90px, 18vh, 180px)",
                                     "width": "auto",
                                     "objectFit": "contain",
                                     "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",

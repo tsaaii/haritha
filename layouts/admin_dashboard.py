@@ -1899,16 +1899,14 @@ def register_dashboard_flask_routes(server):
 # Keep all other existing functions unchanged - they don't need modification
 def ensure_upload_directory(server):
     """Create upload directory if it doesn't exist"""
-    upload_path = server.config.get('UPLOAD_FOLDER', 'uploads')
-    if not os.path.exists(upload_path):
-        os.makedirs(upload_path, exist_ok=True)
-    logger.info(f"✅ Upload directory ensured: {os.path.abspath(upload_path)}")
+    upload_path = "/tmp/uploads"
+    os.makedirs(upload_path, exist_ok=True)
     return upload_path
 
 def configure_upload_settings(server):
     """Configure upload settings"""
     server.config.update({
-        'UPLOAD_FOLDER': 'uploads',
+        'UPLOAD_FOLDER': '/tmp/uploads',
         'MAX_CONTENT_LENGTH': 50 * 1024 * 1024,  # 50MB max file size
         'UPLOAD_EXTENSIONS': {'.pdf', '.csv', '.xlsx', '.xls'},
         'SECRET_KEY': os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production-' + str(hash(os.getcwd())))
