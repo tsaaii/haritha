@@ -31,8 +31,8 @@ def load_csv_data():
         possible_paths = [
             'waste_management_data_updated.csv',
             'data/waste_management_data_updated.csv', 
-            'uploads/waste_management_data_updated.csv',
-            'uploads/dash_uploads/waste_management_data_updated.csv'
+            '/tmp/uploads/waste_management_data_updated.csv',
+            '/tmp/uploads/dash_/uploads/waste_management_data_updated.csv'
         ]
         
         for path in possible_paths:
@@ -433,8 +433,8 @@ def check_csv_file():
     possible_paths = [
         'waste_management_data_updated.csv',
         'data/waste_management_data_updated.csv', 
-        'uploads/waste_management_data_updated.csv',
-        'uploads/dash_uploads/waste_management_data_updated.csv'
+        '/tmp/uploads/waste_management_data_updated.csv',
+        '/tmp/uploads/dash_/uploads/waste_management_data_updated.csv'
     ]
     
     found_files = []

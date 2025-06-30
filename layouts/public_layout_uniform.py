@@ -13,7 +13,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 from utils.theme_utils import get_theme_styles
-from components.navigation.hover_overlay import create_hover_overlay_banner
+
 
 # Initialize logger FIRST
 logger = logging.getLogger(__name__)
@@ -24,6 +24,20 @@ AGENCY_NAMES = {
     'Saurashtra': 'Saurastra Enviro Pvt Ltd, Gujarat', 
     'Tharuni': 'Tharuni Associates, Guntur'
 }
+
+def create_hover_overlay_banner(theme_name="dark"):
+    """Create hover overlay banner component"""
+    return html.Div(
+        id="hover-overlay-banner",
+        className="hover-overlay-banner",
+        style={"display": "none"},
+        children=[
+            html.Div(className="overlay-content", children=[
+                html.I(className="fas fa-info-circle overlay-icon"),
+                html.Span(id="overlay-text", className="overlay-text")
+            ])
+        ]
+    )
 
 def get_display_agency_name(agency_key):
     """Get the full display name for an agency"""
@@ -2571,7 +2585,7 @@ def create_agency_header(current_agency_display):
     )
 
 def create_hero_section():
-    """Create hero section with main system title"""
+    """Create the hero section with logos and title"""
     return html.Div(
         className="hero-section",
         children=[
@@ -2580,14 +2594,17 @@ def create_hero_section():
                 children=[
                     # Left Logo
                     html.Div(
-                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "height": "100%", "flexShrink": "0"},
+                        style={
+                            "display": "flex", "alignItems": "center", "justifyContent": "center",
+                            "height": "100%", "flexShrink": "0"
+                        },
                         children=[
                             html.Img(
                                 src="/assets/img/left.png",
                                 alt="Left Organization Logo",
                                 className="responsive-logo",
                                 style={
-                                    "height": "clamp(90px, 18vh, 180px)",
+                                    "height": "clamp(40px, 8vh, 60px)",
                                     "width": "auto",
                                     "objectFit": "contain",
                                     "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
@@ -2602,7 +2619,8 @@ def create_hero_section():
                         className="hero-title-section",
                         style={
                             "textAlign": "center", "flex": "1", "padding": "0 clamp(1rem, 3vw, 2rem)",
-                            "display": "flex", "flexDirection": "column", "justifyContent": "center", "alignItems": "center", "height": "100%"
+                            "display": "flex", "flexDirection": "column", "justifyContent": "center", 
+                            "alignItems": "center", "height": "100%"
                         },
                         children=[
                             html.H1(
@@ -2610,14 +2628,16 @@ def create_hero_section():
                                 className="hero-title",
                                 style={
                                     "margin": "0", "padding": "0", "fontSize": "clamp(1.5rem, 4vw, 2.5rem)",
-                                    "fontWeight": "800", "lineHeight": "1.1", "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.3)", "letterSpacing": "-0.5px"
+                                    "fontWeight": "800", "lineHeight": "1.1", 
+                                    "textShadow": "2px 2px 4px rgba(0, 0, 0, 0.3)", "letterSpacing": "-0.5px"
                                 }
                             ),
                             html.P(
                                 "Real Time Legacy Waste Remediation Progress Tracker",
                                 className="hero-subtitle",
                                 style={
-                                    "margin": "0.25rem 0 0 0", "padding": "0", "fontSize": "clamp(0.8rem, 1.8vw, 1rem)",
+                                    "margin": "0.25rem 0 0 0", "padding": "0", 
+                                    "fontSize": "clamp(0.8rem, 1.8vw, 1rem)",
                                     "fontWeight": "500", "lineHeight": "1.3", "opacity": "0.9", "textAlign": "center"
                                 }
                             )
@@ -2626,14 +2646,17 @@ def create_hero_section():
                     
                     # Right Logo
                     html.Div(
-                        style={"display": "flex", "alignItems": "center", "justifyContent": "center", "height": "100%", "flexShrink": "0"},
+                        style={
+                            "display": "flex", "alignItems": "center", "justifyContent": "center", 
+                            "height": "100%", "flexShrink": "0"
+                        },
                         children=[
                             html.Img(
                                 src="/assets/img/right.png",
                                 alt="Right Organization Logo",
                                 className="responsive-logo",
                                 style={
-                                    "height": "clamp(90px, 18vh, 180px)",
+                                    "height": "clamp(40px, 8vh, 60px)",
                                     "width": "auto",
                                     "objectFit": "contain",
                                     "filter": "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
@@ -2678,7 +2701,9 @@ def build_public_layout(theme_name="dark", is_authenticated=False, user_data=Non
                 rel="stylesheet",
                 href=f"/assets/css/container_zoom_fix.css?v={int(datetime.now().timestamp())}"
             ),
-            
+        
+            # In your public_layout_uniform.py, add mobile detection
+                
             dcc.Interval(id='auto-rotation-interval', interval=15*1000, n_intervals=0),
             dcc.Store(id='current-theme', data=theme_name),
             create_hover_overlay_banner(theme_name),
