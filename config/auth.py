@@ -35,7 +35,7 @@ OAUTH_CONFIG = {
     "google": {
         "client_secrets_file": "client_secrets.json",  # Your Google OAuth credentials file
         "scopes": ["openid", "email", "profile"],
-        "redirect_uri": "http://localhost:8050/oauth/callback",  # Adjust for production
+        "redirect_uri": "https://applied-pursuit-332603.el.r.appspot.com/oauth/callback",  # Adjust for production
         "hosted_domain": None  # Set to your domain to restrict to specific domain users
     }
 }
@@ -233,7 +233,7 @@ def get_environment_config():
         }
     else:
         return {
-            "redirect_uri": "http://localhost:8050/oauth/callback",
+            "redirect_uri": "https://applied-pursuit-332603.el.r.appspot.com/oauth/callback",
             "secure_cookies": False,
             "session_timeout": 3600,  # 1 hour
             "require_domain_verification": False

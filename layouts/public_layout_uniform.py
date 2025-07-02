@@ -11,7 +11,8 @@ import logging
 import os
 import numpy as np
 from datetime import datetime, timedelta
-
+from utils.theme_utils import get_theme_styles, get_hover_overlay_css, get_theme_css_variables
+from components.navigation.hover_overlay import create_hover_overlay_banner  # ← IMPORT THE REAL ONE
 from utils.theme_utils import get_theme_styles
 
 
@@ -24,20 +25,6 @@ AGENCY_NAMES = {
     'Saurashtra': 'Saurastra Enviro Pvt Ltd, Gujarat', 
     'Tharuni': 'Tharuni Associates, Guntur'
 }
-
-def create_hover_overlay_banner(theme_name="dark"):
-    """Create hover overlay banner component"""
-    return html.Div(
-        id="hover-overlay-banner",
-        className="hover-overlay-banner",
-        style={"display": "none"},
-        children=[
-            html.Div(className="overlay-content", children=[
-                html.I(className="fas fa-info-circle overlay-icon"),
-                html.Span(id="overlay-text", className="overlay-text")
-            ])
-        ]
-    )
 
 def get_display_agency_name(agency_key):
     """Get the full display name for an agency"""

@@ -657,7 +657,7 @@ def oauth_status():
     """Check OAuth configuration status"""
     if GOOGLE_AUTH_AVAILABLE and google_auth_manager:
         try:
-            test_url, test_state = google_auth_manager.get_authorization_url('http://localhost:8050/oauth/callback')
+            test_url, test_state = google_auth_manager.get_authorization_url('http://localhost:8050//oauth/callback')
             return flask.jsonify({
                 'available': True,
                 'configured': True,

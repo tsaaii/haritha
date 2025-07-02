@@ -49,7 +49,7 @@ class AuthenticationService:
         
         params = {
             'client_id': self.oauth_config['client_id'],
-            'redirect_uri': 'http://localhost:8050/oauth/callback',  # Adjust for production
+            'redirect_uri': 'https://applied-pursuit-332603.el.r.appspot.com/oauth/callback',  # Adjust for production
             'scope': 'openid email profile',
             'response_type': 'code',
             'state': state,
@@ -80,7 +80,7 @@ class AuthenticationService:
                 'client_secret': self.oauth_config['client_secret'],
                 'code': code,
                 'grant_type': 'authorization_code',
-                'redirect_uri': 'http://localhost:8050/oauth/callback'
+                'redirect_uri': 'https://applied-pursuit-332603.el.r.appspot.com/oauth/callback'
             }
             
             response = requests.post(
@@ -252,8 +252,8 @@ class AuthenticationService:
         }
         
         if self.oauth_config:
-            debug_info['expected_redirect_uri'] = 'http://localhost:8050/oauth/callback'
-            debug_info['redirect_uri_configured'] = 'http://localhost:8050/oauth/callback' in self.oauth_config.get('redirect_uris', [])
+            debug_info['expected_redirect_uri'] = 'https://applied-pursuit-332603.el.r.appspot.com/oauth/callback'
+            debug_info['redirect_uri_configured'] = 'https://applied-pursuit-332603.el.r.appspot.com/oauth/callback' in self.oauth_config.get('redirect_uris', [])
         
         return debug_info
     

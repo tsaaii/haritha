@@ -70,7 +70,7 @@ class GoogleAuthManager:
         """Check if OAuth is available"""
         return self.is_configured
     
-    def get_authorization_url(self, redirect_uri="http://localhost:8050/oauth/callback"):
+    def get_authorization_url(self, redirect_uri="http://localhost:8050//oauth/callback"):
         """Get OAuth authorization URL"""
         if not self.is_configured:
             raise Exception("OAuth not configured")
@@ -89,7 +89,7 @@ class GoogleAuthManager:
         auth_url = f"{self.oauth_config['auth_uri']}?{urllib.parse.urlencode(params)}"
         return auth_url, state
     
-    def exchange_code_for_tokens(self, code, redirect_uri="http://localhost:8050/oauth/callback"):
+    def exchange_code_for_tokens(self, code, redirect_uri="http://localhost:8050//oauth/callback"):
         """Exchange code for tokens"""
         if not self.is_configured:
             return {"error": "OAuth not configured"}
